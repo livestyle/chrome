@@ -1,0 +1,77 @@
+@import url(http://fonts.googleapis.com/css?family=PT+Sans:400,700&subset=latin,cyrillic);
+/* @import url(http://fonts.googleapis.com/css?family=Lato); */
+
+@import url(./assets/toggler.css);
+@import url(./assets/select-box.css);
+
+.popup {
+	background: #fff;
+	font-family: Lato, 'PT Sans', Arial, sans-serif;
+	font-size: 16px;
+	padding: 28px;
+	color: #2c3f4f;
+}
+
+.active-editor {
+	padding: 7px;
+	text-align: right;
+	font-size: 0.8em;
+	background: #ecf0f1;
+	margin: -28px;
+	margin-bottom: 14px;
+}
+
+.activity {
+	border: 0;
+	padding: 0;
+	position: relative;
+	margin: 28px 0;
+}
+
+.activity label {
+	display: block;
+	line-height: 1;
+	font-size: 1.8em;
+}
+
+.activity em {
+	display: block;
+	font-size: 0.8em;
+	line-height: 1;
+	font-style: normal;
+	color: #95a5a6;
+}
+
+.activity .toggler {
+	position: absolute;
+	right: -14px;
+	margin-top: -5px;
+}
+
+.file-list {
+	list-style-type: none;
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+
+.file-list__item {
+	margin-bottom: 28px;
+}
+
+.file__browser {
+	margin-bottom: 4px;
+}
+
+.file__browser-addon {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 0.65em;
+	color: #95a5a6;
+}
+
+.file__editor {
+	margin: 0 -15px;
+}

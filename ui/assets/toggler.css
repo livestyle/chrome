@@ -1,0 +1,107 @@
+.toggler {
+	display: inline-block;
+	position: relative;
+	overflow: hidden;
+}
+
+.toggler > input[type="checkbox"] {
+	position: absolute;
+	display: inline-block;
+	-webkit-transform-origin: 0 0;
+	-moz-transform-origin: 0 0;
+	-ms-transform-origin: 0 0;
+	-o-transform-origin: 0 0;
+	transform-origin: 0 0;
+
+	-webkit-transform: scale(6, 2);
+	-moz-transform: scale(6, 2);
+	-ms-transform: scale(6, 2);
+	-o-transform: scale(6, 2);
+	transform: scale(6, 2);
+	z-index: 1;
+	opacity: 0;
+}
+
+.toggler__bg {
+	position: relative;
+	display: inline-block;
+	width: 80px;
+	height: 29px;
+	line-height: 29px;
+	font-size: 15px;
+	border-radius: 30px;
+	color: #fff;
+	background-color: #bdc3c7;
+	overflow: hidden;
+
+	-webkit-transition-property: background-color, color;
+	-moz-transition-property: background-color, color;
+	-ms-transition-property: background-color, color;
+	-o-transition-property: background-color, color;
+	transition-property: background-color, color;
+
+	-webkit-transition-duration: 0.3s;
+	-moz-transition-duration: 0.3s;
+	-ms-transition-duration: 0.3s;
+	-o-transition-duration: 0.3s;
+	transition-duration: 0.3s;
+}
+
+.toggler__knob {
+	display: inline-block;
+	width: 21px;
+	height: 21px;
+	border-radius: 21px;
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	background: #7f8c9a;
+	font-style: normal;
+
+	-webkit-transition-property: -webkit-transform, background-color;
+	-moz-transition-property: -moz-transform, background-color;
+	-ms-transition-property: -ms-transform, background-color;
+	-o-transition-property: -o-transform, background-color;
+	transition-property: transform, background-color;
+
+	-webkit-transition-duration: 0.3s;
+	-moz-transition-duration: 0.3s;
+	-ms-transition-duration: 0.3s;
+	-o-transition-duration: 0.3s;
+	transition-duration: 0.3s;
+}
+
+.toggler__knob:before,
+.toggler__knob:after {
+	display: inline-block;
+	width: 36px;
+	text-align: center;
+	position: absolute;
+	top: -3px;
+}
+
+.toggler__knob:before {
+	content: 'ON';
+	right: 100%;
+	margin-right: 4px;
+}
+
+.toggler__knob:after {
+	content: 'OFF';
+	left: 100%;
+	margin-left: 4px;
+}
+
+input[type="checkbox"]:checked + .toggler__bg {
+	background: #344a5d;
+	color: #26bb9d;
+}
+
+input[type="checkbox"]:checked + .toggler__bg .toggler__knob {
+	-webkit-transform: translateX(50px);
+	-moz-transform: translateX(50px);
+	-ms-transform: translateX(50px);
+	-o-transform: translateX(50px);
+	transform: translateX(50px);
+	background: #26bb9d;
+}
