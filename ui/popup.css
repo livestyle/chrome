@@ -7,17 +7,17 @@
 .popup {
 	background: #fff;
 	font-family: Lato, 'PT Sans', Arial, sans-serif;
-	font-size: 16px;
-	padding: 28px;
+	font-size: 14px;
+	padding: 20px;
 	color: #2c3f4f;
 }
 
 .active-editor {
-	padding: 7px;
+	padding: 5px;
 	text-align: right;
 	font-size: 0.8em;
 	background: #ecf0f1;
-	margin: -28px;
+	margin: -20px;
 	margin-bottom: 14px;
 }
 
@@ -25,7 +25,7 @@
 	border: 0;
 	padding: 0;
 	position: relative;
-	margin: 28px 0;
+	margin: 20px 0;
 }
 
 .activity label {
@@ -44,8 +44,8 @@
 
 .activity .toggler {
 	position: absolute;
-	right: -14px;
-	margin-top: -5px;
+	right: -10px;
+	margin-bottom: -1px;
 }
 
 .file-list {
@@ -56,7 +56,11 @@
 }
 
 .file-list__item {
-	margin-bottom: 28px;
+	margin-bottom: 20px;
+}
+
+.file-list__item:last-child {
+	margin-bottom: 0;
 }
 
 .file__browser {
@@ -68,10 +72,17 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font-size: 0.65em;
+	font-size: 0.7em;
+	margin-top: 2px;
 	color: #95a5a6;
 }
 
 .file__editor {
-	margin: 0 -15px;
+	margin: 0 -10px;
+}
+
+.offscreen {
+	position: absolute;
+	left: -9999px;
+	visibility: hidden;
 }

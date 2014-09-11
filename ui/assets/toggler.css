@@ -2,6 +2,10 @@
 	display: inline-block;
 	position: relative;
 	overflow: hidden;
+	font-size: 12px;
+	width: 60px;
+	height: 23px;
+	line-height: 23px;
 }
 
 .toggler > input[type="checkbox"] {
@@ -20,16 +24,16 @@
 	transform: scale(6, 2);
 	z-index: 1;
 	opacity: 0;
+	margin: 0;
+	padding: 0;
 }
 
 .toggler__bg {
 	position: relative;
 	display: inline-block;
-	width: 80px;
-	height: 29px;
-	line-height: 29px;
-	font-size: 15px;
-	border-radius: 30px;
+	width: 100%;
+	height: 100%;
+	border-radius: 2em;
 	color: #fff;
 	background-color: #bdc3c7;
 	overflow: hidden;
@@ -49,12 +53,12 @@
 
 .toggler__knob {
 	display: inline-block;
-	width: 21px;
-	height: 21px;
-	border-radius: 21px;
 	position: absolute;
-	top: 4px;
-	left: 4px;
+	width: 17px;
+	height: 17px;
+	border-radius: 17px;
+	top: 3px;
+	left: 3px;
 	background: #7f8c9a;
 	font-style: normal;
 
@@ -74,10 +78,10 @@
 .toggler__knob:before,
 .toggler__knob:after {
 	display: inline-block;
-	width: 36px;
+	width: 2.2em;
 	text-align: center;
 	position: absolute;
-	top: -3px;
+	top: -1px;
 }
 
 .toggler__knob:before {
@@ -98,10 +102,10 @@ input[type="checkbox"]:checked + .toggler__bg {
 }
 
 input[type="checkbox"]:checked + .toggler__bg .toggler__knob {
-	-webkit-transform: translateX(50px);
-	-moz-transform: translateX(50px);
-	-ms-transform: translateX(50px);
-	-o-transform: translateX(50px);
-	transform: translateX(50px);
+	-webkit-transform: translateX(37px);
+	-moz-transform: translateX(37px);
+	-ms-transform: translateX(37px);
+	-o-transform: translateX(37px);
+	transform: translateX(37px);
 	background: #26bb9d;
 }
