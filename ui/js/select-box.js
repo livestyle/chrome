@@ -45,13 +45,17 @@ define(function(require, module, exports) {
 		_attachEvents: function() {
 			var self = this;
 			this._sel.addEventListener('change', this.sync.bind(this));
+			this._sel.addEventListener('sync', this.sync.bind(this));
 			this.label.addEventListener('click', this.toggle.bind(this));
 			this.picker.addEventListener('click', function(evt) {
 				var pickerItem = ancestorOrSelf(evt.target, 'select-box__picker-item');
 				if (pickerItem) {
 					self._sel.selectedIndex = +pickerItem.getAttribute('data-ix');
 					self.hide();
-					self.sync();
+					
+					var event = self._sel.ownerDocument.createEvent('Events');
+					event.initEvent('change', true, true);
+					self._sel.dispatchEvent(event);
 				}
 			});
 		},
