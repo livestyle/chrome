@@ -2,76 +2,66 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8" />
-	<title>Popup preview</title>
+	<title>LiveStyle Popup</title>
 	<link rel="stylesheet" href="popup.css" />
 	<style>
-		.preview {
-			width: 320px;
+		html {
+			width: 340px;
 			height: 400px;
-			margin: 100px auto;
-			border: 1px solid #aaa;
-			overflow: auto;
 		}
 	</style>
 </head>
 <body>
-	<div class="preview">
-		<div class="popup">
-			<section class="active-editor">Sublime Text 3</section>
-			<fieldset class="activity">
-				<span class="toggler"><input type="checkbox" name="enabled" id="fld-enabled" /><span class="toggler__bg"><i class="toggler__knob"></i></span></span>
-				<label for="fld-enabled">Включить LiveStyle</label>
-				<em>для текущей страницы</em>
-			</fieldset>
-
-			<ul class="file-list">
-				<li class="file-list__item">
-					<div class="file__browser">.../assets/my-super-styles.css<span class="file__browser-addon">?family=PT+Sans:400,700&amp;subset=latin,cyrillic</span></div>
-					<div class="file__editor">
-						<select>
-							<option>css/my-super-styles1.css</option>
-							<option>css/my-super-styles2.css</option>
-							<option>css/my-super-styles3.css</option>
-							<option>css/my-super-styles4.css</option>
-						</select>
-						<!-- <div class="select-box">
-							<span class="select-box__label">css/my-super-styles.css</span>
-							<ul class="select-box__picker">
-								<li class="select-box__picker-item">css/my-super-styles.css</li>
-								<li class="select-box__picker-item">css/popup.css</li>
-								<li class="select-box__picker-item select-box__picker-item_selected">less/page-layout.less</li>
-								<li class="select-box__picker-item">scss/variables.scss</li>
-								<li class="select-box__picker-item">scss/variables.scss</li>
-							</ul>
-						</div> -->
+	<div class="popup">
+		<section class="active-editor">Sublime Text 3</section>
+		<fieldset class="activity">
+			<span class="toggler"><input type="checkbox" name="enabled" id="fld-enabled" /><span class="toggler__bg"><i class="toggler__knob"></i></span></span>
+			<label for="fld-enabled">Включить LiveStyle</label>
+			<em>для текущей страницы</em>
+		</fieldset>
+	
+		<ul class="file-list">
+			<li class="file-list__item">
+				<div class="file__browser">.../assets/my-super-styles.css<span class="file__browser-addon">?family=PT+Sans:400,700&amp;subset=latin,cyrillic</span></div>
+				<div class="file__editor">
+					<select>
+						<option>css/my-super-styles1.css</option>
+						<option>css/my-super-styles2.css</option>
+						<option>css/my-super-styles3.css</option>
+						<option>css/my-super-styles4.css</option>
+					</select>
+					<!-- <div class="select-box">
+						<span class="select-box__label">css/my-super-styles.css</span>
+						<ul class="select-box__picker">
+							<li class="select-box__picker-item">css/my-super-styles.css</li>
+							<li class="select-box__picker-item">css/popup.css</li>
+							<li class="select-box__picker-item select-box__picker-item_selected">less/page-layout.less</li>
+							<li class="select-box__picker-item">scss/variables.scss</li>
+							<li class="select-box__picker-item">scss/variables.scss</li>
+						</ul>
+					</div> -->
+				</div>
+			</li>
+	
+			<li class="file-list__item">
+				<div class="file__browser">.../assets/my-super-styles.css</div>
+				<div class="file__editor">
+					<div class="select-box">
+						<span class="select-box__label">css/my-super-styles.css</span>
 					</div>
-				</li>
-
-				<li class="file-list__item">
-					<div class="file__browser">.../assets/my-super-styles.css</div>
-					<div class="file__editor">
-						<div class="select-box">
-							<span class="select-box__label">css/my-super-styles.css</span>
-						</div>
+				</div>
+			</li>
+	
+			<li class="file-list__item">
+				<div class="file__browser">.../assets/my-super-styles.css</div>
+				<div class="file__editor">
+					<div class="select-box">
+						<span class="select-box__label">css/my-super-styles.css</span>
 					</div>
-				</li>
-
-				<li class="file-list__item">
-					<div class="file__browser">.../assets/my-super-styles.css</div>
-					<div class="file__editor">
-						<div class="select-box">
-							<span class="select-box__label">css/my-super-styles.css</span>
-						</div>
-					</div>
-				</li>
-			</ul>
-		</div>
+				</div>
+			</li>
+		</ul>
 	</div>
-	<script src="../lib/vendor/require.js"></script>
-	<script>
-	require(['./js/select-box'], function(selectBox) {
-		selectBox(document.body);
-	})
-	</script>
+	<script src="../lib/vendor/require.js" data-main="popup.js"></script>
 </body>
 </html>
