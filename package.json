@@ -19,7 +19,7 @@
     "url": "https://github.com/livestyle/chrome/issues"
   },
   "homepage": "https://github.com/livestyle/chrome",
-  "dependencies": {
+  "devDependencies": {
     "mocha": "^1.21.4"
   }
 }
