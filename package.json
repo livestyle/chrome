@@ -1,0 +1,25 @@
+{
+  "name": "livestyle-chrome",
+  "version": "0.9.0",
+  "description": "A Google Chrome extension for LiveStyle",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/livestyle/chrome.git"
+  },
+  "author": "Sergey Chikuyonok <serge.che@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/livestyle/chrome/issues"
+  },
+  "homepage": "https://github.com/livestyle/chrome",
+  "dependencies": {
+    "mocha": "^1.21.4"
+  }
+}
