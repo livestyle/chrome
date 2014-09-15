@@ -1,5 +1,4 @@
 define(function(require) {
-	chrome.browserAction.onClicked.addListener(function(tab) {
-		
-	});
+	var modelController = require('../lib/controllers/model');
+	
 });
