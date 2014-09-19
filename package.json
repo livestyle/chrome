@@ -21,5 +21,8 @@
   "homepage": "https://github.com/livestyle/chrome",
   "devDependencies": {
     "mocha": "^1.21.4"
+  },
+  "dependencies": {
+    "livestyle-client": "git+https://github.com/livestyle/client.git"
   }
 }
