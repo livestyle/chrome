@@ -36,24 +36,24 @@ describe('LiveStyle Model', function() {
 		assert.equal(browserFiles, 1);
 	});
 
-	it('global event dispatching', function() {
-		var m1 = new Model('m1');
-		var m2 = new Model('m2');
+	// it('global event dispatching', function() {
+	// 	var m1 = new Model('m1');
+	// 	var m2 = new Model('m2');
 
-		var changes = {}
-		Model.on('change:editorFiles update', function(model) {
-			if (!changes[model.id]) {
-				changes[model.id] = 0;
-			}
+	// 	var changes = {}
+	// 	Model.on('change:editorFiles update', function(model) {
+	// 		if (!changes[model.id]) {
+	// 			changes[model.id] = 0;
+	// 		}
 
-			changes[model.id]++;
-		});
+	// 		changes[model.id]++;
+	// 	});
 
-		m1.set('editorFiles', ['a', 'b']);
-		m2.set('editorFiles', ['c', 'd']);
+	// 	m1.set('editorFiles', ['a', 'b']);
+	// 	m2.set('editorFiles', ['c', 'd']);
 
-		assert.deepEqual(changes, {m1: 2, m2: 2});
-	});
+	// 	assert.deepEqual(changes, {m1: 2, m2: 2});
+	// });
 
 	it('file assocs', function() {
 		var model = new Model();

@@ -1,14 +1,12 @@
 .select-box {
 	position: relative;
 	display: block;
-	padding: 7px 30px 7px 10px;
 	font-size: 14px;
 	font-weight: normal;
 	line-height: 1.4;
-	border-radius: 3px;
-	background: #26bb9d;
-	color: #fff;
 	cursor: pointer;
+	background: #26bb9d;
+	border-radius: 3px;
 
 	-webkit-transition: background-color 0.5s;
 	-moz-transition: background-color 0.5s;
@@ -21,6 +19,12 @@
 	background-color: #48c9b0;
 }
 
+.select-box__label {
+	padding: 7px 30px 7px 10px;
+	color: #fff;
+	display: block;
+}
+
 .select-box:after {
 	position: absolute;
 	top: 42%;
@@ -30,6 +34,7 @@
 	border-top-color: #fff;
 	border-style: solid;
 	border-width: 6px 4px;
+	pointer-events: none;
 	content: '';
 }
 
