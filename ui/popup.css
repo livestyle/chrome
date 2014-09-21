@@ -1,6 +1,4 @@
-@import url(http://fonts.googleapis.com/css?family=PT+Sans:400,700&subset=latin,cyrillic);
-/* @import url(http://fonts.googleapis.com/css?family=Lato); */
-
+@import url(./assets/ptsans.css);
 @import url(./assets/toggler.css);
 @import url(./assets/select-box.css);
 

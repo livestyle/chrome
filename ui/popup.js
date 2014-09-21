@@ -1,9 +1,9 @@
 /**
  * Main popup controller
  */
-define(['./js/select-box'], function(selectBox) {
+define(function(require) {
 	var selectBox = require('./js/select-box');
-	var selectBoxList = [];
+	var compactPaths = require('../lib/helpers/compact-paths');
 
 	function $(selector, context) {
 		return (document || context).querySelector(selector);
@@ -15,8 +15,8 @@ define(['./js/select-box'], function(selectBox) {
 	}
 
 	function renderFileList(model) {
-		var browserFiles = prettifyPaths(model.get('browserFiles') || []);
-		var editorFiles = prettifyPaths(model.get('editorFiles') || []);
+		var browserFiles = compactPaths(model.get('browserFiles') || []);
+		var editorFiles = compactPaths(model.get('editorFiles') || []);
 		var assocs = model.associations();
 		
 		var html = '<ul class="file-list">'
@@ -28,7 +28,7 @@ define(['./js/select-box'], function(selectBox) {
 				}
 
 				return '<li class="file-list__item">'
-					+ '<div class="file__browser">' + label + '</div>'
+					+ '<div class="file__browser" data-full-path="' + file.value + '">' + label + '</div>'
 					+ '<div class="file__editor">'
 					+ populateSelect(file.value, editorFiles, assocs[file.value])
 					+ '</div>';
@@ -85,29 +85,6 @@ define(['./js/select-box'], function(selectBox) {
 		var result = div.firstChild;
 		div.removeChild(result);
 		return result;
-	}
-
-	/**
-	 * Returns given paths with prettified and shortened names
-	 * @param  {Array} list List of paths
-	 * @return {Array} List of objects with <code>label</code> and
-	 * <code>value</code> properties
-	 */
-	function prettifyPaths(list) {
-		return list.map(function(file) {
-			return {
-				label: file,
-				value: file
-			};
-		});
-
-		// var compact = function(item) {
-		// 	return !!item;
-		// };
-
-		// var lookup = list.map(function(path) {
-			
-		// });
 	}
 
 	// bind model with view

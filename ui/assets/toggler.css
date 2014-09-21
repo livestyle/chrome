@@ -57,6 +57,7 @@
 	width: 17px;
 	height: 17px;
 	border-radius: 17px;
+	line-height: 17px;
 	top: 3px;
 	left: 3px;
 	background: #7f8c9a;
@@ -81,7 +82,7 @@
 	width: 2.2em;
 	text-align: center;
 	position: absolute;
-	top: -1px;
+	top: 0;
 }
 
 .toggler__knob:before {
