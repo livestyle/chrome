@@ -23,6 +23,8 @@
     "mocha": "^1.21.4"
   },
   "dependencies": {
-    "livestyle-client": "git+https://github.com/livestyle/client.git"
+    "livestyle-client": "git+https://github.com/livestyle/client.git",
+    "livestyle-cssom-patcher": "git+https://github.com/livestyle/cssom-patcher.git",
+    "livestyle-patcher": "git+https://github.com/livestyle/patcher.git"
   }
 }

@@ -5,15 +5,20 @@
 	"permissions": [
 		"tabs",
 		"storage",
-		"http://*/",
-		"https://*/"
+		"http://*/*",
+		"https://*/*",
+		"file:///*"
 	],
 	"background": {
-		"page": "ui/background.html"
+		"page": "./ui/background.html"
 	},
+	"content_scripts": [{
+		"matches": ["http://*/*", "https://*/*", "file:///*"],
+		"js": ["./node_modules/livestyle-cssom-patcher/index.js", "./ui/content-script.js"]
+    }],
 	"browser_action": {
 		"default_title": "LiveStyle Control Panel",
-		"default_popup": "ui/popup.html"
+		"default_popup": "./ui/popup.html"
 	},
 	"manifest_version": 2
 }

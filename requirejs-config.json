@@ -1,0 +1,10 @@
+{
+	"paths": {
+		"livestyle-client": "node_modules/livestyle-client/index",
+		"livestyle-cssom-patcher": "node_modules/livestyle-cssom-patcher/index",
+		"livestyle-patcher": "node_modules/livestyle-patcher/index",
+		"string-stream": "node_modules/livestyle-patcher/node_modules/livestyle/node_modules/string-stream/index",
+		"livestyle-css-tree": "node_modules/livestyle-patcher/node_modules/livestyle/node_modules/livestyle-css-tree",
+		"livestyle-css-expression": "node_modules/livestyle-patcher/node_modules/livestyle/node_modules/livestyle-css-expression"
+	}
+}
