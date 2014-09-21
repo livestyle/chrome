@@ -61,7 +61,11 @@ define(function(require, module, exports) {
 		},
 
 		toggle: function() {
-			this.box.classList.toggle('select-box_active');
+			if (this.box.classList.contains('select-box_active')) {
+				this.hide();
+			} else {
+				this.show();
+			}
 		},
 
 		hide: function() {
@@ -69,7 +73,37 @@ define(function(require, module, exports) {
 		},
 
 		show: function() {
+			this.picker.classList.remove('select-box__picker_attop');
+			this.picker.style.height = '';
 			this.box.classList.add('select-box_active');
+			
+			// detect picker position and adjust it if required
+			var pickerRect = this.picker.getBoundingClientRect();
+			var viewportHeight = window.innerHeight;
+			if (pickerRect.bottom <= viewportHeight) {
+				// select box is completely visible
+				return;
+			}
+
+			// let’s if it’s visible at top
+			this.picker.classList.add('select-box__picker_attop');
+			var pickerTopRect = this.picker.getBoundingClientRect();
+			if (pickerTopRect.top >= 0) {
+				return;
+			}
+
+			// picker is not completely visible neither at top nor bottom,
+			// pick the best location, e.g. the one with more space
+			var topDelta = Math.abs(pickerTopRect.top);
+			var bottomDelta = Math.abs(pickerRect.bottom - viewportHeight);
+			var height = pickerTopRect.height;
+			if (bottomDelta < topDelta) {
+				// keep at bottom
+				this.picker.classList.remove('select-box__picker_attop');
+				height = pickerRect.height;
+			}
+
+			this.picker.style.height = (height - Math.min(topDelta, bottomDelta)) + 'px';
 		},
 
 		/**

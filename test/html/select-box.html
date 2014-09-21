@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>Select box test</title>
+	<link rel="stylesheet" href="../../ui/assets/ptsans.css" />
+	<link rel="stylesheet" href="../../ui/assets/select-box.css" />
+	<style>
+	body {
+		font-family: 'PT Sans', sans-serif;
+		height: 800px;
+	}
+	section {
+		width: 300px;
+	}
+	.offscreen {
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	</style>
+</head>
+<body>
+	<section>
+		<p>Regular box</p>
+		<select>
+			<option>css/my-super-styles1.css</option>
+			<option>css/my-super-styles2.css</option>
+			<option>css/my-super-styles3.css</option>
+			<option>css/my-super-styles4.css</option>
+		</select>
+	</section>
+
+	<section style="position: absolute;top: 400px;left: 400px;">
+		<p>Offscreen dropdown box</p>
+		<select>
+			<option>css/my-super-styles1.css</option>
+			<option>css/my-super-styles2.css</option>
+			<option>css/my-super-styles3.css</option>
+			<option>css/my-super-styles4.css</option>
+		</select>
+	</section>
+	<script src="../../lib/vendor/require.js" ></script>
+	<script>
+	requirejs(['../../ui/js/select-box'], function(selectBox) {
+		selectBox(document.body);
+	});
+	</script>
+</body>
+</html>

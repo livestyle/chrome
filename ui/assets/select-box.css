@@ -49,6 +49,7 @@
 	z-index: 10;
 	min-width: 220px;
 	max-height: 165px;
+	min-height: 37px;
 	overflow: auto;
 	width: 100%;
 	left: 0;
@@ -59,6 +60,13 @@
 	background-color: #f3f4f5;
 	color: #34495e;
 	border-radius: 4px;
+}
+
+.select-box__picker_attop {
+	margin-top: 0;
+	margin-bottom: 9px;
+	top: auto;
+	bottom: 100%;
 }
 
 .select-box__picker-item {
