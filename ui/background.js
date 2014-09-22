@@ -1,5 +1,6 @@
 define(function(require) {
 	var modelController = require('../lib/controllers/model');
+	var devtoolsController = require('../lib/controllers/devtools');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
 
@@ -26,7 +27,7 @@ define(function(require) {
 		 * Returns model for currently opened page
 		 */
 		getCurrentModel: function(callback) {
-			chrome.tabs.query({currentWindow: true, highlighted: true}, function(tabs) {
+			chrome.tabs.query({currentWindow: true, highlighted: true, windowType: 'normal'}, function(tabs) {
 				modelController.get(tabs && tabs[0], callback);
 			});
 		}
