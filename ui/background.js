@@ -1,6 +1,25 @@
 define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var client = require('../node_modules/livestyle-client/index');
+	var patcher = require('../node_modules/livestyle-patcher/index');
+
+	var worker = patcher(client, {
+		worker: '../out/worker.js'
+	});
+
+	worker.addEventListener('message', function(message) {
+		var payload = message.data;
+
+		if (payload.name === 'init') {
+			return console.log('%c%s', 'color:green;font-size:1.1em;font-weight:bold;', payload.data);
+		}
+
+		if (payload.status === 'error') {
+			return console.error(payload.data);
+		}
+
+		// console.log('worker message', payload);
+	});
 
 	self.LiveStyle = {
 		/**
@@ -13,9 +32,7 @@ define(function(require) {
 		}
 	};
 
-	client
-	.on('diff', function(data) {
-		console.log('received diff message', data);
+	function applyDiff(data) {
 		modelController.active(function(models) {
 			models.forEach(function(item) {
 				var model = item.model;
@@ -34,8 +51,8 @@ define(function(require) {
 					});
 				}
 
-				console.log('stylesheet url:', stylesheetUrl);
 				if (stylesheetUrl) {
+					console.log('apply diff on', stylesheetUrl);
 					chrome.tabs.sendMessage(item.tab.id, {
 						name: 'apply-cssom-patch',
 						data: {
@@ -46,6 +63,20 @@ define(function(require) {
 				}
 			});
 		});
+	}
+	
+
+	client
+	.on('message-send', function(name, data) {
+		console.log('send socket message %c%s', 'font-weight:bold', name);
+		if (name === 'diff') {
+			// sending `diff` message from worker: 
+			// server won’t send it back to sender so handle it manually
+			applyDiff(data);
+		}
+	})
+	.on('diff', function(data) {
+		applyDiff(data);
 	})
 	.connect();
 });
