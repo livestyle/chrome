@@ -37,23 +37,29 @@ define(function(require) {
 		modelController.active(function(models) {
 			models.forEach(function(item) {
 				var model = item.model;
-				var browserFiles = model.get('browserFiles') || [];
 				var assocs = model.associations();
-				var stylesheetUrl = null;
 
-				if (~browserFiles.indexOf(data.uri)) {
-					stylesheetUrl = data.uri;
-				} else {
-					Object.keys(assocs).some(function(key) {
-						if (assocs[key] === data.uri) {
-							stylesheetUrl = key;
-							return true;
-						}
+				if (data.uri in assocs) {
+					// This diff result is for browser file, meaning that browser
+					// file was updated and editor should receive these changes
+					return client.send('incoming-updates', {
+						uri: assocs[data.uri],
+						patches: data.patches
 					});
 				}
 
+				// Looks like this diff result is coming from editor file:
+				// find corresponding browser file and patch it
+				var stylesheetUrl = null;
+				Object.keys(assocs).some(function(key) {
+					if (assocs[key] === data.uri) {
+						stylesheetUrl = key;
+						return true;
+					}
+				});
+
 				if (stylesheetUrl) {
-					console.log('apply diff on', stylesheetUrl);
+					console.log('apply diff on', stylesheetUrl, data.patches);
 					chrome.tabs.sendMessage(item.tab.id, {
 						name: 'apply-cssom-patch',
 						data: {
@@ -61,6 +67,7 @@ define(function(require) {
 							patches: data.patches
 						}
 					});
+					devtoolsController.saveDiff(item.tab.id, stylesheetUrl, data.patches);
 				}
 			});
 		});
