@@ -18,8 +18,6 @@ define(function(require) {
 		if (payload.status === 'error') {
 			return console.error(payload.data);
 		}
-
-		// console.log('worker message', payload);
 	});
 
 	self.LiveStyle = {

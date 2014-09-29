@@ -17,7 +17,6 @@ define(function(require) {
 		switch (message.name) {
 			case 'diff':
 				resources.get(message.data.uri, function(res) {
-					log('Has resource for', message.data.uri, !!res);
 					res && res.patch(message.data.patches);
 				});
 				break;
