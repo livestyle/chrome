@@ -9,18 +9,40 @@
 			width: 340px;
 			height: 400px;
 		}
+
+		html, body {
+			padding: 0;
+			margin: 0;
+		}
 	</style>
 </head>
 <body>
 	<div class="popup">
-		<section class="active-editor">Sublime Text 3</section>
 		<fieldset class="activity">
 			<span class="toggler"><input type="checkbox" name="enabled" id="fld-enabled" /><span class="toggler__bg"><i class="toggler__knob"></i></span></span>
 			<label for="fld-enabled">Enable LiveStyle</label>
 			<em>for current page</em>
 		</fieldset>
 	
-		<ul class="file-list"></ul>
+		<ul class="file-list">
+			<!-- <li class="file-list__item">
+				<div class="file__browser">style.css</div>
+				<div class="file__editor">
+					<div class="select-box">
+						<div class="select-box__label">editor-file.css</div>
+					</div>
+				</div>
+			</li>
+			<li class="file-list__item file-list__item_user">
+				<div class="file__browser">user style1<i class="file__remove"></i></div>
+				<div class="file__editor">
+					<div class="select-box">
+						<div class="select-box__label">editor-file.css</div>
+					</div>
+				</div>
+			</li> -->
+		</ul>
+		<button class="add-file">Add stylesheet</button>
 	</div>
 	<script src="../node_modules/requirejs/require.js" data-main="popup.js"></script>
 </body>

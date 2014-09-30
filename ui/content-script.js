@@ -1,7 +1,7 @@
 (function() {
 	function $$(sel, context) {
 		var items = (context || document).querySelectorAll(sel);
-		return Array.prototype.slice.call(items, 0);
+		return Array.prototype.slice.call(items, 0) || [];
 	}
 
 	function applyPatches(url, patches) {
@@ -12,7 +12,7 @@
 	}
 
 	function userStylesheets() {
-		$$('link[rel="stylesheet"]').filter(function(link) {
+		return $$('link[rel="stylesheet"]').filter(function(link) {
 			return !!link.dataset.livestyleId;
 		});
 	}
@@ -29,6 +29,7 @@
 
 		var result = {};
 		url.forEach(function(internalUrl) {
+			console.log('Creating stylesheet', internalUrl);
 			var blob = new Blob([''], {type: 'text/css'});
 			var url = window.URL.createObjectURL(blob);
 			var link = document.createElement('link');
@@ -39,6 +40,7 @@
 			result[internalUrl] = url;
 		});
 
+		console.log('Create result', result);
 		return result;
 	}
 
@@ -95,7 +97,10 @@
 		});
 	}
 
+	console.log('Init content script');
+
 	chrome.runtime.onMessage.addListener(function(message) {
+		console.log('got message1', message);
 		if (!message) {
 			return;
 		}
@@ -110,7 +115,8 @@
 	});
 
 	// Use separate listener for events that require explicit response
-	chrome.runtime.onMessage.addListener(function(message, callback) {
+	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+		console.log('got message2', message);
 		if (!message) {
 			return;
 		}

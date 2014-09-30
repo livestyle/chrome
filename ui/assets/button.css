@@ -1,0 +1,30 @@
+button {
+	border: none;
+	font-size: 13px;
+	font-weight: normal;
+	line-height: 1.2;
+	border-radius: 4px;
+	padding: 7px 10px;
+	background: #344a5d;
+	color: #fff;
+	cursor: pointer;
+	outline: none;
+
+	-webkit-transition: background-color 0.25s linear;
+	-moz-transition: background-color 0.25s linear;
+	-ms-transition: background-color 0.25s linear;
+	-o-transition: background-color 0.25s linear;
+	transition: background-color 0.25s linear;
+
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+}
+
+button:hover {
+	background-color: #415c75;
+}
+
+button:active {
+	background-color: #2c3e50;
+}

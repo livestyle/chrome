@@ -1,6 +1,7 @@
-@import url(./assets/ptsans.css);
+@import url(./assets/fonts.css);
 @import url(./assets/toggler.css);
 @import url(./assets/select-box.css);
+@import url(./assets/button.css);
 
 .popup {
 	background: #fff;
@@ -23,7 +24,7 @@
 	border: 0;
 	padding: 0;
 	position: relative;
-	margin: 20px 0;
+	margin:0 0 20px;
 }
 
 .activity label {
@@ -42,14 +43,15 @@
 
 .activity .toggler {
 	position: absolute;
-	right: -10px;
+	right: -3px;
 	margin-bottom: -1px;
+	z-index: 2;
 }
 
 .file-list {
 	list-style-type: none;
 	display: block;
-	margin: 0;
+	margin: 0 0 20px;
 	padding: 0;
 }
 
@@ -63,6 +65,47 @@
 
 .file__browser {
 	margin-bottom: 4px;
+	padding-left: 10px;
+}
+
+.file-list__item_user .file__browser {
+	/* color: #e57c2c; */
+	font-weight: bold;
+}
+
+.file__remove {
+	display: inline-block;
+	margin-left: 10px;
+	color: #bf382e;
+	cursor: pointer;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 10px;
+	line-height: 10px;
+	position: relative;
+	top: 1px;
+	opacity: 0;
+	-webkit-transition: opacity 0.2s;
+	-moz-transition: opacity 0.2s;
+	-ms-transition: opacity 0.2s;
+	-o-transition: opacity 0.2s;
+	transition: opacity 0.2s;
+}
+
+.file__remove:hover {
+	color: #e64b3f;
+}
+
+.file__remove:before {
+	font-family: 'Flat UI Icons';
+	content: '\e609';
+	display: inline-block;
+	padding: 4px;
+	margin: -4px;
+}
+
+.file-list__item:hover .file__remove {
+	opacity: 1;
 }
 
 .file__browser-addon {
@@ -75,9 +118,9 @@
 	color: #95a5a6;
 }
 
-.file__editor {
+/* .file__editor {
 	margin: 0 -10px;
-}
+} */
 
 .offscreen {
 	position: absolute;

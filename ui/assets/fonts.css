@@ -11,3 +11,10 @@
 	font-weight: bold;
 	font-style: normal;
 }
+
+@font-face {
+	font-family: 'Flat UI Icons';
+	src: url('flat-ui-icons-regular.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}

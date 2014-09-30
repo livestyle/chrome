@@ -14,35 +14,68 @@ define(function(require) {
 		return Array.prototype.slice.call(result, 0);
 	}
 
+	function ancestorOrSelf(elem, className) {
+		while (elem && elem !== document) {
+			if (elem.classList && elem.classList.contains(className)) {
+				return elem;
+			}
+			elem = elem.parentNode;
+		}
+	}
+
+	function renderFileItem(label, value, editorFilesView, isUserFile) {
+		var parts = label.split('?');
+		label = parts.shift();
+		if (isUserFile) {
+			label += '<i class="file__remove"></i>';
+		}
+		if (parts.length) {
+			label += '<span class="file__browser-addon">' + parts.join('?') + '</span>';
+		}
+
+		return '<li class="file-list__item' + (isUserFile ? ' file-list__item_user' : '') + '">'
+			+ '<div class="file__browser" data-full-path="' + value + '">' + label + '</div>'
+			+ '<div class="file__editor">'
+			+ editorFilesView
+			+ '</div>';
+	}
+
 	function renderFileList(model) {
 		var browserFiles = compactPaths(model.get('browserFiles') || []);
 		var editorFiles = compactPaths(model.get('editorFiles') || []);
+		var userStylesheets = model.get('userStylesheets') || {};
 		var assocs = model.associations();
 		
 		var html = '<ul class="file-list">'
 			+ browserFiles.map(function(file) {
-				var parts = file.label.split('?');
-				var label = parts.shift();
-				if (parts.length) {
-					label += '<span class="file__browser-addon">' + parts.join('?') + '</span>';
-				}
-
-				return '<li class="file-list__item">'
-					+ '<div class="file__browser" data-full-path="' + file.value + '">' + label + '</div>'
-					+ '<div class="file__editor">'
-					+ populateSelect(file.value, editorFiles, assocs[file.value])
-					+ '</div>';
+				return renderFileItem(file.label, file.value, populateSelect(file.value, editorFiles, assocs[file.value]));
+			}).join('')
+			+ Object.keys(userStylesheets).map(function(userId, i) {
+				return renderFileItem('user stylesheet ' + (i + 1), userId, populateSelect(userId, editorFiles, assocs[userId]), true);
 			}).join('')
 			+ '</ul>';
 
 		return toDom(html);
 	}
 
-	function prepareView(model) {
+	function prepareView(model, LiveStyle) {
 		var toggler = $('#fld-enabled');
 		toggler.checked = !!model.get('enabled');
 		toggler.addEventListener('change', function() {
 			model.set('enabled', toggler.checked);
+		});
+
+		$('.add-file').addEventListener('click', function(evt) {
+			evt.stopPropagation();
+			LiveStyle.addUserStylesheet(model);
+		});
+
+		document.addEventListener('click', function(evt) {
+			if (evt.target.classList.contains('file__remove')) {
+				evt.stopPropagation();
+				var browserFile = ancestorOrSelf(evt.target, 'file__browser');
+				LiveStyle.removeUserStylesheet(model, browserFile.dataset.fullPath);
+			}
 		});
 	}
 
@@ -90,7 +123,7 @@ define(function(require) {
 	// bind model with view
 	chrome.runtime.getBackgroundPage(function(bg) {
 		bg.LiveStyle.getCurrentModel(function(model) {
-			prepareView(model);
+			prepareView(model, bg.LiveStyle);
 			model.on('update', handleUpdate);
 			window.addEventListener('unload', function() {
 				model.off('update', handleUpdate);
