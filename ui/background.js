@@ -2,6 +2,7 @@ define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var devtoolsController = require('../lib/controllers/devtools');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
+	var utils = require('../lib/utils');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
 
@@ -21,66 +22,61 @@ define(function(require) {
 		}
 	});
 
-	function activeTab(callback) {
-		chrome.tabs.query({currentWindow: true, highlighted: true, windowType: 'normal'}, function(tabs) {
-			callback(tabs && tabs[0]);
-		});
+	function copy(obj) {
+		return utils.extend({}, obj);
 	}
+
+	chrome.runtime.onMessage.addListener(function(message) {
+		switch (message.name) {
+			case 'add-user-stylesheet':
+				modelController.current(function(model, tab) {
+					var stylesheets = copy(model.get('userStylesheets'));
+					var maxId = 0;
+					Object.keys(stylesheets).forEach(function(url) {
+						var m = url.match(/^livestyle:([0-9]+)$/);
+						if (m && +m[1] > maxId) {
+							maxId = +m[1];
+						}
+					});
+
+					var newStylesheet = 'livestyle:' + (maxId + 1);
+					console.log('Add user stylesheet %c%s', 'font-weight:bold', newStylesheet);
+					userStylesheets.create(tab.id, newStylesheet, function(data) {
+						stylesheets[newStylesheet] = data[newStylesheet] || '';
+						model.set('userStylesheets', stylesheets);
+					});
+				});
+				break;
+
+			case 'remove-user-stylesheet':
+				var url = message.data.url;
+				console.log('Remove user stylesheet %c%s', 'font-weight:bold', url);
+				modelController.current(function(model, tab) {
+					var stylesheets = copy(model.get('userStylesheets'));
+					var assocs = copy(model.get('assocs'));
+					delete stylesheets[url];
+					delete assocs[url];
+
+					model.set({
+						userStylesheets: stylesheets,
+						assocs: assocs
+					});
+					userStylesheets.remove(tab.id, url);
+				});
+				break;
+		}
+	});
 
 	self.LiveStyle = {
 		/**
 		 * Returns model for currently opened page
 		 */
 		getCurrentModel: function(callback) {
-			activeTab(function(tab) {
-				modelController.get(tab, callback);
-			});
+			modelController.current(callback);
 		},
 
-		/**
-		 * Creates new user stylesheet for given model
-		 * @param {Model} model LiveStyle page model
-		 */
-		addUserStylesheet: function(model) {
-			var stylesheets = model.get('userStylesheets') || {};
-			var maxId = 0;
-			Object.keys(stylesheets).forEach(function(url) {
-				var m = /^livestyle:([0-9]+)$/;
-				if (m && +m[1] > maxId) {
-					maxId = +m[1];
-				}
-			});
-
-			var newStylesheet = 'livestyle:' + (maxId + 1);
-			activeTab(function(tab) {
-				userStylesheets.create(tab.id, newStylesheet, function(data) {
-					stylesheets[newStylesheet] = data[newStylesheet] || '';
-					model.set('userStylesheets', stylesheets);
-					console.log(model);
-				});
-			})
-		},
-
-		/**
-		 * Removes given user stylesheet from model and page, including
-		 * file associations
-		 * @param  {Model} model LiveStyle page model
-		 * @param  {String} url   Stylesheet internal URL
-		 */
-		removeUserStylesheet: function(model, url) {
-			console.log('Removing stylesheet', url);
-			var stylesheets = model.get('userStylesheets') || {};
-			var assocs = model.get('assocs') || {};
-			delete stylesheets[url];
-			delete assocs[url];
-
-			model.set('userStylesheets', stylesheets);
-			model.set('assocs', assocs);
-			activeTab(function(tab) {
-				console.log('active tab', tab.id);
-				userStylesheets.remove(tab.id, url);
-				console.log(model);
-			});
+		log: function(message) {
+			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
 		}
 	};
 

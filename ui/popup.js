@@ -23,6 +23,13 @@ define(function(require) {
 		}
 	}
 
+	function sendMessage(name, data) {
+		chrome.runtime.sendMessage({
+			name: name,
+			data: data
+		});
+	}
+
 	function renderFileItem(label, value, editorFilesView, isUserFile) {
 		var parts = label.split('?');
 		label = parts.shift();
@@ -58,7 +65,7 @@ define(function(require) {
 		return toDom(html);
 	}
 
-	function prepareView(model, LiveStyle) {
+	function prepareView(model) {
 		var toggler = $('#fld-enabled');
 		toggler.checked = !!model.get('enabled');
 		toggler.addEventListener('change', function() {
@@ -67,14 +74,14 @@ define(function(require) {
 
 		$('.add-file').addEventListener('click', function(evt) {
 			evt.stopPropagation();
-			LiveStyle.addUserStylesheet(model);
+			sendMessage('add-user-stylesheet');
 		});
 
 		document.addEventListener('click', function(evt) {
 			if (evt.target.classList.contains('file__remove')) {
 				evt.stopPropagation();
 				var browserFile = ancestorOrSelf(evt.target, 'file__browser');
-				LiveStyle.removeUserStylesheet(model, browserFile.dataset.fullPath);
+				sendMessage('remove-user-stylesheet', {url: browserFile.dataset.fullPath});
 			}
 		});
 	}
@@ -123,7 +130,7 @@ define(function(require) {
 	// bind model with view
 	chrome.runtime.getBackgroundPage(function(bg) {
 		bg.LiveStyle.getCurrentModel(function(model) {
-			prepareView(model, bg.LiveStyle);
+			prepareView(model);
 			model.on('update', handleUpdate);
 			window.addEventListener('unload', function() {
 				model.off('update', handleUpdate);

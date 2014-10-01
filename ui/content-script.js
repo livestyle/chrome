@@ -40,7 +40,6 @@
 			result[internalUrl] = url;
 		});
 
-		console.log('Create result', result);
 		return result;
 	}
 
@@ -68,7 +67,7 @@
 	 * @return {Object}     Hash where key is given URL and value if stylesheets’ 
 	 * blob URL
 	 */
-	function validateUserStylesheets(url, callback) {
+	function validateUserStylesheets(url) {
 		var result = {};
 		var cur = userStylesheets();
 		if (!Array.isArray(url)) {
@@ -78,7 +77,7 @@
 		// remove redundant
 		var exists = {};
 		cur.forEach(function(item) {
-			if (~url.indexOf(item.dataset.livestyleId)) {
+			if (!~url.indexOf(item.dataset.livestyleId)) {
 				removeLink(item);
 			} else {
 				exists[item.dataset.livestyleId] = item.href;
@@ -86,21 +85,19 @@
 		});
 
 		// create missing
-		createUserStylesheet(url.filter(function(item) {
+		var missing = createUserStylesheet(url.filter(function(item) {
 			return !(item in exists);
-		}), function(blobs) {
-			// re-create result hash with keys in right order
-			var result = {};
-			url.forEach(function(item) {
-				result[item] = exists[item] || blobs[item];
-			});
+		}));
+
+		// re-create result hash with keys in right order
+		var result = {};
+		url.forEach(function(item) {
+			result[item] = exists[item] ||  missing[item];
 		});
+		return result;
 	}
 
-	console.log('Init content script');
-
-	chrome.runtime.onMessage.addListener(function(message) {
-		console.log('got message1', message);
+	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 		if (!message) {
 			return;
 		}
@@ -109,23 +106,14 @@
 		switch (message.name) {
 			case 'apply-cssom-patch':
 				return applyPatches(data.stylesheetUrl, data.patches);
+			case 'create-user-stylesheet':
+				callback(createUserStylesheet(message.data.url));
 			case 'remove-user-stylesheet':
 				return removeUserStylesheet(data.url);
-		}
-	});
-
-	// Use separate listener for events that require explicit response
-	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
-		console.log('got message2', message);
-		if (!message) {
-			return;
-		}
-
-		switch (message.name) {
-			case 'create-user-stylesheet':
-				return callback(createUserStylesheet(message.data.url));
+				return true;
 			case 'validate-user-stylesheet':
-				return callback(validateUserStylesheets(message.data.url));
+				callback(validateUserStylesheets(message.data.url));
+				return true;
 		}
 	});
 })();
