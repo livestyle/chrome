@@ -97,6 +97,39 @@
 		return result;
 	}
 
+	/**
+	 * Findes all stylesheets in given context, including
+	 * nested `@import`s
+	 * @param  {StyleSheetList} ctx List of stylesheets to scan
+	 * @return {Array} Array of stylesheet URLs
+	 */
+	function findStyleSheets(ctx, out) {
+		out = out || [];
+		for (var i = 0, il = ctx.length, url, item; i < il; i++) {
+			item = ctx[i];
+			url = item.href;
+			if (~out.indexOf(url) || item.ownerNode.dataset.livestyleId) {
+				// stylesheet already added
+				continue;
+			}
+
+			if (url) {
+				out.push(url);
+			}
+			
+			// find @import rules
+			if (item.cssRules) {
+				for (var j = 0, jl = item.cssRules.length; j < jl; j++) {
+					if (item.cssRules[j].type == 3) {
+						findStyleSheets([item.cssRules[j].styleSheet], out);
+					}
+				}
+			}
+		}
+		
+		return out;
+	}
+
 	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 		if (!message) {
 			return;
@@ -113,6 +146,9 @@
 				return true;
 			case 'validate-user-stylesheet':
 				callback(validateUserStylesheets(message.data.url));
+				return true;
+			case 'get-stylesheets':
+				callback(findStyleSheets(document.styleSheets));
 				return true;
 		}
 	});
