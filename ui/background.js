@@ -33,9 +33,9 @@ define(function(require) {
 					var stylesheets = copy(model.get('userStylesheets'));
 					var maxId = 0;
 					Object.keys(stylesheets).forEach(function(url) {
-						var m = url.match(/^livestyle:([0-9]+)$/);
-						if (m && +m[1] > maxId) {
-							maxId = +m[1];
+						var id = userStylesheets.is(url);
+						if (id && +id > maxId) {
+							maxId = +id;
 						}
 					});
 
@@ -83,14 +83,24 @@ define(function(require) {
 	function applyDiff(data) {
 		modelController.active(function(models) {
 			models.forEach(function(item) {
+				var uri = data.uri;
 				var model = item.model;
 				var assocs = model.associations();
+				var user = model.get('userStylesheets');
+				var userTransposed = {};
+				Object.keys(user).forEach(function(key) {
+					userTransposed[user[key]] = key;
+				});
 
-				if (data.uri in assocs) {
+				if (userTransposed[uri]) {
+					uri = userTransposed[uri];
+				}
+
+				if (uri in assocs) {
 					// This diff result is for browser file, meaning that browser
 					// file was updated and editor should receive these changes
 					return client.send('incoming-updates', {
-						uri: assocs[data.uri],
+						uri: assocs[uri],
 						patches: data.patches
 					});
 				}
@@ -99,11 +109,14 @@ define(function(require) {
 				// find corresponding browser file and patch it
 				var stylesheetUrl = null;
 				Object.keys(assocs).some(function(key) {
-					if (assocs[key] === data.uri) {
-						stylesheetUrl = key;
-						return true;
+					if (assocs[key] === uri) {
+						return stylesheetUrl = key;
 					}
 				});
+
+				if (stylesheetUrl in user) {
+					stylesheetUrl = user[stylesheetUrl];
+				}
 
 				if (stylesheetUrl) {
 					console.log('apply diff on', stylesheetUrl, data.patches);

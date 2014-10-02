@@ -4,6 +4,7 @@
 define(function(require) {
 	var selectBox = require('./js/select-box');
 	var compactPaths = require('../lib/helpers/compact-paths');
+	var utils = require('../lib/utils');
 
 	function $(selector, context) {
 		return (document || context).querySelector(selector);
@@ -21,6 +22,10 @@ define(function(require) {
 			}
 			elem = elem.parentNode;
 		}
+	}
+
+	function copy(obj) {
+		return utils.extend({}, obj);
 	}
 
 	function sendMessage(name, data) {
@@ -53,11 +58,13 @@ define(function(require) {
 		var userStylesheets = model.get('userStylesheets') || {};
 		var assocs = model.associations();
 		
+		console.log('user ss', userStylesheets);
 		var html = '<ul class="file-list">'
 			+ browserFiles.map(function(file) {
 				return renderFileItem(file.label, file.value, populateSelect(file.value, editorFiles, assocs[file.value]));
 			}).join('')
 			+ Object.keys(userStylesheets).map(function(userId, i) {
+				console.log('render user', userId);
 				return renderFileItem('user stylesheet ' + (i + 1), userId, populateSelect(userId, editorFiles, assocs[userId]), true);
 			}).join('')
 			+ '</ul>';
@@ -95,7 +102,7 @@ define(function(require) {
 		selectBox(fileList);
 		$$('select', fileList).forEach(function(select) {
 			select.addEventListener('change', function() {
-				var assocs = model.get('assocs') || {};
+				var assocs = copy(model.get('assocs'));
 				assocs[select.name] = select.value;
 				model.set('assocs', assocs);
 			}, false);

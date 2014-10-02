@@ -141,9 +141,9 @@
 				return applyPatches(data.stylesheetUrl, data.patches);
 			case 'create-user-stylesheet':
 				callback(createUserStylesheet(message.data.url));
+				return true;
 			case 'remove-user-stylesheet':
 				return removeUserStylesheet(data.url);
-				return true;
 			case 'validate-user-stylesheet':
 				callback(validateUserStylesheets(message.data.url));
 				return true;
