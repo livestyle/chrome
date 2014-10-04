@@ -1,0 +1,43 @@
+@import url(./fonts.css);
+
+html {
+	background: #fff;
+	color: #000;
+	font-family: Consolas, Menlo, monospace;
+	font-size: 13px;
+}
+
+body {
+	max-width: 1000px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+h1 {
+	text-align: center;
+}
+
+.error-log {
+	list-style-type: none;
+	display: block;
+}
+
+.error-log__item {
+	margin: 0;
+	padding: 0 0 20px 0;
+	border-bottom: 1px solid #ccc;
+	white-space: pre-wrap;
+}
+
+.error-log__item:last-child {
+	border-bottom: 0;
+}
+
+.error-log__item[data-type="error"] {
+	color: red;
+}
+
+.time {
+	font-size: 0.8em;
+	color: #ccc;
+}

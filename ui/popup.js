@@ -134,9 +134,22 @@ define(function(require) {
 		return result;
 	}
 
+	function checkErrorState(tracker) {
+		var hasError = tracker.get('error');
+		$('.error-message').classList.toggle('hidden', !hasError);
+	}
+
 	// bind model with view
 	chrome.runtime.getBackgroundPage(function(bg) {
-		bg.LiveStyle.getCurrentModel(function(model) {
+		var LiveStyle = bg.LiveStyle;
+
+		// keep track of errors
+		LiveStyle.errorTracker.on('change:error', function() {
+			LiveStyle.log('Error: ' + this.get('error'));
+		});
+		checkErrorState(LiveStyle.errorTracker);
+
+		LiveStyle.getCurrentModel(function(model) {
 			prepareView(model);
 			model.on('update', handleUpdate);
 			window.addEventListener('unload', function() {

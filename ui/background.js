@@ -1,16 +1,18 @@
 define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var devtoolsController = require('../lib/controllers/devtools');
+	var errorTracker = require('../lib/controllers/error-tracker');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
 	var utils = require('../lib/utils');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
 
-	var worker = patcher(client, {
+	var maxErrorLog = 50;
+	var workerCommandQueue = patcher(client, {
 		worker: '../out/worker.js'
 	});
 
-	worker.addEventListener('message', function(message) {
+	workerCommandQueue.worker.addEventListener('message', function(message) {
 		var payload = message.data;
 
 		if (payload.name === 'init') {
@@ -18,12 +20,34 @@ define(function(require) {
 		}
 
 		if (payload.status === 'error') {
-			return console.error(payload.data);
+			return logError(payload.data);
 		}
 	});
 
 	function copy(obj) {
 		return utils.extend({}, obj);
+	}
+
+	function padNum(num) {
+		return (num < 10 ? '0' : '') + num;
+	}
+
+	function logError(error) {
+		var date = new Date();
+		var time = padNum(date.getHours()) + ':' + padNum(date.getMinutes());
+		error = error.replace(/\t/g, ' ');
+
+		var container = document.querySelector('.error-log');
+		var item = document.createElement('li');
+		item.className = 'error-log__item';
+		item.dataset.type = 'error';
+		item.innerHTML = '<span class="time">[' + time + ']</span> ' + error;
+		container.appendChild(item);
+
+		while (container.childNodes.length > maxErrorLog) {
+			container.removeChild(container.firstChild);
+		}
+		console.error(error);
 	}
 
 	chrome.runtime.onMessage.addListener(function(message) {
@@ -77,7 +101,9 @@ define(function(require) {
 
 		log: function(message) {
 			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
-		}
+		},
+
+		errorTracker: errorTracker.track(workerCommandQueue)
 	};
 
 	function applyDiff(data) {

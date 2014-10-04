@@ -5,7 +5,7 @@
 
 .popup {
 	background: #fff;
-	font-family: Lato, 'PT Sans', Arial, sans-serif;
+	font-family: 'PT Sans', Arial, sans-serif;
 	font-size: 14px;
 	padding: 20px;
 	color: #2c3f4f;
@@ -118,6 +118,23 @@
 	color: #95a5a6;
 }
 
+.error-message {
+	font-size: 12px;
+	background: #e64b3f;
+	color: #fff;
+	padding: 5px;
+	text-align: center;
+	margin-bottom: 20px;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+}
+
+.error-message a {
+	outline: none;
+	color: inherit;
+}
+
 /* .file__editor {
 	margin: 0 -10px;
 } */
@@ -126,4 +143,8 @@
 	position: absolute;
 	left: -9999px;
 	visibility: hidden;
+}
+
+.hidden {
+	display: none;
 }
