@@ -58,13 +58,11 @@ define(function(require) {
 		var userStylesheets = model.get('userStylesheets') || {};
 		var assocs = model.associations();
 		
-		console.log('user ss', userStylesheets);
 		var html = '<ul class="file-list">'
 			+ browserFiles.map(function(file) {
 				return renderFileItem(file.label, file.value, populateSelect(file.value, editorFiles, assocs[file.value]));
 			}).join('')
 			+ Object.keys(userStylesheets).map(function(userId, i) {
-				console.log('render user', userId);
 				return renderFileItem('user stylesheet ' + (i + 1), userId, populateSelect(userId, editorFiles, assocs[userId]), true);
 			}).join('')
 			+ '</ul>';
@@ -110,7 +108,6 @@ define(function(require) {
 	}
 
 	function handleUpdate() {
-		console.log('model updated', this.toJSON());
 		renderView(this);
 	}
 
@@ -134,13 +131,13 @@ define(function(require) {
 		return result;
 	}
 
-	function checkErrorState(tracker) {
-		var toggle = function() {
-			var hasError = tracker.get('error');
-			$('.error-message').classList.toggle('hidden', !hasError);
-		};
-		tracker.on('change:error', toggle);
-		toggle();
+	/**
+	 * Displays temporary message about errors happened
+	 * in LiveStyle patcher
+	 * @param  {Boolean} hasError 
+	 */
+	function toggleErrorStateMessage(hasError) {
+		$('.error-message').classList.toggle('hidden', !hasError);
 	}
 
 	/**
@@ -161,7 +158,8 @@ define(function(require) {
 		var LiveStyle = bg.LiveStyle;
 
 		// keep track of errors
-		checkErrorState(LiveStyle.errorStateTracker);
+		LiveStyle.errorStateTracker.on('change:error', toggleErrorStateMessage);
+		toggleErrorStateMessage(LiveStyle.errorStateTracker.get('error'));
 
 		if (LiveStyle.hasErrors()) {
 			showErrorLogLink();
@@ -172,6 +170,7 @@ define(function(require) {
 			model.on('update', handleUpdate);
 			window.addEventListener('unload', function() {
 				model.off('update', handleUpdate);
+				LiveStyle.errorStateTracker.off('change:error', toggleErrorStateMessage);
 			}, false);
 			renderView(model);
 		});
