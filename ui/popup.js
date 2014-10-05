@@ -135,19 +135,37 @@ define(function(require) {
 	}
 
 	function checkErrorState(tracker) {
-		var hasError = tracker.get('error');
-		$('.error-message').classList.toggle('hidden', !hasError);
+		var toggle = function() {
+			var hasError = tracker.get('error');
+			$('.error-message').classList.toggle('hidden', !hasError);
+		};
+		tracker.on('change:error', toggle);
+		toggle();
 	}
+
+	/**
+	 * Displays permanent link on error log
+	 */
+	function showErrorLogLink() {
+		$('.error-log-link').classList.remove('hidden');
+	}
+
+	chrome.runtime.onMessage.addListener(function(message) {
+		if (message.name === 'log-updated') {
+			showErrorLogLink();
+		}
+	});
 
 	// bind model with view
 	chrome.runtime.getBackgroundPage(function(bg) {
 		var LiveStyle = bg.LiveStyle;
 
 		// keep track of errors
-		LiveStyle.errorTracker.on('change:error', function() {
-			LiveStyle.log('Error: ' + this.get('error'));
-		});
-		checkErrorState(LiveStyle.errorTracker);
+		checkErrorState(LiveStyle.errorStateTracker);
+
+		if (LiveStyle.hasErrors()) {
+			showErrorLogLink();
+		}
 
 		LiveStyle.getCurrentModel(function(model) {
 			prepareView(model);

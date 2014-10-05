@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>LiveStyle log</title>
+	<style>
+	html {
+		background: #fff;
+		color: #000;
+		font-family: Consolas, Menlo, monospace;
+		font-size: 13px;
+	}
+
+	body {
+		max-width: 1000px;
+		margin: 0 auto;
+		padding: 20px;
+	}
+
+	h1 {
+		text-align: center;
+	}
+
+	.log {
+		list-style-type: none;
+		display: block;
+	}
+
+	.log__item {
+		margin: 0;
+		padding: 20px 0;
+		border-bottom: 1px solid #ccc;
+		white-space: pre-wrap;
+	}
+
+	.log__item:last-child {
+		border-bottom: 0;
+	}
+
+	.log__item[data-type="error"] {
+		color: red;
+	}
+
+	.time {
+		font-size: 0.8em;
+		color: #ccc;
+	}
+	</style>
+</head>
+<body>
+	<h1>LiveStyle log</h1>
+	<ul class="log"></ul>
+	<script src="./error-log.js"></script>
+</body>
+</html>

@@ -1,110 +1,20 @@
 define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var devtoolsController = require('../lib/controllers/devtools');
-	var errorTracker = require('../lib/controllers/error-tracker');
+	var errorStateTracker = require('../lib/controllers/error-tracker');
+	var errorLogger = require('../lib/controllers/error-logger');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
 	var utils = require('../lib/utils');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
 
-	var maxErrorLog = 50;
 	var workerCommandQueue = patcher(client, {
 		worker: '../out/worker.js'
-	});
-
-	workerCommandQueue.worker.addEventListener('message', function(message) {
-		var payload = message.data;
-
-		if (payload.name === 'init') {
-			return console.log('%c%s', 'color:green;font-size:1.1em;font-weight:bold;', payload.data);
-		}
-
-		if (payload.status === 'error') {
-			return logError(payload.data);
-		}
 	});
 
 	function copy(obj) {
 		return utils.extend({}, obj);
 	}
-
-	function padNum(num) {
-		return (num < 10 ? '0' : '') + num;
-	}
-
-	function logError(error) {
-		var date = new Date();
-		var time = padNum(date.getHours()) + ':' + padNum(date.getMinutes());
-		error = error.replace(/\t/g, ' ');
-
-		var container = document.querySelector('.error-log');
-		var item = document.createElement('li');
-		item.className = 'error-log__item';
-		item.dataset.type = 'error';
-		item.innerHTML = '<span class="time">[' + time + ']</span> ' + error;
-		container.appendChild(item);
-
-		while (container.childNodes.length > maxErrorLog) {
-			container.removeChild(container.firstChild);
-		}
-		console.error(error);
-	}
-
-	chrome.runtime.onMessage.addListener(function(message) {
-		switch (message.name) {
-			case 'add-user-stylesheet':
-				modelController.current(function(model, tab) {
-					var stylesheets = copy(model.get('userStylesheets'));
-					var maxId = 0;
-					Object.keys(stylesheets).forEach(function(url) {
-						var id = userStylesheets.is(url);
-						if (id && +id > maxId) {
-							maxId = +id;
-						}
-					});
-
-					var newStylesheet = 'livestyle:' + (maxId + 1);
-					console.log('Add user stylesheet %c%s', 'font-weight:bold', newStylesheet);
-					userStylesheets.create(tab.id, newStylesheet, function(data) {
-						stylesheets[newStylesheet] = data[newStylesheet] || '';
-						model.set('userStylesheets', stylesheets);
-					});
-				});
-				break;
-
-			case 'remove-user-stylesheet':
-				var url = message.data.url;
-				console.log('Remove user stylesheet %c%s', 'font-weight:bold', url);
-				modelController.current(function(model, tab) {
-					var stylesheets = copy(model.get('userStylesheets'));
-					var assocs = copy(model.get('assocs'));
-					delete stylesheets[url];
-					delete assocs[url];
-
-					model.set({
-						userStylesheets: stylesheets,
-						assocs: assocs
-					});
-					userStylesheets.remove(tab.id, url);
-				});
-				break;
-		}
-	});
-
-	self.LiveStyle = {
-		/**
-		 * Returns model for currently opened page
-		 */
-		getCurrentModel: function(callback) {
-			modelController.current(callback);
-		},
-
-		log: function(message) {
-			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
-		},
-
-		errorTracker: errorTracker.track(workerCommandQueue)
-	};
 
 	function applyDiff(data) {
 		modelController.active(function(models) {
@@ -158,7 +68,75 @@ define(function(require) {
 			});
 		});
 	}
-	
+
+	self.LiveStyle = {
+		/**
+		 * Returns model for currently opened page
+		 */
+		getCurrentModel: function(callback) {
+			modelController.current(callback);
+		},
+
+		hasErrors: function() {
+			return !!errorLogger.getLog().length;
+		},
+
+		log: function(message) {
+			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
+		},
+
+		errorStateTracker: errorStateTracker.watch(workerCommandQueue)
+	};
+
+	errorLogger.watch(workerCommandQueue);
+
+	chrome.runtime.onMessage.addListener(function(message) {
+		switch (message.name) {
+			case 'add-user-stylesheet':
+				modelController.current(function(model, tab) {
+					var stylesheets = copy(model.get('userStylesheets'));
+					var maxId = 0;
+					Object.keys(stylesheets).forEach(function(url) {
+						var id = userStylesheets.is(url);
+						if (id && +id > maxId) {
+							maxId = +id;
+						}
+					});
+
+					var newStylesheet = 'livestyle:' + (maxId + 1);
+					console.log('Add user stylesheet %c%s', 'font-weight:bold', newStylesheet);
+					userStylesheets.create(tab.id, newStylesheet, function(data) {
+						stylesheets[newStylesheet] = data[newStylesheet] || '';
+						model.set('userStylesheets', stylesheets);
+					});
+				});
+				break;
+
+			case 'remove-user-stylesheet':
+				var url = message.data.url;
+				console.log('Remove user stylesheet %c%s', 'font-weight:bold', url);
+				modelController.current(function(model, tab) {
+					var stylesheets = copy(model.get('userStylesheets'));
+					var assocs = copy(model.get('assocs'));
+					delete stylesheets[url];
+					delete assocs[url];
+
+					model.set({
+						userStylesheets: stylesheets,
+						assocs: assocs
+					});
+					userStylesheets.remove(tab.id, url);
+				});
+				break;
+		}
+	});
+
+	workerCommandQueue.worker.addEventListener('message', function(message) {
+		var payload = message.data;
+		if (payload.name === 'init') {
+			return console.log('%c%s', 'color:green;font-size:1.1em;font-weight:bold;', payload.data);
+		}
+	});
 
 	client
 	.on('message-send', function(name, data) {

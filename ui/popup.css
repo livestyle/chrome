@@ -135,9 +135,19 @@
 	color: inherit;
 }
 
-/* .file__editor {
-	margin: 0 -10px;
-} */
+.error-log-link {
+	font-size: 11px;
+	text-align: center;
+	color: #bdc3c7;
+}
+
+.error-log-link > a {
+	color: inherit;
+}
+
+.error-log-link > a:hover {
+	color: #e64b3f;
+}
 
 .offscreen {
 	position: absolute;
