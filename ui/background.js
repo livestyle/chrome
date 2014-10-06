@@ -4,6 +4,7 @@ define(function(require) {
 	var errorStateTracker = require('../lib/controllers/error-tracker');
 	var errorLogger = require('../lib/controllers/error-logger');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
+	var browserActionIcon = require('../lib/browser-action-icon');
 	var utils = require('../lib/utils');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
@@ -69,6 +70,13 @@ define(function(require) {
 		});
 	}
 
+	function setCurrentIconState() {
+		console.log('update current state');
+		modelController.current(function(model) {
+			browserActionIcon.state(model.get('enabled') ? 'active' : 'disabled');
+		});
+	}
+
 	self.LiveStyle = {
 		/**
 		 * Returns model for currently opened page
@@ -85,7 +93,8 @@ define(function(require) {
 			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
 		},
 
-		errorStateTracker: errorStateTracker.watch(workerCommandQueue)
+		errorStateTracker: errorStateTracker.watch(workerCommandQueue),
+		updateIconState: setCurrentIconState
 	};
 
 	errorLogger.watch(workerCommandQueue);
@@ -128,6 +137,19 @@ define(function(require) {
 					userStylesheets.remove(tab.id, url);
 				});
 				break;
+		}
+	});
+
+	// setup browser action icon state update
+	chrome.tabs.onHighlighted.addListener(setCurrentIconState);
+	setCurrentIconState();
+	errorStateTracker.on('change:error', function() {
+		var err = this.get('error');
+		console.log('error state changed', err);
+		if (err) {
+			browserActionIcon.state('error');
+		} else {
+			setCurrentIconState();
 		}
 	});
 

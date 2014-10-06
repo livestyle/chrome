@@ -165,6 +165,7 @@ define(function(require) {
 			showErrorLogLink();
 		}
 
+		LiveStyle.updateIconState();
 		LiveStyle.getCurrentModel(function(model) {
 			prepareView(model);
 			model.on('update', handleUpdate);
