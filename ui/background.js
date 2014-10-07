@@ -1,10 +1,10 @@
 define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var devtoolsController = require('../lib/controllers/devtools');
+	var iconController = require('../lib/controllers/browser-action-icon');
 	var errorStateTracker = require('../lib/controllers/error-tracker');
 	var errorLogger = require('../lib/controllers/error-logger');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
-	var browserActionIcon = require('../lib/browser-action-icon');
 	var utils = require('../lib/utils');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
@@ -12,10 +12,6 @@ define(function(require) {
 	var workerCommandQueue = patcher(client, {
 		worker: '../out/worker.js'
 	});
-
-	function copy(obj) {
-		return utils.extend({}, obj);
-	}
 
 	function applyDiff(data) {
 		modelController.active(function(models) {
@@ -70,13 +66,6 @@ define(function(require) {
 		});
 	}
 
-	function setCurrentIconState() {
-		console.log('update current state');
-		modelController.current(function(model) {
-			browserActionIcon.state(model.get('enabled') ? 'active' : 'disabled');
-		});
-	}
-
 	self.LiveStyle = {
 		/**
 		 * Returns model for currently opened page
@@ -94,7 +83,7 @@ define(function(require) {
 		},
 
 		errorStateTracker: errorStateTracker.watch(workerCommandQueue),
-		updateIconState: setCurrentIconState
+		updateIconState: iconController.update
 	};
 
 	errorLogger.watch(workerCommandQueue);
@@ -103,7 +92,7 @@ define(function(require) {
 		switch (message.name) {
 			case 'add-user-stylesheet':
 				modelController.current(function(model, tab) {
-					var stylesheets = copy(model.get('userStylesheets'));
+					var stylesheets = utils.copy(model.get('userStylesheets'));
 					var maxId = 0;
 					Object.keys(stylesheets).forEach(function(url) {
 						var id = userStylesheets.is(url);
@@ -125,8 +114,8 @@ define(function(require) {
 				var url = message.data.url;
 				console.log('Remove user stylesheet %c%s', 'font-weight:bold', url);
 				modelController.current(function(model, tab) {
-					var stylesheets = copy(model.get('userStylesheets'));
-					var assocs = copy(model.get('assocs'));
+					var stylesheets = utils.copy(model.get('userStylesheets'));
+					var assocs = utils.copy(model.get('assocs'));
 					delete stylesheets[url];
 					delete assocs[url];
 
@@ -140,18 +129,8 @@ define(function(require) {
 		}
 	});
 
-	// setup browser action icon state update
-	chrome.tabs.onHighlighted.addListener(setCurrentIconState);
-	setCurrentIconState();
-	errorStateTracker.on('change:error', function() {
-		var err = this.get('error');
-		console.log('error state changed', err);
-		if (err) {
-			browserActionIcon.state('error');
-		} else {
-			setCurrentIconState();
-		}
-	});
+	// setup browser action icon state update on error
+	iconController.watchErrors(errorStateTracker);
 
 	workerCommandQueue.worker.addEventListener('message', function(message) {
 		var payload = message.data;
