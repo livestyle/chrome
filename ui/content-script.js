@@ -108,7 +108,7 @@
 		for (var i = 0, il = ctx.length, url, item; i < il; i++) {
 			item = ctx[i];
 			url = item.href;
-			if (~out.indexOf(url) || item.ownerNode.dataset.livestyleId) {
+			if (~out.indexOf(url) || (item.ownerNode && item.ownerNode.dataset.livestyleId)) {
 				// stylesheet already added
 				continue;
 			}
