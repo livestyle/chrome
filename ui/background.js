@@ -2,10 +2,12 @@ define(function(require) {
 	var modelController = require('../lib/controllers/model');
 	var devtoolsController = require('../lib/controllers/devtools');
 	var iconController = require('../lib/controllers/browser-action-icon');
+	var editorController = require('../lib/controllers/editor');
 	var errorStateTracker = require('../lib/controllers/error-tracker');
 	var errorLogger = require('../lib/controllers/error-logger');
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
 	var utils = require('../lib/utils');
+	var eventMixin = require('../lib/event-mixin');
 	var client = require('../node_modules/livestyle-client/index');
 	var patcher = require('../node_modules/livestyle-patcher/index');
 
@@ -66,7 +68,7 @@ define(function(require) {
 		});
 	}
 
-	self.LiveStyle = {
+	self.LiveStyle = utils.extend({
 		/**
 		 * Returns model for currently opened page
 		 */
@@ -82,11 +84,20 @@ define(function(require) {
 			console.log('%c[Content]', 'background:#e67e22;color:#fff', message);
 		},
 
+		/**
+		 * Check if there’s active connection to editor
+		 * @return {Boolean}
+		 */
+		isActive: function() {
+			return editorController.get('active');
+		},
+
 		errorStateTracker: errorStateTracker.watch(workerCommandQueue),
 		updateIconState: iconController.update
-	};
+	}, eventMixin);
 
 	errorLogger.watch(workerCommandQueue);
+	
 
 	chrome.runtime.onMessage.addListener(function(message) {
 		switch (message.name) {

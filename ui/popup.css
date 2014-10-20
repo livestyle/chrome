@@ -2,6 +2,7 @@
 @import url(./assets/toggler.css);
 @import url(./assets/select-box.css);
 @import url(./assets/button.css);
+@import url(./assets/global-message.css);
 
 .popup {
 	background: #fff;
@@ -9,6 +10,8 @@
 	font-size: 14px;
 	padding: 20px;
 	color: #2c3f4f;
+	position: relative;
+	min-height: 300px;
 }
 
 .active-editor {

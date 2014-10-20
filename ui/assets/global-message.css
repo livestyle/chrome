@@ -1,0 +1,32 @@
+.global-message {
+	position: absolute;
+	z-index: 30;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #fff;
+	padding: 30px;
+	display: none;
+}
+
+.global-message__title {
+	font-weight: normal;
+	font-size: 2.5em;
+	text-align: center;
+	margin-top: 0;
+}
+
+.global-message__comment {
+	font-size: 0.8em;
+	color: #95a5a6;
+	line-height: 1.7;
+}
+
+.global-message__comment a {
+	color: #2a82b7;
+}
+
+.status__no-editor .global-message_no-editor {
+	display: block;
+}
