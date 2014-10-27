@@ -157,6 +157,10 @@ define(function(require) {
 	chrome.runtime.getBackgroundPage(function(bg) {
 		var LiveStyle = bg.LiveStyle;
 
+		function updateActivityState() {
+			$('.popup').classList.toggle('status__no-editor', !LiveStyle.isActive());
+		}
+
 		// keep track of errors
 		LiveStyle.errorStateTracker.on('change:error', toggleErrorStateMessage);
 		toggleErrorStateMessage(LiveStyle.errorStateTracker.get('error'));
@@ -165,12 +169,15 @@ define(function(require) {
 			showErrorLogLink();
 		}
 
+		updateActivityState();
 		LiveStyle.updateIconState();
+		LiveStyle.editorController.on('change:active', updateActivityState);
 		LiveStyle.getCurrentModel(function(model) {
 			prepareView(model);
 			model.on('update', handleUpdate);
 			window.addEventListener('unload', function() {
 				model.off('update', handleUpdate);
+				LiveStyle.editorController.off('change:active', updateActivityState);
 				LiveStyle.errorStateTracker.off('change:error', toggleErrorStateMessage);
 			}, false);
 			renderView(model);

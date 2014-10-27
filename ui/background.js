@@ -92,6 +92,7 @@ define(function(require) {
 			return editorController.get('active');
 		},
 
+		editorController: editorController,
 		errorStateTracker: errorStateTracker.watch(workerCommandQueue),
 		updateIconState: iconController.update
 	}, eventMixin);
