@@ -5,8 +5,13 @@
 	}
 
 	function applyPatches(url, patches) {
+		if (!url || !patches || !patches.length) {
+			return;
+		}
+
 		var stylesheets = livestyleCSSOM.stylesheets();
 		if (stylesheets[url]) {
+			// console.log('apply patch %o on %o', patches, stylesheets[url]);
 			livestyleCSSOM.patch(stylesheets[url], patches);
 		}
 	}
