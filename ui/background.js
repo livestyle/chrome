@@ -16,6 +16,10 @@ define(function(require) {
 	});
 
 	function applyDiff(data) {
+		if (!data.patches || !data.patches.length) {
+			return;
+		}
+
 		modelController.active(function(models) {
 			models.forEach(function(item) {
 				var uri = data.uri;
@@ -34,6 +38,16 @@ define(function(require) {
 				if (uri in assocs) {
 					// This diff result is for browser file, meaning that browser
 					// file was updated and editor should receive these changes
+					
+					// XXX send two messages in case if updates are coming from
+					// DevTools, e.g. user updates local stylesheet then send it 
+					// to all connected clients to update accordingly
+
+					client.send('incoming-updates', {
+						uri: uri,
+						patches: data.patches
+					});
+
 					return client.send('incoming-updates', {
 						uri: assocs[uri],
 						patches: data.patches
@@ -63,6 +77,10 @@ define(function(require) {
 						}
 					});
 					devtoolsController.saveDiff(item.tab.id, stylesheetUrl, data.patches);
+					client.send('incoming-updates', {
+						uri: stylesheetUrl,
+						patches: data.patches
+					});
 				}
 			});
 		});
