@@ -29,7 +29,7 @@ gulp.task('worker', function() {
 });
 
 /**
- * Simple extension builder, used to demo purposes
+ * Simple extension builder, used for demo purposes
  * only (Chrome extension perfectly works from source, it
  * requires just a `worker` task to run first)
  */
