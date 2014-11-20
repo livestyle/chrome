@@ -28,6 +28,16 @@ gulp.task('worker', function() {
 	.pipe(gulp.dest('./out'));
 });
 
+/**
+ * Simple extension builder, used to demo purposes
+ * only (Chrome extension perfectly works from source, it
+ * requires just a `worker` task to run first)
+ */
+gulp.task('extension-files', ['worker'], function() {
+	return gulp.src(['{lib,ui}/**/*.*', 'node_modules/livestyle-cssom-patcher/index.js', 'manifest.json', './out/worker.js'], {base: './'})
+	.pipe(gulp.dest('./out/extension'));
+});
+
 gulp.task('watch', function() {
 	gulp.watch(['./node_modules/livestyle-patcher/lib/*.js'], ['worker']);
 });
