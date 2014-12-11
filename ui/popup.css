@@ -38,8 +38,9 @@
 
 .activity em {
 	display: block;
-	font-size: 0.8em;
+	font-size: 0.9em;
 	line-height: 1;
+	margin-top: 0.6em;
 	font-style: normal;
 	color: #95a5a6;
 }
@@ -49,6 +50,35 @@
 	right: -3px;
 	margin-bottom: -1px;
 	z-index: 2;
+}
+
+.update-direction {
+	padding: 2px 7px 4px;
+	border-radius: 4px;
+	background: #5eafe0;
+	color: #fff;
+	cursor: pointer;
+}
+
+.update-direction__icon {
+	display: inline-block;
+}
+
+.update-direction__icon:before {
+	font-family: 'Font Awesome';
+	content: '\f0ec';
+	display: inline-block;
+	width: 1.5em;
+	text-align: center;
+	font-size: 12px;
+}
+
+[data-direction="to browser"] .update-direction__icon:before {
+	content: '\f178';
+}
+
+[data-direction="to editor"] .update-direction__icon:before {
+	content: '\f177';
 }
 
 .file-list {

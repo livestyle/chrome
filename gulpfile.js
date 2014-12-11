@@ -16,16 +16,25 @@ function cleanup() {
 	});
 }
 
-gulp.task('worker', function() {
+function browserifyFile(src, dest, moduleName) {
 	return browserify({
-		entries: './node_modules/livestyle-patcher/lib/worker.js',
-		detectGlobals: false
+		entries: src,
+		detectGlobals: false,
+		standalone: moduleName
 	})
 	.bundle()
 	.pipe(cleanup())
-	.pipe(source('worker.js'))
+	.pipe(source(dest))
 	// .pipe(streamify(uglify()))
 	.pipe(gulp.dest('./out'));
+}
+
+gulp.task('worker', function() {
+	return browserifyFile('./node_modules/livestyle-patcher/lib/worker.js', 'worker.js');
+});
+
+gulp.task('cssom-patcher', function() {
+	return browserifyFile('./node_modules/livestyle-cssom-patcher/index.js', 'cssom-patcher.js', 'livestyleCSSOM');
 });
 
 /**
@@ -33,13 +42,13 @@ gulp.task('worker', function() {
  * only (Chrome extension perfectly works from source, it
  * requires just a `worker` task to run first)
  */
-gulp.task('extension-files', ['worker'], function() {
-	return gulp.src(['{lib,ui}/**/*.*', 'node_modules/livestyle-cssom-patcher/index.js', 'manifest.json', './out/worker.js'], {base: './'})
+gulp.task('extension-files', ['worker', 'cssom-patcher'], function() {
+	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js'], {base: './'})
 	.pipe(gulp.dest('./out/extension'));
 });
 
 gulp.task('watch', function() {
-	gulp.watch(['./node_modules/livestyle-patcher/lib/*.js'], ['worker']);
+	gulp.watch(['./node_modules/{livestyle-patcher,livestyle-cssom-patcher}/**/*.js'], ['worker', 'cssom-patcher']);
 });
 
-gulp.task('default', ['worker']);
+gulp.task('default', ['worker', 'cssom-patcher']);

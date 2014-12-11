@@ -14,7 +14,7 @@
 	},
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*", "file:///*"],
-		"js": ["./node_modules/livestyle-cssom-patcher/index.js", "./ui/content-script.js"],
+		"js": ["./out/cssom-patcher.js", "./ui/content-script.js"],
 		"run_at": "document_start"
     }],
     "devtools_page": "./ui/devtools.html",

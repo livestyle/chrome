@@ -39,19 +39,21 @@ define(function(require) {
 					// This diff result is for browser file, meaning that browser
 					// file was updated and editor should receive these changes
 					
-					// XXX send two messages in case if updates are coming from
-					// DevTools, e.g. user updates local stylesheet then send it 
-					// to all connected clients to update accordingly
-
+					// XXX send two 'incoming-updates' messages in case if updates 
+					// are coming from DevTools, e.g. user updates local stylesheet 
+					// then send it  to all connected clients to update accordingly
 					client.send('incoming-updates', {
 						uri: uri,
 						patches: data.patches
 					});
 
-					return client.send('incoming-updates', {
-						uri: assocs[uri],
-						patches: data.patches
-					});
+					if (model.get('updateDirection') !== 'to browser') {
+						client.send('incoming-updates', {
+							uri: assocs[uri],
+							patches: data.patches
+						});
+					}
+					return;
 				}
 
 				// Looks like this diff result is coming from editor file:
@@ -68,15 +70,17 @@ define(function(require) {
 				}
 
 				if (stylesheetUrl) {
-					console.log('apply diff on', stylesheetUrl, data.patches);
-					chrome.tabs.sendMessage(item.tab.id, {
-						name: 'apply-cssom-patch',
-						data: {
-							stylesheetUrl: stylesheetUrl,
-							patches: data.patches
-						}
-					});
-					devtoolsController.saveDiff(item.tab.id, stylesheetUrl, data.patches);
+					if (model.get('updateDirection') !== 'to editor') {
+						logPatches(stylesheetUrl, data.patches);
+						chrome.tabs.sendMessage(item.tab.id, {
+							name: 'apply-cssom-patch',
+							data: {
+								stylesheetUrl: stylesheetUrl,
+								patches: data.patches
+							}
+						});
+						devtoolsController.saveDiff(item.tab.id, stylesheetUrl, data.patches);
+					}
 					client.send('incoming-updates', {
 						uri: stylesheetUrl,
 						patches: data.patches
@@ -84,6 +88,14 @@ define(function(require) {
 				}
 			});
 		});
+	}
+
+	function logPatches(prefix, patches) {
+		console.groupCollapsed('apply diff on', prefix);
+		patches.forEach(function(p) {
+			console.log(utils.stringifyPatch(p));
+		});
+		console.groupEnd();
 	}
 
 	self.LiveStyle = utils.extend({
@@ -166,6 +178,10 @@ define(function(require) {
 		var payload = message.data;
 		if (payload.name === 'init') {
 			return console.log('%c%s', 'color:green;font-size:1.1em;font-weight:bold;', payload.data);
+		}
+
+		if (payload.status === 'error') {
+			console.error(payload.data);
 		}
 	});
 

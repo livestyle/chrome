@@ -5,6 +5,9 @@ define(function(require) {
 	var selectBox = require('./js/select-box');
 	var compactPaths = require('../lib/helpers/compact-paths');
 	var utils = require('../lib/utils');
+	
+	var updateDirections = ['both', 'to browser', 'to editor'];
+	var currentModel = null;
 
 	function $(selector, context) {
 		return (document || context).querySelector(selector);
@@ -35,6 +38,26 @@ define(function(require) {
 		});
 	}
 
+	function toDom(html) {
+		var div = document.createElement('div');
+		div.innerHTML = html;
+		var result = div.firstChild;
+		div.removeChild(result);
+		return result;
+	}
+
+	function populateSelect(name, options, selected) {
+		return '<select name="' + name + '" id="fld-' + name + '">'
+			+ '<option value="">…</option>'
+			+ options.map(function(option, i) {
+				var selectedAttr = (selected === i || selected === option.value) 
+					? ' selected="selected"' 
+					: '';
+				return '<option value="' + option.value + '"' + selectedAttr + '>' + option.label + '</option>';
+			}).join('')
+			+ '</select>';
+	}
+
 	function renderFileItem(label, value, editorFilesView, isUserFile) {
 		var parts = label.split('?');
 		label = parts.shift();
@@ -52,11 +75,11 @@ define(function(require) {
 			+ '</div>';
 	}
 
-	function renderFileList(model) {
-		var browserFiles = compactPaths(model.get('browserFiles') || []);
-		var editorFiles = compactPaths(model.get('editorFiles') || []);
-		var userStylesheets = model.get('userStylesheets') || {};
-		var assocs = model.associations();
+	function renderFileList() {
+		var browserFiles = compactPaths(currentModel.get('browserFiles') || []);
+		var editorFiles = compactPaths(currentModel.get('editorFiles') || []);
+		var userStylesheets = currentModel.get('userStylesheets') || {};
+		var assocs = currentModel.associations();
 		
 		var html = '<ul class="file-list">'
 			+ browserFiles.map(function(file) {
@@ -67,32 +90,7 @@ define(function(require) {
 			}).join('')
 			+ '</ul>';
 
-		return toDom(html);
-	}
-
-	function prepareView(model) {
-		var toggler = $('#fld-enabled');
-		toggler.checked = !!model.get('enabled');
-		toggler.addEventListener('change', function() {
-			model.set('enabled', toggler.checked);
-		});
-
-		$('.add-file').addEventListener('click', function(evt) {
-			evt.stopPropagation();
-			sendMessage('add-user-stylesheet');
-		});
-
-		document.addEventListener('click', function(evt) {
-			if (evt.target.classList.contains('file__remove')) {
-				evt.stopPropagation();
-				var browserFile = ancestorOrSelf(evt.target, 'file__browser');
-				sendMessage('remove-user-stylesheet', {url: browserFile.dataset.fullPath});
-			}
-		});
-	}
-
-	function renderView(model) {
-		var fileList = renderFileList(model);
+		var fileList = toDom(html);
 		var prevFileList = $('.file-list');
 		var parent = prevFileList.parentNode;
 		parent.insertBefore(fileList, prevFileList);
@@ -100,35 +98,33 @@ define(function(require) {
 		selectBox(fileList);
 		$$('select', fileList).forEach(function(select) {
 			select.addEventListener('change', function() {
-				var assocs = copy(model.get('assocs'));
+				var assocs = copy(currentModel.get('assocs'));
 				assocs[select.name] = select.value;
-				model.set('assocs', assocs);
+				currentModel.set('assocs', assocs);
 			}, false);
 		});
+
+		return fileList;
 	}
 
-	function handleUpdate() {
-		renderView(this);
+	function renderUpdateDirection() {
+		var dir = currentModel.get('updateDirection') || updateDirections[0];
+		$('.update-direction').dataset.direction = dir;
 	}
 
-	function populateSelect(name, options, selected) {
-		return '<select name="' + name + '" id="fld-' + name + '">'
-			+ '<option value="">…</option>'
-			+ options.map(function(option, i) {
-				var selectedAttr = (selected === i || selected === option.value) 
-					? ' selected="selected"' 
-					: '';
-				return '<option value="' + option.value + '"' + selectedAttr + '>' + option.label + '</option>';
-			}).join('')
-			+ '</select>';
+	function cycleUpdateDirection() {
+		var elem = $('.update-direction');
+		var dir = elem.dataset.direction || updateDirections[0];
+		var next = (updateDirections.indexOf(dir) + 1) % updateDirections.length;
+		currentModel.set('updateDirection', updateDirections[next]);
 	}
 
-	function toDom(html) {
-		var div = document.createElement('div');
-		div.innerHTML = html;
-		var result = div.firstChild;
-		div.removeChild(result);
-		return result;
+	function toggleEnabledState() {
+		currentModel.set('enabled', $('#fld-enabled').checked);
+	}
+
+	function renderEnabledState() {
+		$('#fld-enabled').checked = !!currentModel.get('enabled');
 	}
 
 	/**
@@ -145,6 +141,42 @@ define(function(require) {
 	 */
 	function showErrorLogLink() {
 		$('.error-log-link').classList.remove('hidden');
+	}
+
+	function setup() {
+		$('#fld-enabled').addEventListener('change', toggleEnabledState);
+		$('.update-direction').addEventListener('click', cycleUpdateDirection);
+		$('.add-file').addEventListener('click', function(evt) {
+			evt.stopPropagation();
+			sendMessage('add-user-stylesheet');
+		});
+
+		document.addEventListener('click', function(evt) {
+			if (evt.target.classList.contains('file__remove')) {
+				evt.stopPropagation();
+				var browserFile = ancestorOrSelf(evt.target, 'file__browser');
+				sendMessage('remove-user-stylesheet', {url: browserFile.dataset.fullPath});
+			}
+		});
+	}
+
+	function setupModel(model) {
+		currentModel = model;
+		renderEnabledState();
+		renderFileList();
+		renderUpdateDirection();
+		model
+		.on('update', renderFileList)
+		.on('change:enabled', renderEnabledState)
+		.on('change:updateDirection', renderUpdateDirection);
+	}
+
+	function resetModel() {
+		currentModel
+		.off('update', renderFileList)
+		.off('change:enabled', renderEnabledState)
+		.off('change:updateDirection', renderUpdateDirection);
+		currentModel = null;
 	}
 
 	chrome.runtime.onMessage.addListener(function(message) {
@@ -170,17 +202,16 @@ define(function(require) {
 		}
 
 		updateActivityState();
+		setup();
 		LiveStyle.updateIconState();
 		LiveStyle.editorController.on('change:active', updateActivityState);
 		LiveStyle.getCurrentModel(function(model) {
-			prepareView(model);
-			model.on('update', handleUpdate);
+			setupModel(model);
 			window.addEventListener('unload', function() {
-				model.off('update', handleUpdate);
+				resetModel();
 				LiveStyle.editorController.off('change:active', updateActivityState);
 				LiveStyle.errorStateTracker.off('change:error', toggleErrorStateMessage);
 			}, false);
-			renderView(model);
 		});
 	});
 });
