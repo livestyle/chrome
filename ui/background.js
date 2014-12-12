@@ -174,6 +174,28 @@ define(function(require) {
 	// setup browser action icon state update on error
 	iconController.watchErrors(errorStateTracker);
 
+	// when tab is loaded, request unsaved changes for loaded
+	chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
+		if (changeInfo.status === 'complete') {
+			modelController.get(tab, function(model) {
+				var assocs = model.associations();
+				var editorFiles = utils.unique(Object.keys(assocs)
+				.map(function(key) {
+					return assocs[key];
+				})
+				.filter(function(editorFile) {
+					return !!editorFile;
+				}));
+
+				if (editorFiles.length) {
+					client.send('request-unsaved-changes', {
+						files: editorFiles
+					});
+				}
+			});
+		}
+	});
+
 	workerCommandQueue.worker.addEventListener('message', function(message) {
 		var payload = message.data;
 		if (payload.name === 'init') {
