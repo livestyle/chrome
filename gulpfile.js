@@ -5,6 +5,8 @@ var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var through = require('through2');
 
+var allModules = ['worker', 'cssom-patcher', 'client', 'patcher'];
+
 function cleanup() {
 	return through.obj(function(chunk, enc, next) {
 		var str = chunk.toString();
@@ -37,18 +39,26 @@ gulp.task('cssom-patcher', function() {
 	return browserifyFile('./node_modules/livestyle-cssom-patcher/index.js', 'cssom-patcher.js', 'livestyleCSSOM');
 });
 
+gulp.task('client', function() {
+	return browserifyFile('./node_modules/livestyle-client/index.js', 'client.js', 'livestyleClient');
+});
+
+gulp.task('patcher', function() {
+	return browserifyFile('./node_modules/livestyle-patcher/index.js', 'patcher.js', 'livestylePatcher');
+});
+
 /**
  * Simple extension builder, used for demo purposes
  * only (Chrome extension perfectly works from source, it
  * requires just a `default` task to run first)
  */
-gulp.task('extension-files', ['worker', 'cssom-patcher'], function() {
-	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js'], {base: './'})
+gulp.task('extension-files', allModules, function() {
+	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js', './node_modules/requirejs/require.js'], {base: './'})
 	.pipe(gulp.dest('./out/extension'));
 });
 
 gulp.task('watch', function() {
-	gulp.watch(['./node_modules/{livestyle-patcher,livestyle-cssom-patcher}/**/*.js'], ['worker', 'cssom-patcher']);
+	gulp.watch(['./node_modules/{livestyle-patcher,livestyle-cssom-patcher}/**/*.js'], allModules);
 });
 
-gulp.task('default', ['worker', 'cssom-patcher']);
+gulp.task('default', allModules);

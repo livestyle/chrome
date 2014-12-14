@@ -8,8 +8,8 @@ define(function(require) {
 	var userStylesheets = require('../lib/helpers/user-stylesheets');
 	var utils = require('../lib/utils');
 	var eventMixin = require('../lib/event-mixin');
-	var client = require('../node_modules/livestyle-client/index');
-	var patcher = require('../node_modules/livestyle-patcher/index');
+	var client = require('../out/client');
+	var patcher = require('../out/patcher');
 
 	var workerCommandQueue = patcher(client, {
 		worker: '../out/worker.js'
