@@ -122,6 +122,10 @@ define(function(require) {
 			return editorController.get('active');
 		},
 
+		hasOpenedDevTools: function(tabId) {
+			return devtoolsController.isOpenedForTab(tabId);
+		},
+
 		editorController: editorController,
 		errorStateTracker: errorStateTracker.watch(workerCommandQueue),
 		updateIconState: iconController.update

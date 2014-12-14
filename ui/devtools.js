@@ -5,11 +5,15 @@ define(function(require) {
 		name: 'devtools-page:' + chrome.devtools.inspectedWindow.tabId
 	});
 
-	function log() {
+	function send(name, data) {
 		port.postMessage({
-			name: 'log',
-			data: Array.prototype.slice.call(arguments, 0)
+			name: name,
+			data: data
 		});
+	}
+
+	function log() {
+		send('log', Array.prototype.slice.call(arguments, 0));
 	}
 
 	port.onMessage.addListener(function(message) {
@@ -22,6 +26,11 @@ define(function(require) {
 				break;
 			case 'pending-patches':
 				resources.applyPendingPatches(message.data);
+				break;
+			case 'get-stylesheets':
+				resources.list(function(urls) {
+					send('stylesheets', urls);
+				});
 				break;
 		}
 	});

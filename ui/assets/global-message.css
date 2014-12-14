@@ -30,3 +30,7 @@
 .status__no-editor .global-message_no-editor {
 	display: block;
 }
+
+.status__file-protocol .global-message_file-protocol {
+	display: block;
+}

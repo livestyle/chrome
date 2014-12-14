@@ -180,7 +180,7 @@ define(function(require) {
 	}
 
 	chrome.runtime.onMessage.addListener(function(message) {
-		if (message.name === 'log-updated') {
+		if (message && message.name === 'log-updated') {
 			showErrorLogLink();
 		}
 	});
@@ -205,8 +205,13 @@ define(function(require) {
 		setup();
 		LiveStyle.updateIconState();
 		LiveStyle.editorController.on('change:active', updateActivityState);
-		LiveStyle.getCurrentModel(function(model) {
+		LiveStyle.getCurrentModel(function(model, tab) {
 			setupModel(model);
+
+			if (/^file:/.test(tab.url)) {
+				$('.popup').classList.toggle('status__file-protocol', !LiveStyle.hasOpenedDevTools(tab.id));
+			}
+
 			window.addEventListener('unload', function() {
 				resetModel();
 				LiveStyle.editorController.off('change:active', updateActivityState);
