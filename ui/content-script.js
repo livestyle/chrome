@@ -135,6 +135,9 @@
 		return out;
 	}
 
+	// disable in-page LiveStyle extension
+	document.documentElement.setAttribute('data-livestyle-extension', 'available');
+
 	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 		if (!message) {
 			return;

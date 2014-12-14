@@ -40,7 +40,7 @@ gulp.task('cssom-patcher', function() {
 /**
  * Simple extension builder, used for demo purposes
  * only (Chrome extension perfectly works from source, it
- * requires just a `worker` task to run first)
+ * requires just a `default` task to run first)
  */
 gulp.task('extension-files', ['worker', 'cssom-patcher'], function() {
 	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js'], {base: './'})
