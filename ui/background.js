@@ -181,6 +181,7 @@ define(function(require) {
 	// when tab is loaded, request unsaved changes for loaded
 	chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
 		if (changeInfo.status === 'complete') {
+			devtoolsController.reset();
 			modelController.get(tab, function(model) {
 				var assocs = model.associations();
 				var editorFiles = utils.unique(Object.keys(assocs)

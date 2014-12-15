@@ -32,6 +32,9 @@ define(function(require) {
 					send('stylesheets', urls);
 				});
 				break;
+			case 'reset':
+				resources.reset();
+				break;
 		}
 	});
 
