@@ -54,7 +54,7 @@ gulp.task('patcher', function() {
  */
 gulp.task('extension-files', allModules, function() {
 	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js', './node_modules/requirejs/require.js'], {base: './'})
-	.pipe(gulp.dest('./out/extension'));
+	.pipe(gulp.dest('./out/livestyle-alpha'));
 });
 
 gulp.task('watch', function() {
