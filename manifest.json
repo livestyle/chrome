@@ -17,6 +17,7 @@
 		"js": ["./out/cssom-patcher.js", "./ui/content-script.js"],
 		"run_at": "document_start"
     }],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
     "devtools_page": "./ui/devtools.html",
 	"browser_action": {
 		"default_title": "LiveStyle Control Panel",
