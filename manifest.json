@@ -14,7 +14,7 @@
 	},
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*", "file:///*"],
-		"js": ["./out/cssom-patcher.js", "./ui/content-script.js"],
+		"js": ["./scripts/content-script.js"],
 		"run_at": "document_start"
     }],
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",

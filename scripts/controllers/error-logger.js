@@ -3,76 +3,72 @@
  * simply notifies user about possible errors, this method actually
  * logs error messages and displays them upon request
  */
-define(function() {
-	var logItems = [];
-	var maxLogItems = 50;
-	var messageId = 0;
+var logItems = [];
+var maxLogItems = 50;
+var messageId = 0;
 
-	function logMessage(message, type) {
-		// Remove items with the same message
-		for (var i = logItems.length - 1; i >= 0; i--) {
-			if (logItems[i].message == message) {
-				logItems.splice(i, 1);
-			}
-		}
+/**
+ * Watches for errors on given LiveStyle patcher instance
+ * @param  {CommandQueue} patcher LiveStyle patcher
+ */
+export function watch(patcher) {
+	patcher.worker.addEventListener('message', handleWorkerEvent);
+}
 
-		logItems.push({
-			messageId: messageId++,
-			date: Date.now(),
-			message: message,
-			type: type
-		});
+/**
+ * Stops watching for errors on given LiveStyle patcher instance
+ * @param  {CommandQueue} patcher LiveStyle patcher
+ */
+export function unwatch(patcher) {
+	patcher.worker.removeEventListener('message', handleWorkerEvent);
+}
 
-		messageId %= 10000;
+/**
+ * Returns currently logged items
+ * @return {Array} Array of log items
+ */
+export function getLog() {
+	return logItems;
+}
 
-		while (logItems.length > maxLogItems) {
-			logItems.shift();
-		}
-
-		chrome.runtime.sendMessage({
-			name: 'log-updated',
-			data: logItems
-		});
-	}
-
-	function handleWorkerEvent(message) {
-		var payload = message.data;
-		if (payload.status === 'error') {
-			logMessage(payload.data, 'error');
+function logMessage(message, type) {
+	// Remove items with the same message
+	for (var i = logItems.length - 1; i >= 0; i--) {
+		if (logItems[i].message == message) {
+			logItems.splice(i, 1);
 		}
 	}
 
-	// handle internal extension communication
-	chrome.runtime.onMessage.addListener(function(message, sender, callback) {
-		if (message.name === 'get-log') {
-			callback(logItems);
-			return true;
-		}
+	logItems.push({
+		messageId: messageId++,
+		date: Date.now(),
+		message: message,
+		type: type
 	});
 
-	return {
-		/**
-		 * Watches for errors on given LiveStyle patcher instance
-		 * @param  {CommandQueue} patcher LiveStyle patcher
-		 */
-		watch: function(patcher) {
-			patcher.worker.addEventListener('message', handleWorkerEvent);
-		},
+	messageId %= 10000;
 
-		/**
-		 * Stops watching for errors on given LiveStyle patcher instance
-		 * @param  {CommandQueue} patcher LiveStyle patcher
-		 */
-		unwatch: function(patcher) {
-			patcher.worker.removeEventListener('message', handleWorkerEvent);
-		},
+	while (logItems.length > maxLogItems) {
+		logItems.shift();
+	}
 
-		/**
-		 * Returns currently logged items
-		 * @return {Array} Array of log items
-		 */
-		getLog: function() {
-			return logItems;
-		}
-	};
+	chrome.runtime.sendMessage({
+		name: 'log-updated',
+		data: logItems
+	});
+}
+
+function handleWorkerEvent(message) {
+	var payload = message.data;
+	if (payload.status === 'error') {
+		logMessage(payload.data, 'error');
+	}
+}
+
+// handle internal extension communication
+chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+	if (message.name === 'get-log') {
+		callback(logItems);
+		return true;
+	}
 });

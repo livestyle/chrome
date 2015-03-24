@@ -1,170 +1,144 @@
-if (typeof module === 'object' && typeof define !== 'function') {
-	var define = function (factory) {
-		module.exports = factory(require, exports, module);
+export function $(selector, context=document) {
+	return context.querySelector(selector);
+}
+
+export function $$(selector, context=document) {
+	return toArray(context.querySelectorAll(selector));
+}
+
+export function toArray(obj, ix=0) {
+	return Array.prototype.slice.call(obj, 0);
+}
+
+/**
+ * Extend given object with properties from other objects
+ * @param  {Object} obj
+ * @return {Object}
+ */
+export function extend(obj, ...args) {
+	args.forEach(arg => {
+		arg && Object.keys(arg).forEach(key => obj[key] = arg[key]);
+	});
+	return obj;
+}
+
+export function copy(...args) {
+	return extend({}, ...args);
+}
+
+export function closest(elem, sel) {
+	while (elem && elem !== document) {
+		if (elem.matches && elem.matches(sel)) {
+			return elem;
+		}
+		elem = elem.parentNode;
+	}
+}
+
+/**
+ * Returns copy of given array with unique values 
+ * @param {Array} arr
+ * @return {Array}
+ */
+export function unique(arr) {
+	var lookup = [];
+	return arr.filter(val => {
+		if (lookup.indexOf(val) < 0) {
+			lookup.push(val);
+			return true;
+		}
+	});
+}
+
+/**
+ * Returns a function, that, as long as it continues to be invoked, will not
+ * be triggered. The function will be called after it stops being called for
+ * N milliseconds. If `immediate` is passed, trigger the function on the
+ * leading edge, instead of the trailing.
+ * 
+ * @src underscore.js
+ * 
+ * @param  {Function} func
+ * @param  {Number} wait
+ * @param  {Boolean} immediate
+ * @return {Function}
+ */
+export function debounce(func, wait, immediate) {
+	var timeout, args, context, timestamp, result;
+
+	var later = function() {
+		var last = Date.now() - timestamp;
+
+		if (last < wait && last >= 0) {
+			timeout = setTimeout(later, wait - last);
+		} else {
+			timeout = null;
+			if (!immediate) {
+				result = func.apply(context, args);
+				if (!timeout) context = args = null;
+			}
+		}
+	};
+
+	return function() {
+		context = this;
+		args = arguments;
+		timestamp = Date.now();
+		var callNow = immediate && !timeout;
+		if (!timeout) timeout = setTimeout(later, wait);
+		if (callNow) {
+			result = func.apply(context, args);
+			context = args = null;
+		}
+
+		return result;
 	};
 }
 
-define(function(require, exports, module) {
-	return {
-		/**
-		 * Extend given object with properties from other objects
-		 * @param  {Object} obj
-		 * @return {Object}
-		 */
-		extend: function(obj) {
-			for (var i = 1, il = arguments.length, ctx; i < il; i++) {
-				if (ctx = arguments[i]) {
-					Object.keys(ctx).forEach(function(key) {
-						obj[key] = ctx[key];
-					});
-				}
-			}
-			return obj;
-		},
+/**
+ * Returns string representation for given node path
+ * @param {Array} nodePath
+ * @type {String}
+ */
+export function stringifyPath(nodePath) {
+	return nodePath.map(c => c[0] + (c[1] > 1 ? '|' + c[1] : '')).join(' / ');
+}
 
-		copy: function(obj) {
-			return this.extend({}, obj);
-		},
+/**
+ * Returns string representation of given patch JSON
+ * @param {Object} patch
+ * @type {String}
+ */
+export function stringifyPatch(patch) {
+	var str = this.stringifyPath(patch.path) + ' {\n' + 
+		patch.update.map(prop => `  ${prop.name}: ${prop.value};\n`).join('') +
+		patch.remove.map(prop => `  /* ${prop.name}: ${prop.value}; */\n`).join('') +
+		'}';
 
-		/**
-		 * Returns copy of given array with unique values 
-		 * @param {Array} arr
-		 * @return {Array}
-		 */
-		unique: function(arr) {
-			var lookup = [];
-			return arr.filter(function(val) {
-				if (lookup.indexOf(val) < 0) {
-					lookup.push(val);
-					return true;
-				}
-			});
-		},
+	if (patch.action === 'remove') {
+		str = '/* remove: ' + this.stringifyPath(patch.path) + ' */';
+	}
 
-		/**
-		 * Simple class inheritance
-		 * @param {Function} child Child class
-		 * @param {Function} base Base class
-		 * @param {Object} ... Additional object with properties
-		 * that will be added to `child` prototype
-		 * @return {Object}
-		 */
-		inherit: function(child, base) {
-			// var Surrogate = function() {
-			// 	this.constructor = child;
-			// 	this.super = base;
-			// };
-			// Surrogate.prototype = base.prototype;
-			// child.prototype = new Surrogate;
+	if (patch.hints && patch.hints.length) {
+		var hint = patch.hints[patch.hints.length - 1];
+		var self = this;
 
-			child.prototype = Object.create(base.prototype);
-			child.prototype.constructor = child;
-			child.__super__ = base.prototype;
+		var before = (hint.before || []).map(function(p) {
+			return self.stringifyPath([p]);
+		}).join(' / ');
 
-			for (var i = 2, il = arguments.length; i < il; i++) {
-				this.extend(child.prototype, arguments[i]);
-			}
+		var after = (hint.after || []).map(function(p) {
+			return self.stringifyPath([p]);
+		}).join(' / ');
 
-			return child;
-		},
-
-		/**
-		 * Returns a function, that, as long as it continues to be invoked, will not
-  		 * be triggered. The function will be called after it stops being called for
-  		 * N milliseconds. If `immediate` is passed, trigger the function on the
-  		 * leading edge, instead of the trailing.
-  		 * 
-  		 * @src underscore.js
-  		 * 
-		 * @param  {Function} func
-		 * @param  {Number} wait
-		 * @param  {Boolean} immediate
-		 * @return {Function}
-		 */
-		debounce: function(func, wait, immediate) {
-			var timeout, args, context, timestamp, result;
-
-			var later = function() {
-				var last = Date.now() - timestamp;
-
-				if (last < wait && last >= 0) {
-					timeout = setTimeout(later, wait - last);
-				} else {
-					timeout = null;
-					if (!immediate) {
-						result = func.apply(context, args);
-						if (!timeout) context = args = null;
-					}
-				}
-			};
-
-			return function() {
-				context = this;
-				args = arguments;
-				timestamp = Date.now();
-				var callNow = immediate && !timeout;
-				if (!timeout) timeout = setTimeout(later, wait);
-				if (callNow) {
-					result = func.apply(context, args);
-					context = args = null;
-				}
-
-				return result;
-			};
-		},
-
-		/**
-		 * Returns string representation for given node path
-		 * @param {Array} nodePath
-		 * @type {String}
-		 */
-		stringifyPath: function(nodePath) {
-			return nodePath.map(function(component) {
-				return component[0] + (component[1] > 1 ? '|' + component[1] : '');
-			}).join(' / ');
-		},
-
-		/**
-		 * Returns string representation of given patch JSON
-		 * @param {Object} patch
-		 * @type {String}
-		 */
-		stringifyPatch: function(patch) {
-			var str = this.stringifyPath(patch.path) + ' {\n' + 
-				patch.update.map(function(prop) {
-					return '  ' + prop.name + ': ' + prop.value + ';\n';
-				}).join('') +
-				patch.remove.map(function(prop) {
-					return '  /* ' + prop.name + ': ' + prop.value + '; */\n';
-				}).join('') +
-				'}';
-
-			if (patch.action === 'remove') {
-				str = '/* remove: ' + this.stringifyPath(patch.path) + ' */';
-			}
-
-			if (patch.hints && patch.hints.length) {
-				var hint = patch.hints[patch.hints.length - 1];
-				var self = this;
-
-				var before = (hint.before || []).map(function(p) {
-					return self.stringifyPath([p]);
-				}).join(' / ');
-
-				var after = (hint.after || []).map(function(p) {
-					return self.stringifyPath([p]);
-				}).join(' / ');
-
-				if (before) {
-					str = '/** before: ' + before + ' */\n' + str;
-				}
-
-				if (after) {
-					str += '\n/** after: ' + after + ' */\n';
-				}
-			}
-
-			return str.trim();
+		if (before) {
+			str = `/** before: ${before} */\n${str}`;
 		}
-	};
-});
+
+		if (after) {
+			str += `\n/** after: ${after} */\n`;
+		}
+	}
+
+	return str.trim();
+}
