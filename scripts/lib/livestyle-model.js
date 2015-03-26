@@ -4,8 +4,9 @@
  */
 import Model from './model';
 import EventEmitter from './event-emitter';
-import {extend} from './utils';
 import associations from './associations';
+
+var emitter = new EventEmitter();
 
 export default class LiveStyleModel extends Model {
 	constructor(id) {
@@ -14,7 +15,7 @@ export default class LiveStyleModel extends Model {
 		super();
 		this
 		.on('change:browserFiles change:editorFiles change:assocs change:userStylesheets', function() {
-			this.trigger('update');
+			this.emit('update');
 		})
 		.on('all', function() {
 			// pass all inner model events to the global dispatcher
@@ -39,4 +40,6 @@ export default class LiveStyleModel extends Model {
 	}
 }
 
-extend(LiveStyleModel, EventEmitter.prototype);
+LiveStyleModel.on = emitter.on.bind(emitter);
+LiveStyleModel.off = emitter.off.bind(emitter);
+LiveStyleModel.emit = emitter.emit.bind(emitter);

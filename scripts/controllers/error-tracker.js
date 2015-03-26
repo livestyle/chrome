@@ -19,6 +19,24 @@ var model = new Model();
 
 export default model;
 
+/**
+ * Listens to events on given LiveStyle worker command queue
+ * @param {CommandQueue} commandQueue
+ */
+model.watch = function(commandQueue) {
+	commandQueue.on('command-create command-reply', handleWorkerEvent);
+	return this;
+};
+
+/**
+ * Stops listening events on given LiveStyle worker
+ * @param {CommandQueue} commandQueue
+ */
+model.unwatch = function(commandQueue) {
+	commandQueue.off('command-create command-reply', handleWorkerEvent);
+	return this;
+};
+
 model.set({
 	error: false,
 	warning: false
@@ -83,23 +101,3 @@ setInterval(function() {
 		}
 	});
 }, 5000);
-
-/**
- * Listens to events on given LiveStyle worker command queue
- * @param {CommandQueue} commandQueue
- */
-model.watch = function(commandQueue) {
-	commandQueue.on('command-create command-reply', handleWorkerEvent);
-	return this;
-};
-
-/**
- * Stops listening events on given LiveStyle worker
- * @param {CommandQueue} commandQueue
- */
-model.unwatch = function(commandQueue) {
-	commandQueue.off('command-create command-reply', handleWorkerEvent);
-	return this;
-};
-
-return model;

@@ -17,7 +17,11 @@ export function toArray(obj, ix=0) {
  */
 export function extend(obj, ...args) {
 	args.forEach(arg => {
-		arg && Object.keys(arg).forEach(key => obj[key] = arg[key]);
+		if (arg) {
+			for (var key in arg) if (arg.hasOwnProperty(key)) {
+				obj[key] = arg[key];
+			}
+		}
 	});
 	return obj;
 }

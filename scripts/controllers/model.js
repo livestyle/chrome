@@ -3,12 +3,12 @@
  * model for given tab (page url) and automatically syncs
  * changes with storage backend.
  */
+import client from 'livestyle-client';
 import LiveStyleModel from '../lib/livestyle-model';
 import editorController from './editor';
 import devtoolsController from './devtools';
 import userStylesheets from '../helpers/user-stylesheets';
 import {copy, debounce} from '../lib/utils';
-import client from '../lib/client';
 
 var collection = {}; // collection of all active page models
 var storage = chrome.storage.local;

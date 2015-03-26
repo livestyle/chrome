@@ -2,7 +2,7 @@
  * Main popup controller
  */
 import selectBox from './ui/select-box';
-import compactPaths  form './helpers/compact-paths';
+import compactPaths from './helpers/compact-paths';
 import {$, $$, copy, closest} from './lib/utils';
 
 var updateDirections = ['both', 'to browser', 'to editor'];

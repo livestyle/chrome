@@ -1,5 +1,6 @@
 var assert = require('assert');
-var deferred = require('../lib/deferred');
+require('babel/register');
+var deferred = require('../scripts/lib/deferred');
 
 describe('Deferred', function() {
 	it('resolve', function() {
@@ -47,7 +48,7 @@ describe('Deferred', function() {
 
 	it('arguments passing', function() {
 		var result = '';
-		d = deferred()
+		var d = deferred()
 		.then(function(a, b) {result = a + ':' + b;}, function(a, b) {result = b + ':' + a;})
 		.resolve('foo', 'bar');
 

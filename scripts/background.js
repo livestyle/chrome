@@ -1,3 +1,6 @@
+import client from 'livestyle-client';
+import patcher from 'livestyle-patcher';
+
 import modelController from './controllers/model';
 import devtoolsController from './controllers/devtools';
 import iconController from './controllers/browser-action-icon';
@@ -5,9 +8,7 @@ import editorController from './controllers/editor';
 import errorStateTracker from './controllers/error-tracker';
 import errorLogger from './controllers/error-logger';
 import userStylesheets from './helpers/user-stylesheets';
-import eventMixin from './lib/event-mixin';
-import client from './lib/client';
-import patcher from './lib/patcher';
+import EventEmitter from './lib/event-emitter';
 import * as utils from './lib/utils';
 
 var workerCommandQueue = patcher(client, {
@@ -41,12 +42,11 @@ export function hasOpenedDevTools(tabId) {
 	return devtoolsController.isOpenedForTab(tabId);
 }
 
-export var errorStateTracker = errorStateTracker.watch(workerCommandQueue);
 export function updateIconState() {
 	iconController.update();
 }
 
-export {editorController};
+export {editorController, errorStateTracker};
 
 
 function applyDiff(data) {
@@ -162,9 +162,12 @@ self.LiveStyle = utils.extend({
 	editorController: editorController,
 	errorStateTracker: errorStateTracker.watch(workerCommandQueue),
 	updateIconState: iconController.update
-}, eventMixin);
+}, EventEmitter.prototype);
 
 errorLogger.watch(workerCommandQueue);
+errorStateTracker.watch(workerCommandQueue);
+// setup browser action icon state update on error
+iconController.watchErrors(errorStateTracker);
 
 chrome.runtime.onMessage.addListener(function(message) {
 	switch (message.name) {
@@ -206,9 +209,6 @@ chrome.runtime.onMessage.addListener(function(message) {
 			break;
 	}
 });
-
-// setup browser action icon state update on error
-iconController.watchErrors(errorStateTracker);
 
 // when tab is loaded, request unsaved changes for loaded
 chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {

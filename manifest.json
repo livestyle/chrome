@@ -10,7 +10,7 @@
 		"file:///*"
 	],
 	"background": {
-		"page": "./ui/background.html"
+		"scripts": ["./scripts/background.js"]
 	},
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*", "file:///*"],
@@ -18,11 +18,11 @@
 		"run_at": "document_start"
     }],
     "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-    "devtools_page": "./ui/devtools.html",
+    "devtools_page": "./devtools.html",
 	"browser_action": {
 		"default_title": "LiveStyle Control Panel",
-		"default_popup": "./ui/popup.html",
-		"default_icon": "./ui/icon/ba-disabled.png"
+		"default_popup": "./popup.html",
+		"default_icon": "./icon/ba-disabled.png"
 	},
 	"manifest_version": 2
 }

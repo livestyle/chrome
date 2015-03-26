@@ -1,64 +1,55 @@
+var path = require('path');
 var gulp = require('gulp');
-var uglify = require('gulp-uglify');
-var streamify = require('gulp-streamify');
-var browserify = require('browserify');
-var source = require('vinyl-source-stream');
+var jsBundler = require('js-bundler');
+var notifier = require('node-notifier');
 var through = require('through2');
 
-var allModules = ['worker', 'cssom-patcher', 'client', 'patcher'];
+var srcOptions = {base: './'};
+var outPath = './out';
+var production = process.argv.indexOf('--production') !== -1;
 
 function cleanup() {
-	return through.obj(function(chunk, enc, next) {
-		var str = chunk.toString();
+	return through.obj(function(file, enc, next) {
+		var str = file.contents.toString();
 		if (str.indexOf(__dirname)) {
-			chunk = new Buffer(str.replace(__dirname, ''));
+			file.contents = new Buffer(str.replace(__dirname, ''));
 		}
-		this.push(chunk);
-		next();
+		next(null, file);
 	});
 }
 
-function browserifyFile(src, dest, moduleName) {
-	return browserify({
-		entries: src,
-		detectGlobals: false,
-		standalone: moduleName
-	})
-	.bundle()
-	.pipe(cleanup())
-	.pipe(source(dest))
-	// .pipe(streamify(uglify()))
-	.pipe(gulp.dest('./out'));
+function js(options) {
+	return jsBundler(options).on('error', function(err) {
+		notifier.notify({
+			title: 'Error', 
+			message: err,
+			sound: true
+		});
+		console.error(err.stack || err);
+		this.emit('end');
+	});
 }
 
-gulp.task('worker', function() {
-	return browserifyFile('./node_modules/livestyle-patcher/lib/worker.js', 'worker.js');
+gulp.task('js', function() {
+	return gulp.src('./scripts/*.js', srcOptions)
+		.pipe(js({
+			standalone: true,
+			sourceMap: !production,
+			detectGlobals: false,
+		}))
+		.pipe(cleanup())
+		.pipe(gulp.dest(outPath))
 });
 
-gulp.task('cssom-patcher', function() {
-	return browserifyFile('./node_modules/livestyle-cssom-patcher/index.js', 'cssom-patcher.js', 'livestyleCSSOM');
+gulp.task('assets', function() {
+	return gulp.src(['./{icon,styles}/**', './*.html', './manifest.json'], srcOptions)
+		.pipe(gulp.dest(outPath));
 });
 
-gulp.task('client', function() {
-	return browserifyFile('./node_modules/livestyle-client/index.js', 'client.js', 'livestyleClient');
-});
-
-gulp.task('patcher', function() {
-	return browserifyFile('./node_modules/livestyle-patcher/index.js', 'patcher.js', 'livestylePatcher');
-});
-
-/**
- * Simple extension builder, used for demo purposes
- * only (Chrome extension perfectly works from source, it
- * requires just a `default` task to run first)
- */
-gulp.task('extension-files', allModules, function() {
-	return gulp.src(['{lib,ui}/**/*.*', 'manifest.json', './out/*.js', './node_modules/requirejs/require.js'], {base: './'})
-	.pipe(gulp.dest('./out/livestyle-alpha'));
-});
 
 gulp.task('watch', function() {
-	gulp.watch(['./node_modules/{livestyle-patcher,livestyle-cssom-patcher}/**/*.js'], allModules);
+	gulp.watch('./scripts/**/*.js', ['js']);
+	gulp.watch(['./{icon,styles}/**', './*.html', './manifest.json'], ['assets']);
 });
 
-gulp.task('default', allModules);
+gulp.task('default', ['js', 'assets']);

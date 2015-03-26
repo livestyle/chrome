@@ -69,7 +69,7 @@ export default class Model extends EventEmitter {
 				this._pending = options;
 			}
 			for (var i = 0, l = changes.length; i < l; i++) {
-				this.trigger('change:' + changes[i], this, current[changes[i]], options);
+				this.emit('change:' + changes[i], this, current[changes[i]], options);
 			}
 		}
 
@@ -83,7 +83,7 @@ export default class Model extends EventEmitter {
 			while (this._pending) {
 				options = this._pending;
 				this._pending = false;
-				this.trigger('change', this, options);
+				this.emit('change', this, options);
 			}
 		}
 

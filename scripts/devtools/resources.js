@@ -2,11 +2,11 @@
  * Resource manager for DevTools: handles updates and
  * patching of instected we page resources
  */
+import client from 'livestyle-client';
 import deferred from '../lib/deferred';
 import {debounce} from '../lib/utils';
 import crc32 from '../lib/crc32';
 import EventEmitter from '../lib/event-emitter';
-import client from '../lib/client';
 
 var stylesheets = {};
 var reStylesheet = /^blob:|\.css$/;
@@ -61,9 +61,11 @@ export function reset() {
 	loadStylesheets = initStylesheetLoader();
 }
 
-export var on = emitter.on.bind(emitter);
-export var off = emitter.off.bind(emitter);
-export var emit = emitter.emit.bind(emitter);
+var on = emitter.on.bind(emitter);
+var off = emitter.off.bind(emitter);
+var emit = emitter.emit.bind(emitter);
+
+export {on, off, emit};
 
 function initStylesheetLoader() {
 	return deferred(function() {
@@ -93,7 +95,7 @@ function initStylesheetLoader() {
 }
 
 function log() {
-	module.trigger('log', Array.prototype.slice.call(arguments, 0));
+	emit('log', Array.prototype.slice.call(arguments, 0));
 }
 
 function Resource(reference, content) {
@@ -212,5 +214,3 @@ client
 	}
 })
 .connect();
-
-return module;

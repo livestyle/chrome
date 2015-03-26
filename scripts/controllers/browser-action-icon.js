@@ -4,7 +4,7 @@
  */
 import * as modelController from './model';
 import * as icon from '../lib/browser-action-icon';
-import LiveStyleModel = '../lib/livestyle-model';
+import LiveStyleModel from '../lib/livestyle-model';
 
 export function watchErrors(tracker) {
 	tracker.on('change:error', function() {

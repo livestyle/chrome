@@ -36,7 +36,7 @@ export function sync(sel) {
  * element
  * @param {Element} sel
  */
-export class SelectBox(sel) {
+export class SelectBox {
 	constructor(sel) {
 		this._sel = sel;
 		this.box = el('div', 'select-box');

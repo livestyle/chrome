@@ -1,5 +1,6 @@
 var assert = require('assert');
-var compactPaths = require('../lib/helpers/compact-paths');
+require('babel/register');
+var compactPaths = require('../scripts/helpers/compact-paths');
 
 describe('Compact paths', function() {
 	function pluck(items, key) {

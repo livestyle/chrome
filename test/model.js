@@ -1,5 +1,6 @@
 var assert = require('assert');
-var Model = require('../lib/livestyle-model');
+require('babel/register');
+var Model = require('../scripts/lib/livestyle-model');
 
 describe('LiveStyle Model', function() {
 	it('get & set attributes', function() {
