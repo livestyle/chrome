@@ -1,8 +1,8 @@
 import {$$, closest} from '../lib/utils';
 var boxes = [];
 
-export default function(container) {
-	$$('script').forEach(convert);
+export function init(container) {
+	$$('select', container).forEach(convert);
 }
 
 export function find(sel) {

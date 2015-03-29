@@ -1,18 +1,18 @@
 import client from 'livestyle-client';
 import patcher from 'livestyle-patcher';
 
-import modelController from './controllers/model';
-import devtoolsController from './controllers/devtools';
-import iconController from './controllers/browser-action-icon';
+import EventEmitter from './lib/event-emitter';
 import editorController from './controllers/editor';
 import errorStateTracker from './controllers/error-tracker';
-import errorLogger from './controllers/error-logger';
-import userStylesheets from './helpers/user-stylesheets';
-import EventEmitter from './lib/event-emitter';
+import * as modelController from './controllers/model';
+import * as devtoolsController from './controllers/devtools';
+import * as iconController from './controllers/browser-action-icon';
+import * as errorLogger from './controllers/error-logger';
+import * as userStylesheets from './helpers/user-stylesheets';
 import * as utils from './lib/utils';
 
 var workerCommandQueue = patcher(client, {
-	worker: './worker.js'
+	worker: './scripts/worker.js'
 });
 
 /**

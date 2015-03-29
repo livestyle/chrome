@@ -9,7 +9,7 @@
  * we shouldn’t trigger error state.
  */
 import Model from '../lib/model';
-import debounce from '../lib/utils';
+import {debounce} from '../lib/utils';
 
 // Worker commads that commands may generate errors we should track
 var trackCommands = ['calculate-diff', 'apply-patch', 'initial-content'];

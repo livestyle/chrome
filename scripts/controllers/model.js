@@ -6,8 +6,8 @@
 import client from 'livestyle-client';
 import LiveStyleModel from '../lib/livestyle-model';
 import editorController from './editor';
-import devtoolsController from './devtools';
-import userStylesheets from '../helpers/user-stylesheets';
+import * as devtoolsController from './devtools';
+import * as userStylesheets from '../helpers/user-stylesheets';
 import {copy, debounce} from '../lib/utils';
 
 var collection = {}; // collection of all active page models

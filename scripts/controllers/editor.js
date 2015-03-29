@@ -5,7 +5,7 @@
  * stylesheet files
  */
 import Model from '../lib/model';
-import unique from '../lib/utils';
+import {unique} from '../lib/utils';
 
 // The `active` key tells if there are any connected editor
 var editorFiles = new Model();

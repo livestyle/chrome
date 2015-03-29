@@ -1,9 +1,11 @@
 /**
  * Main popup controller
  */
-import selectBox from './ui/select-box';
 import compactPaths from './helpers/compact-paths';
+import * as selectBox from './ui/select-box';
 import {$, $$, copy, closest} from './lib/utils';
+
+console.log('select box', selectBox);
 
 var updateDirections = ['both', 'to browser', 'to editor'];
 var currentModel = null;
@@ -69,7 +71,7 @@ function renderFileList() {
 	var parent = prevFileList.parentNode;
 	parent.insertBefore(fileList, prevFileList);
 	parent.removeChild(prevFileList);
-	selectBox(fileList);
+	selectBox.init(fileList);
 	$$('select', fileList).forEach(select => {
 		select.addEventListener('change', function() {
 			var assocs = copy(currentModel.get('assocs'));

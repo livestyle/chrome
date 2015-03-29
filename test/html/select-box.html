@@ -3,8 +3,8 @@
 <head>
 	<meta charset="UTF-8" />
 	<title>Select box test</title>
-	<link rel="stylesheet" href="../../ui/assets/ptsans.css" />
-	<link rel="stylesheet" href="../../ui/assets/select-box.css" />
+	<link rel="stylesheet" href="../../styles/assets/fonts.css" />
+	<link rel="stylesheet" href="../../styles/assets/select-box.css" />
 	<style>
 	body {
 		font-family: 'PT Sans', sans-serif;
@@ -40,11 +40,9 @@
 			<option>css/my-super-styles4.css</option>
 		</select>
 	</section>
-	<script src="../../lib/vendor/require.js" ></script>
+	<script src="../../out/scripts/ui/select-box.js"></script>
 	<script>
-	requirejs(['../../ui/js/select-box'], function(selectBox) {
-		selectBox(document.body);
-	});
+	selectBox.init(document.body);
 	</script>
 </body>
 </html>

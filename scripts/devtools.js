@@ -1,4 +1,4 @@
-import * as resources  from './devtools/resources';
+import * as resources from './devtools/resources';
 
 var port = chrome.runtime.connect({
 	name: 'devtools-page:' + chrome.devtools.inspectedWindow.tabId

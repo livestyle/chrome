@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<title>LiveStyle Popup</title>
-	<link rel="stylesheet" href="popup.css" />
+	<link rel="stylesheet" href="./styles/popup.css" />
 	<style>
 		html {
 			width: 340px;
@@ -30,7 +30,7 @@
 				<p>You’re working with a web-page opened via <code>file://</code> protocol. Due to Chrome security policy, to get live CSS updates you have to either open DevTools or use local web-server (e.g. switch to <code>http://</code> protocol).</p>
 			</div>
 		</div>
-		<div class="error-message hidden">There were errors during recent stylesheet update.<br /><a href="/ui/error-log.html" target="livestyle-bg">Check them out</a> if you experience issues.</div>
+		<div class="error-message hidden">There were errors during recent stylesheet update.<br /><a href="/error-log.html" target="livestyle-bg">Check them out</a> if you experience issues.</div>
 		<fieldset class="activity">
 			<span class="toggler"><input type="checkbox" name="enabled" id="fld-enabled" /><span class="toggler__bg"><i class="toggler__knob"></i></span></span>
 			<label for="fld-enabled">Enable LiveStyle</label>
@@ -57,7 +57,7 @@
 			</li> -->
 		</ul>
 		<button class="add-file">Add stylesheet</button>
-		<p class="error-log-link hidden"><a href="/ui/error-log.html" target="livestyle-bg">Show error log</a></p>
+		<p class="error-log-link hidden"><a href="/error-log.html" target="livestyle-bg">Show error log</a></p>
 	</div>
 	<script src="./scripts/popup.js"></script>
 </body>

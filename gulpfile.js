@@ -4,9 +4,13 @@ var jsBundler = require('js-bundler');
 var notifier = require('node-notifier');
 var through = require('through2');
 
-var srcOptions = {base: './'};
-var outPath = './out';
 var production = process.argv.indexOf('--production') !== -1;
+var dest = './out';
+var src = {
+	js: './scripts/*.js',
+	assets: ['./{icon,styles}/**', './*.html', './manifest.json'],
+	options: {base: './'}
+};
 
 function cleanup() {
 	return through.obj(function(file, enc, next) {
@@ -31,25 +35,25 @@ function js(options) {
 }
 
 gulp.task('js', function() {
-	return gulp.src('./scripts/*.js', srcOptions)
+	return gulp.src(src.js, src.options)
 		.pipe(js({
 			standalone: true,
 			sourceMap: !production,
-			detectGlobals: false,
+			detectGlobals: false
 		}))
 		.pipe(cleanup())
-		.pipe(gulp.dest(outPath))
+		.pipe(gulp.dest(dest))
 });
 
 gulp.task('assets', function() {
-	return gulp.src(['./{icon,styles}/**', './*.html', './manifest.json'], srcOptions)
-		.pipe(gulp.dest(outPath));
+	return gulp.src(src.assets, src.options)
+		.pipe(gulp.dest(dest));
 });
 
 
 gulp.task('watch', function() {
 	gulp.watch('./scripts/**/*.js', ['js']);
-	gulp.watch(['./{icon,styles}/**', './*.html', './manifest.json'], ['assets']);
+	gulp.watch(src.assets, ['assets']);
 });
 
 gulp.task('default', ['js', 'assets']);
