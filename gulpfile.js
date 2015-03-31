@@ -52,6 +52,7 @@ gulp.task('assets', function() {
 
 
 gulp.task('watch', function() {
+	jsBundler.watch({sourceMap: true, uglify: false});
 	gulp.watch('./scripts/**/*.js', ['js']);
 	gulp.watch(src.assets, ['assets']);
 });

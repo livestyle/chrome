@@ -1,8 +1,8 @@
-import * as cssom from 'livestyle-cssom-patcher';
+import cssom from 'livestyle-cssom-patcher';
 
 function $$(sel, context) {
 	var items = (context || document).querySelectorAll(sel);
-	return Array.prototype.slice.call(items, 0) || [];
+	return Array.prototype.slice.call(items, 0);
 }
 
 function applyPatches(url, patches) {
@@ -18,9 +18,7 @@ function applyPatches(url, patches) {
 }
 
 function userStylesheets() {
-	return $$('link[rel="stylesheet"]').filter(function(link) {
-		return !!link.dataset.livestyleId;
-	});
+	return $$('link[rel="stylesheet"]').filter(link => !!link.dataset.livestyleId);
 }
 
 /**
@@ -115,7 +113,7 @@ function findStyleSheets(ctx, out) {
 		item = ctx[i];
 		url = item.href;
 		if (~out.indexOf(url) || (item.ownerNode && item.ownerNode.dataset.livestyleId)) {
-			// stylesheet already added
+			// stylesheet already added or it’s a user stylesheet
 			continue;
 		}
 

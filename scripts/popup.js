@@ -3,9 +3,7 @@
  */
 import compactPaths from './helpers/compact-paths';
 import * as selectBox from './ui/select-box';
-import {$, $$, copy, closest} from './lib/utils';
-
-console.log('select box', selectBox);
+import {$, $$, copy, closest, toDom} from './lib/utils';
 
 var updateDirections = ['both', 'to browser', 'to editor'];
 var currentModel = null;
@@ -15,14 +13,6 @@ function sendMessage(name, data) {
 		name: name,
 		data: data
 	});
-}
-
-function toDom(html) {
-	var div = document.createElement('div');
-	div.innerHTML = html;
-	var result = div.firstChild;
-	div.removeChild(result);
-	return result;
 }
 
 function populateSelect(name, options, selected) {

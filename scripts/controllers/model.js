@@ -169,12 +169,11 @@ function updateModel(tab, model, callback) {
 		// console.log('← validated', stylesheets);
 		model.set('userStylesheets', stylesheets || user);
 		var saveBrowserStylesheets = function(stylesheets) {
-			stylesheets = (stylesheets || []).filter(function(url) {
-				// XXX this thing looks like a hack: user stylesheets
-				// are skipped from CSSOM but available in DevTools.
-				// Should be a better way of precise user stylesheet detection
-				return !/^blob:/.test(url);
-			});
+			// XXX this thing looks like a hack: user stylesheets
+			// are skipped from CSSOM but available in DevTools.
+			// Should be a better way of precise user stylesheet detection
+			stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
+			console.log('setup model with stylesheets', stylesheets);
 			model.set('browserFiles', stylesheets);
 			callback(model);
 		};

@@ -10,6 +10,14 @@ export function toArray(obj, ix=0) {
 	return Array.prototype.slice.call(obj, 0);
 }
 
+export function toDom(html) {
+	var div = document.createElement('div');
+	div.innerHTML = html;
+	var result = div.firstChild;
+	div.removeChild(result);
+	return result;
+}
+
 /**
  * Extend given object with properties from other objects
  * @param  {Object} obj

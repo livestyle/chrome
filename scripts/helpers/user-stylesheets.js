@@ -2,7 +2,7 @@
  * Manages user stylesheets life cycle.
  * A user stylesheet is a stylesheet created by LiveStyle
  * on current page specifically for live updates:
- * it is addeb below page stylesheets (hence has higher
+ * it is added below page stylesheets (hence has higher
  * priority), it’s small and fast: a good alternative 
  * for very large page stylesheets where each update
  * could take some time
