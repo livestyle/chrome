@@ -12,12 +12,18 @@ var stylesheets = {};
 var reStylesheet = /^blob:|\.css$/;
 var emitter = new EventEmitter();
 
+var on = emitter.on.bind(emitter);
+var off = emitter.off.bind(emitter);
+var emit = emitter.emit.bind(emitter);
+
 /**
  * Initial resource loader: retrieves all stylesheet resources
  * from inspected page and keeps them in `stylesheets` collection
  * for patching
  */
 var loadStylesheets = initStylesheetLoader();
+
+export {on, off, emit};
 
 /**
  * Returns resource by its url
@@ -60,12 +66,6 @@ export function reset() {
 	stylesheets = {};
 	loadStylesheets = initStylesheetLoader();
 }
-
-var on = emitter.on.bind(emitter);
-var off = emitter.off.bind(emitter);
-var emit = emitter.emit.bind(emitter);
-
-export {on, off, emit};
 
 function initStylesheetLoader() {
 	return deferred(function() {

@@ -77,6 +77,24 @@ export function current(callback) {
 }
 
 /**
+ * Destroys model for given tab or id
+ * @param  {Object} tab Tab or ID
+ * @param {Boolean} noSave Do not save model
+ */
+export function destroy(tab, noSave) {
+	var id = idFromTab(tab);
+	if (id in collection) {
+		console.log('%cDestroy model for', 'font-weight:bold;color:red', id);
+		var model = collection[id];
+		delete collection[id];
+		if (!noSave) {
+			saveChanges(model);
+		}
+		model.destroy();
+	}
+}
+
+/**
  * Returns matching file URL from active models. 
  * The `callback` argument receives array of objects
  * with `url` and `type` ('browser' or 'editor') keys
@@ -246,11 +264,7 @@ function invalidateModels() {
 		var activeIds = tabs.map(idFromTab);
 		Object.keys(collection).forEach(function(id) {
 			if (!~activeIds.indexOf(id)) {
-				console.log('Destroy model for', id);
-				var model = collection[id];
-				delete collection[id];
-				saveChanges(model);
-				model.destroy();
+				destroy(id);
 			}
 		});
 	});

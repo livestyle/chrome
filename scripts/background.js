@@ -212,17 +212,17 @@ chrome.runtime.onMessage.addListener(function(message) {
 
 // when tab is loaded, request unsaved changes for loaded
 chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
+	if (changeInfo.status === 'loading') {
+		devtoolsController.reset(id);
+	}
+
 	if (changeInfo.status === 'complete') {
-		devtoolsController.reset();
+		modelController.destroy(tab);
 		modelController.get(tab, function(model) {
 			var assocs = model.associations();
 			var editorFiles = utils.unique(Object.keys(assocs)
-			.map(function(key) {
-				return assocs[key];
-			})
-			.filter(function(editorFile) {
-				return !!editorFile;
-			}));
+				.map(key => assocs[key])
+				.filter(Boolean));
 
 			if (editorFiles.length) {
 				client.send('request-unsaved-changes', {
