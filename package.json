@@ -22,8 +22,8 @@
   "devDependencies": {
     "babel": "^4.7.16",
     "gulp": "^3.8.8",
-    "js-bundler": "git+https://github.com/sergeche/js-bundler.git",
-    "mocha": "^1.21.4",
+    "js-bundler": "git+https://github.com/sergeche/js-bundler.git#v1.0.1",
+    "mocha": "^2.2.1",
     "node-notifier": "^4.1.2",
     "through2": "^0.6.3"
   },
