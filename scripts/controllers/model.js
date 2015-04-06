@@ -191,7 +191,6 @@ function updateModel(tab, model, callback) {
 			// are skipped from CSSOM but available in DevTools.
 			// Should be a better way of precise user stylesheet detection
 			stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
-			console.log('setup model with stylesheets', stylesheets);
 			model.set('browserFiles', stylesheets);
 			callback(model);
 		};
