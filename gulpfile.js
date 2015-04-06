@@ -1,5 +1,6 @@
 var path = require('path');
 var gulp = require('gulp');
+var zip = require('gulp-zip');
 var jsBundler = require('js-bundler');
 var notifier = require('node-notifier');
 var through = require('through2');
@@ -50,6 +51,11 @@ gulp.task('assets', function() {
 		.pipe(gulp.dest(dest));
 });
 
+gulp.task('pack', ['build'], function() {
+	return gulp.src(path.join(dest, '**'), {ignore: '*.zip'})
+		.pipe(zip('livestyle-alpha.zip'))
+		.pipe(gulp.dest(dest));
+});
 
 gulp.task('watch', function() {
 	jsBundler.watch({sourceMap: true, uglify: false});
@@ -57,4 +63,5 @@ gulp.task('watch', function() {
 	gulp.watch(src.assets, ['assets']);
 });
 
-gulp.task('default', ['js', 'assets']);
+gulp.task('build', ['js', 'assets']);
+gulp.task('default', ['build']);

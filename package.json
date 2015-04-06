@@ -23,6 +23,7 @@
     "babel": "^4.7.16",
     "connect": "^3.3.5",
     "gulp": "^3.8.8",
+    "gulp-zip": "^3.0.2",
     "js-bundler": "git+https://github.com/sergeche/js-bundler.git#v1.0.1",
     "mocha": "^2.2.1",
     "node-notifier": "^4.1.2",
