@@ -1,7 +1,7 @@
 var path = require('path');
 var gulp = require('gulp');
 var zip = require('gulp-zip');
-var jsBundler = require('js-bundler');
+var js = require('js-bundler');
 var notifier = require('node-notifier');
 var through = require('through2');
 
@@ -23,16 +23,8 @@ function cleanup() {
 	});
 }
 
-function js(options) {
-	return jsBundler(options).on('error', function(err) {
-		notifier.notify({
-			title: 'Error', 
-			message: err,
-			sound: true
-		});
-		console.error(err.stack || err);
-		this.emit('end');
-	});
+function np(lib) {
+	return path.join(__dirname, 'node_modules', lib);
 }
 
 gulp.task('js', function() {
@@ -40,6 +32,7 @@ gulp.task('js', function() {
 		.pipe(js({
 			standalone: true,
 			sourceMap: !production,
+			noParse: [np('livestyle-cssom-patcher/out/livestyle-cssom.js')],
 			detectGlobals: false
 		}))
 		.pipe(cleanup())

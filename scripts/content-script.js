@@ -1,4 +1,4 @@
-import cssom from 'livestyle-cssom-patcher';
+import * as cssom from 'livestyle-cssom-patcher';
 
 function $$(sel, context) {
 	var items = (context || document).querySelectorAll(sel);
