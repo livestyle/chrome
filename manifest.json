@@ -1,13 +1,12 @@
 {
-	"name": "LiveStyle",
+	"name": "LiveStyle Alpha",
 	"description": "LiveStyle — live CSS/LESS/SCSS tool of new generation",
 	"version": "0.9.0",
 	"permissions": [
 		"tabs",
 		"storage",
 		"http://*/*",
-		"https://*/*",
-		"file:///*"
+		"https://*/*"
 	],
 	"background": {
 		"scripts": ["./scripts/background.js"]
