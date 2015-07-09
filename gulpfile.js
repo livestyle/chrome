@@ -45,7 +45,7 @@ gulp.task('assets', function() {
 });
 
 gulp.task('pack', ['build'], function() {
-	return gulp.src(path.join(dest, '**'), {ignore: '*.zip'})
+	return gulp.src(['**', '!*.zip'], {cwd: dest})
 		.pipe(zip('livestyle-alpha.zip'))
 		.pipe(gulp.dest(dest));
 });
