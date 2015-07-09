@@ -5,6 +5,8 @@
  * virtual associations may contain guessed matches that
  * may change if user opens another file in editor
  */
+'use strict';
+
 export default function(browserFiles, editorFiles, assocs) {
 	var result = {};
 	assocs = assocs || {};

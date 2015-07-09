@@ -3,6 +3,8 @@
  * model for given tab (page url) and automatically syncs
  * changes with storage backend.
  */
+'use strict';
+
 import client from 'livestyle-client';
 import LiveStyleModel from '../lib/livestyle-model';
 import editorController from './editor';

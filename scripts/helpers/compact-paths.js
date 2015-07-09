@@ -2,6 +2,8 @@
  * Compacts given list of paths: keeps smallest right-hand 
  * difference between paths
  */
+'use strict';
+
 import {unique} from '../lib/utils';
 
 export default function(list) {

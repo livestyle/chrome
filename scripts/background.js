@@ -1,3 +1,5 @@
+'use strict';
+
 import client from 'livestyle-client';
 import patcher from 'livestyle-patcher';
 

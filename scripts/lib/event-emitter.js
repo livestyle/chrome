@@ -1,6 +1,7 @@
 /**
  * A simple event emitter, borrowed from Backbone.Event.
  */
+'use strict';
 
 // Regular expression used to split event strings
 var eventSplitter = /\s+/;

@@ -2,6 +2,8 @@
  * A simple model object: a very simplified version of 
  * Backbone.Model
  */
+'use strict';
+
 import EventEmitter from './event-emitter';
 import {copy} from './utils';
 
@@ -9,6 +11,7 @@ var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 export default class Model extends EventEmitter {
 	constructor() {
+		super();
 		if (!(this instanceof Model)) {
 			return new Model();
 		}

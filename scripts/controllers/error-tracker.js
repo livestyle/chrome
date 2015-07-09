@@ -1,13 +1,15 @@
 /**
- * Keeps track of errors occured LiveStyle activity. 
+ * Keeps track of errors occurred LiveStyle activity. 
  * Provides model with `error` boolean attribute indicating
  * if there’s something that user should be aware of.
  *
  * This controller tries to detect intermediate error states:
- * for example, when user type something he may accedentally 
+ * for example, when user type something he may accidentally 
  * put stylesheet in error state but fix it later. In this case,
  * we shouldn’t trigger error state.
  */
+'use strict';
+
 import Model from '../lib/model';
 import {debounce} from '../lib/utils';
 

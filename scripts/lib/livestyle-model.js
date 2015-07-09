@@ -2,6 +2,8 @@
  * LiveStyle model: responsible for storing info about
  * LiveStyle state for context page
  */
+'use strict';
+
 import Model from './model';
 import EventEmitter from './event-emitter';
 import associations from './associations';
@@ -10,9 +12,9 @@ var emitter = new EventEmitter();
 
 export default class LiveStyleModel extends Model {
 	constructor(id) {
+		super();
 		this.id = id;
 		this.lastUpdate = Date.now();
-		super();
 		this
 		.on('change:browserFiles change:editorFiles change:assocs change:userStylesheets', function() {
 			this.emit('update');

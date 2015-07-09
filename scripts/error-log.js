@@ -1,3 +1,5 @@
+'use strict';
+
 function padNum(num) {
 	return (num < 10 ? '0' : '') + num;
 }

@@ -3,6 +3,8 @@
  * Original source: https://github.com/SheetJS/js-crc32
  * © 2014 SheetJS — http://sheetjs.com
  */
+'use strict';
+
 var table = new Array(256);
 for (var n = 0, c; n != 256; ++n) {
 	c = n;

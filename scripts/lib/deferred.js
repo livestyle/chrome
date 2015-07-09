@@ -1,3 +1,5 @@
+'use strict';
+
 var STATE_PENDING   = 'pending';
 var STATE_FULFILLED = 'fulfilled';
 var STATE_REJECTED  = 'rejected';

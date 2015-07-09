@@ -3,6 +3,8 @@
  * simply notifies user about possible errors, this method actually
  * logs error messages and displays them upon request
  */
+'use strict';
+
 var logItems = [];
 var maxLogItems = 50;
 var messageId = 0;

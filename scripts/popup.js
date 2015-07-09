@@ -1,6 +1,8 @@
 /**
  * Main popup controller
  */
+'use strict';
+
 import compactPaths from './helpers/compact-paths';
 import * as selectBox from './ui/select-box';
 import {$, $$, copy, closest, toDom} from './lib/utils';

@@ -1,3 +1,5 @@
+'use strict';
+
 import * as cssom from 'livestyle-cssom-patcher';
 
 function $$(sel, context) {

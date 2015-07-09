@@ -7,6 +7,8 @@
  * for very large page stylesheets where each update
  * could take some time
  */
+'use strict';
+
 var reUser = /^livestyle:([0-9]+)$/;
 
 /**

@@ -1,3 +1,5 @@
+'use strict';
+
 import * as resources from './devtools/resources';
 
 var port = chrome.runtime.connect({

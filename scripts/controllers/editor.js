@@ -4,6 +4,8 @@
  * is updated whenever user connects new editor or opens/closes
  * stylesheet files
  */
+'use strict';
+
 import Model from '../lib/model';
 import {unique} from '../lib/utils';
 

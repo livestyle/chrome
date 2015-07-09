@@ -2,6 +2,8 @@
  * Controls browser action icon state depending on 
  * user activity with tabs
  */
+'use strict';
+
 import * as modelController from './model';
 import * as icon from '../lib/browser-action-icon';
 import LiveStyleModel from '../lib/livestyle-model';

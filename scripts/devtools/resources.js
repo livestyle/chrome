@@ -2,6 +2,8 @@
  * Resource manager for DevTools: handles updates and
  * patching of instected we page resources
  */
+'use strict';
+
 import client from 'livestyle-client';
 import deferred from '../lib/deferred';
 import {debounce} from '../lib/utils';

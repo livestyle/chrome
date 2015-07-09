@@ -1,6 +1,8 @@
 /**
  * Displays browser action icon according to current activity state
  */
+'use strict';
+
 import deferred from './deferred';
 
 var states = {};

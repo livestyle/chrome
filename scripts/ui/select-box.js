@@ -1,3 +1,5 @@
+'use strict';
+
 import {$$, closest} from '../lib/utils';
 var boxes = [];
 

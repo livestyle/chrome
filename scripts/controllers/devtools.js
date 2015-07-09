@@ -11,6 +11,8 @@
  * when DevTools for tab became available, it flushes these 
  * changes to DevTools page so it can apply diffs on page resources.
  */
+'use strict';
+
 var openedDevtools = {};
 var pendingPatches = {};
 
