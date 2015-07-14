@@ -75,7 +75,7 @@ function initStylesheetLoader() {
 		// load all resources from inspected window
 		chrome.devtools.inspectedWindow.getResources(function(resources) {
 			resources = resources.filter(function(res) {
-				return reStylesheet.test(res.url);
+				return isStylesheetURL(res.url);
 			});
 			stylesheets = {};
 
@@ -94,6 +94,10 @@ function initStylesheetLoader() {
 			next();
 		});
 	});
+}
+
+function isStylesheetURL(url) {
+	return reStylesheet.test(url.split('?')[0]);
 }
 
 function log() {
