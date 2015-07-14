@@ -1,0 +1,83 @@
+.rv {
+	background-color: #e57c2c;
+	color: #fff;
+	flex-grow: 0;
+	flex-shrink: 0;
+	z-index: 2;
+	position: relative;
+}
+
+.rv-header, .rv-description {
+	position: relative;
+	overflow: hidden;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.rv-header {
+	padding: 7px 20px;
+}
+
+.rv-title {
+	font-size: 18px;
+	margin-bottom: 0.2em;
+	height: 23px;
+	line-height: 22px;
+}
+
+.rv-comment {
+	color: #f1c22a;
+	position: relative;
+	font-size: 12px;
+}
+
+.rv-message {
+	position: relative;
+}
+
+.rv-learn-more {
+	cursor: pointer;
+	border-bottom: 1px dotted currentColor;
+	color: #ecf0f1;
+}
+
+.rv-learn-more:hover {
+	color: #fff;
+}
+
+.rv .toggler {
+	float: right;
+}
+
+.rv .toggler__bg {
+	background-color: #f29a26;
+}
+
+.rv .toggler__knob {
+	background-color: #e57c2c;
+}
+
+.rv input[type="checkbox"]:checked + .toggler__bg {
+	background-color: #fff;
+	color: #e57c2c;
+}
+
+.rv input[type="checkbox"]:checked + .toggler__bg .toggler__knob {
+	background-color: #e57c2c;
+}
+
+.rv-description {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+	overflow: hidden;
+	padding: 0 20px;
+	background-color: inherit;
+	margin-top: -1px;
+}
+
+.rv-description em {
+	font-style: normal;
+	color: #f1c22a;
+}

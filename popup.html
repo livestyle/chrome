@@ -5,14 +5,13 @@
 	<title>LiveStyle Popup</title>
 	<link rel="stylesheet" href="./styles/popup.css" />
 	<style>
-		html {
-			width: 340px;
-			height: 400px;
-		}
-
 		html, body {
 			padding: 0;
 			margin: 0;
+		}
+		html {
+			width: 340px;
+			height: 450px;
 		}
 	</style>
 </head>
@@ -58,6 +57,22 @@
 		</ul>
 		<button class="add-file">Add stylesheet</button>
 		<p class="error-log-link hidden"><a href="/error-log.html" target="livestyle-bg">Show error log</a></p>
+	</div>
+	<div class="rv">
+		<header class="rv-header">
+			<span class="toggler"><input type="checkbox" name="enabled" id="fld-enabled" /><span class="toggler__bg"><i class="toggler__knob"></i></span></span>
+			<div class="rv-title">
+				<div class="rv-message">Remote View <i class="rv-icon-help"></i></div>
+			</div>
+			<div class="rv-comment">
+				<div class="rv-message">Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span class="rv-learn-more">Learn more</span></div>
+			</div>
+		</header>
+		<section class="rv-description">
+			<p>Remote View creates a publicly available domain name like <em>http://some-name.livestyle.io</em> and connects it with your local domain or IP address (aka “reverse tunnel”). So it looks like anyone browsing public domain is actually browsing you local web-site from your computer.</p>
+			<p>This way you can easily share your local web-site with colleagues or customers, preview it on any internet-connected mobile device, virtual machine and so on—with instant LiveStyle updates.</p>
+			<p><strong>Remote View is a paid service available for free during beta-testing.</strong></p>
+		</section>
 	</div>
 	<script src="./scripts/popup.js"></script>
 </body>

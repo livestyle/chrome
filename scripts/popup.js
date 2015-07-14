@@ -6,6 +6,7 @@
 import compactPaths from './helpers/compact-paths';
 import * as selectBox from './ui/select-box';
 import {$, $$, copy, closest, toDom} from './lib/utils';
+import setupRemoteView from './ui/remote-view';
 
 var updateDirections = ['both', 'to browser', 'to editor'];
 var currentModel = null;
@@ -146,6 +147,8 @@ function resetModel() {
 	.off('change:updateDirection', renderUpdateDirection);
 	currentModel = null;
 }
+
+setupRemoteView($('.rv'));
 
 chrome.runtime.onMessage.addListener(function(message) {
 	if (message && message.name === 'log-updated') {
