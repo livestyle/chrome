@@ -4,12 +4,16 @@
 import {$, $$, toDom} from '../lib/utils';
 import tween from '../lib/tween';
 
-export default function(container) {
+export default function(container, onStateChange) {
 	container.addEventListener('click', function(evt) {
 		if (evt.target.classList.contains('rv-learn-more') || isExpanded(container)) {
 			toggleExpand(container);
 		}
 	});
+
+	if (onStateChange) {
+		getToggler(container).addEventListener('change', onStateChange);
+	}
 }
 
 export function enable(container) {
