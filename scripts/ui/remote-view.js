@@ -1,10 +1,8 @@
 /**
  * Remote View UI
  */
-import {$, $$} from '../lib/utils';
+import {$, $$, toDom} from '../lib/utils';
 import tween from '../lib/tween';
-
-var animating = false;
 
 export default function(container) {
 	container.addEventListener('click', function(evt) {
@@ -14,11 +12,11 @@ export default function(container) {
 	});
 }
 
-function isExpanded(section) {
+export function isExpanded(section) {
 	return section.classList.contains('rv__expanded');
 }
 
-function toggleExpand(section, callback) {
+export function toggleExpand(section, callback) {
 	if (isExpanded(section)) {
 		collapse(section, callback);
 	} else {
@@ -26,8 +24,85 @@ function toggleExpand(section, callback) {
 	}
 }
 
+export function setMessage(container, message, callback) {
+	if (container._animating) {
+		// there’s message change animation running,
+		// queue current message
+		if (!container._msgQueue) {
+			container._msgQueue = [];
+		}
+
+		return container._msgQueue.push([message, callback]);
+	}
+
+	if (!message && container._msgDefault) {
+		message = container._msgDefault;
+	} else if (typeof message === 'string') {
+		message = toDom(`<div class="rv-message">${message}</div>`);
+	}
+
+	// measure sizes and positions for previous message
+	var pm = $('.rv-message', container);
+	var pcRect = container.getBoundingClientRect();
+	var pmRect = pm.getBoundingClientRect();
+
+	// keep reference for default message
+	if (!container._msgDefault) {
+		container._msgDefault = pm;
+	}
+
+	// fix message state
+	pm.style.width = pmRect.width + 'px';
+	pm.style.left = (pmRect.left - pcRect.left) + 'px';
+	pm.style.top = (pmRect.top - pcRect.top) + 'px';
+	pm.style.position = 'absolute';
+
+	// add new message and get new container state
+	message.style.transform = `translateY(${pcRect.top}px)`;
+	pm.parentNode.insertBefore(message, pm);
+	var ncRect = container.getBoundingClientRect();
+
+	// get ready for animation
+	var dh = ncRect.height - pcRect.height;
+	container.style.height = pcRect.height + 'px';
+	container._animating = true;
+
+	return tween({
+		easing: 'outExpo',
+		duration: 300,
+		step(pos) {
+			pm.style.transform = `translateY(${-pos * pcRect.height}px)`;
+			message.style.transform = `translateY(${(1 - pos) * pcRect.height}px)`;
+			if (dh) {
+				container.style.height = (pcRect.height + pos * dh) + 'px';
+			}
+		},
+		complete() {
+			container._animating = false;
+			pm.parentNode.removeChild(pm);
+
+			// reset previous message state in case if it’s used
+			// somewhere else
+			pm.style.width = '';
+			pm.style.left = '';
+			pm.style.top = '';
+			pm.style.position = '';
+
+			message.style.transform = '';
+			container.style.height = '';
+			callback && callback();
+
+			// do we have queued messages?
+			if (container._msgQueue && container._msgQueue.length) {
+				var queuedItem = container._msgQueue.shift();
+				setMessage(container, queuedItem[0], queuedItem[1]);
+			}
+		}
+	});
+}
+
 function expand(section, callback) {
-	if (animating) {
+	if (section._animating) {
 		return;
 	}
 
@@ -36,24 +111,24 @@ function expand(section, callback) {
 	var offset = rect.top | 0;
 
 	section.classList.add('rv__expanded');
-	animating = true;
+	section._animating = true;
 
 	tween({
-		duration: 300,
-		easing: 'outCubic',
+		duration: 400,
+		easing: 'outExpo',
 		step(pos) {
 			section.style.transform = `translateY(${-offset * pos}px)`;
 			content.style.height = (offset * pos) + 'px';
 		},
 		complete() {
-			animating = false;
+			section._animating = false;
 			callback && callback();
 		}
 	});
 }
 
 function collapse(section, callback) {
-	if (animating) {
+	if (section._animating) {
 		return;
 	}
 
@@ -61,18 +136,18 @@ function collapse(section, callback) {
 	var offset = content.offsetHeight | 0;
 
 	section.classList.remove('rv__expanded');
-	animating = true;
+	section._animating = true;
 
 	tween({
-		duration: 300,
+		duration: 400,
 		reverse: true,
-		easing: 'outCubic',
+		easing: 'outExpo',
 		step(pos) {
 			section.style.transform = `translateY(${-offset * pos}px)`;
 			content.style.height = (offset * pos) + 'px';
 		},
 		complete() {
-			animating = false;
+			section._animating = false;
 			section.style.transform = content.style.height = '';
 			callback && callback();
 		}

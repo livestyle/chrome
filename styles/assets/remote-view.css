@@ -15,20 +15,24 @@
 }
 
 .rv-header {
-	padding: 7px 20px;
+	position: relative;
 }
 
 .rv-title {
 	font-size: 18px;
-	margin-bottom: 0.2em;
-	height: 23px;
+	padding: 7px 20px 2px;
 	line-height: 22px;
+	box-sizing: border-box;
+	overflow: hidden;
 }
 
 .rv-comment {
 	color: #f1c22a;
 	position: relative;
 	font-size: 12px;
+	padding: 0 20px 7px;
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .rv-message {
@@ -47,6 +51,8 @@
 
 .rv .toggler {
 	float: right;
+	margin-right: 20px;
+	margin-top: 7px;
 }
 
 .rv .toggler__bg {
