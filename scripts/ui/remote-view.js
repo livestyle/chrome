@@ -12,6 +12,18 @@ export default function(container) {
 	});
 }
 
+export function enable(container) {
+	setState(container, true);
+}
+
+export function disable(container) {
+	setState(container, false);
+}
+
+export function isEnabled(container) {
+	return getState(container);
+}
+
 export function isExpanded(section) {
 	return section.classList.contains('rv__expanded');
 }
@@ -152,4 +164,16 @@ function collapse(section, callback) {
 			callback && callback();
 		}
 	});
+}
+
+function setState(container, value) {
+	getToggler(container).checked = !!value;
+}
+
+function getState(container) {
+	return getToggler(container).checked;
+}
+
+function getToggler(container) {
+	return $('[name="rv-enabled"]');
 }
