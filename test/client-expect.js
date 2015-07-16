@@ -61,4 +61,28 @@ describe('Client Expect', function() {
 			});
 		}, 10);
 	});
+
+	it('validate', function(done) {
+		var onMessage = function(name) {
+			if (name === 'ping') {
+				client.emit('message-receive', 'pong', {a: 1});
+
+				setTimeout(function() {
+					client.emit('message-receive', 'pong', {a: 2, foo: 'bar'});
+				}, 100);
+			}
+		};
+
+		client.on('message-send', onMessage);
+		client.send('ping')
+		.expect('pong', function(data) {
+			return data.a === 2;
+		})
+		.then(function(data) {
+			assert.equal(data.a, 2);
+			assert.equal(data.foo, 'bar');
+			client.off('message-send', onMessage);
+			done();
+		}, done);
+	});
 });

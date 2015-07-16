@@ -14,9 +14,14 @@ export function send(name, data) {
 	}, 0);
 
 	return {
-		expect(expectedMessageName, timeout=2000) {
+		expect(expectedMessageName, validate, timeout=2000) {
 			if (messageSent) {
 				return Promise.reject(new Error(`Message "${name}" already sent`));
+			}
+
+			if (typeof validate === 'number') {
+				timeout = validate;
+				validate = null;
 			}
 
 			return new Promise(function(resolve, reject) {
@@ -29,9 +34,20 @@ export function send(name, data) {
 
 				var callback = function(name, data) {
 					if (name === expectedMessageName) {
-						client.off('message-receive', callback);
-						clearTimeout(cancelId);
-						resolve(data);
+						var isValid = true;
+						if (validate) {
+							try {
+								isValid = validate(data);
+							} catch (e) {
+								isValid = false;
+							}
+						}
+
+						if (isValid) {
+							client.off('message-receive', callback);
+							clearTimeout(cancelId);
+							resolve(data);
+						}
 					}
 				};
 
