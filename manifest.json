@@ -8,6 +8,7 @@
 		"http://*/*",
 		"https://*/*"
 	],
+	"optional_permissions": ["identity"],
 	"background": {
 		"scripts": ["./scripts/background.js"]
 	},
