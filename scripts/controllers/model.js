@@ -182,11 +182,10 @@ function getModel(tab, callback) {
 
 function updateModel(tab, model, callback) {
 	model.set('editorFiles', editorController.get('files'));
+	model.set('url', tab.url);
 	model.lastUpdate = Date.now();
 	var user = model.get('userStylesheets');
-	// console.log('→ validate', user);
 	userStylesheets.validate(tab.id, Object.keys(user), function(stylesheets) {
-		// console.log('← validated', stylesheets);
 		model.set('userStylesheets', stylesheets || user);
 		var saveBrowserStylesheets = function(stylesheets) {
 			// XXX this thing looks like a hack: user stylesheets

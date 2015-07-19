@@ -5,6 +5,7 @@
 	flex-shrink: 0;
 	z-index: 2;
 	position: relative;
+	transition: background-color 0.25s;
 }
 
 .rv-header, .rv-description {
@@ -86,4 +87,17 @@
 .rv-description em {
 	font-style: normal;
 	color: #f1c22a;
+}
+
+/* Unavailable state */
+.rv__unavailable {
+	background-color: #bdc3c7;
+}
+
+.rv__unavailable .toggler {
+	display: none;
+}
+
+.rv__unavailable .rv-comment {
+	color: #ecf0f1;
 }

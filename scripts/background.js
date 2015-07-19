@@ -10,6 +10,7 @@ import * as modelController from './controllers/model';
 import * as devtoolsController from './controllers/devtools';
 import * as iconController from './controllers/browser-action-icon';
 import * as errorLogger from './controllers/error-logger';
+import {router as rvRouter} from './controllers/remote-view';
 import * as userStylesheets from './helpers/user-stylesheets';
 import * as utils from './lib/utils';
 
@@ -171,6 +172,8 @@ errorStateTracker.watch(workerCommandQueue);
 // setup browser action icon state update on error
 iconController.watchErrors(errorStateTracker);
 
+// event router
+chrome.runtime.onMessage.addListener(rvRouter);
 chrome.runtime.onMessage.addListener(function(message) {
 	switch (message.name) {
 		case 'add-user-stylesheet':

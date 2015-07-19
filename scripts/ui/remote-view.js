@@ -4,24 +4,76 @@
 import {$, $$, toDom} from '../lib/utils';
 import tween from '../lib/tween';
 
-export default function(container, onStateChange) {
+
+var messages = {
+	unavailable: msg(
+		'Remote View is not available', 
+		'Remote View only works for web-sites with HTTP or HTTPS protocols. <span class="rv-learn-more">Learn more</span>'
+	),
+	connecting: msg('Connecting'),
+	noApp: msg('No LiveStyle App', 'Make sure <a href="http://livestyle.io/app/">LiveStyle app</a> is running.')
+};
+
+export default function(model, container) {
+	// “Learn more” toggler
 	container.addEventListener('click', function(evt) {
 		if (evt.target.classList.contains('rv-learn-more') || isExpanded(container)) {
 			toggleExpand(container);
 		}
 	});
 
-	if (onStateChange) {
-		getToggler(container).addEventListener('change', onStateChange);
+	var url = parseUrl(model.url);
+	if (/^https?:$/.test(url.protocol)) {
+		container.classList.add('rv_unavailable');
+		notify(container, messages.unavailable);
+		return;
 	}
-}
 
-export function enable(container) {
-	setState(container, true);
-}
+	var enabled = false;
+	var toggler = getToggler();
+	var rvPayload = {localSite: url.origin};
 
-export function disable(container) {
-	setState(container, false);
+	// check if there’s active RV session for current web-site
+	toggler.disabled = true;
+	sendMessage('rv-get-session', rvPayload, function(resp) {
+		toggler.disabled = false;
+		if (!resp || !resp.active || res.error) {
+			return;
+		}
+
+		enabled = true;
+		toggler.checked = true;
+		var publicUrl = `http://${resp.publicId}`;
+		notify(container, {
+			title: `<a href="${publicUrl}">${publicUrl}</a>`,
+			comment: `Use this URL to view ${url.origin} in any internet-connect browser, mobile device, virual machine or share it with your friend and colleagues.`
+		});
+	});
+
+	var _lastChange = 0; // prevents from accidental multiple clicks on toggler
+	toggler.addEventListener('change', function() {
+		if (Date.now() - _lastChange < 500 || this.checked === enabled) {
+			return;
+		}
+
+		_lastChange = Date.now();
+		enabled = this.checked;
+		if (enabled) {
+			// create new RV session.
+			// disable toggler until we get
+			toggler.disabled = true;
+			notify(container, messages.connecting);
+			sendMessage('rv-create-session', rvPayload, function() {
+				
+			});
+		} else {
+			// close existing session
+			sendMessage('rv-close-session', rvPayload);
+		}
+	});
+
+
+
 }
 
 export function isEnabled(container) {
@@ -40,6 +92,23 @@ export function toggleExpand(section, callback) {
 	}
 }
 
+export function notify(container, message) {
+	if (typeof message === 'string') {
+		message = {
+			title: message,
+			comment: ''
+		};
+	}
+
+	if (message.title) {
+		setMessage($('.rv-title', container), message.title);
+	}
+
+	if (message.comment) {
+		setMessage($('.rv-comment', container), message.comment);
+	}
+}
+
 export function setMessage(container, message, callback) {
 	if (container._animating) {
 		// there’s message change animation running,
@@ -51,7 +120,7 @@ export function setMessage(container, message, callback) {
 		return container._msgQueue.push([message, callback]);
 	}
 
-	if (!message && container._msgDefault) {
+	if (message === null && container._msgDefault) {
 		message = container._msgDefault;
 	} else if (typeof message === 'string') {
 		message = toDom(`<div class="rv-message">${message}</div>`);
@@ -115,6 +184,26 @@ export function setMessage(container, message, callback) {
 			}
 		}
 	});
+}
+
+function msg(title, comment='') {
+	return {title, comment};
+}
+
+function parseUrl(url) {
+	var a = document.createElement('a');
+	a.href = url;
+	return a;
+}
+
+function sendMessage(name, data, callback) {
+	if (typeof data === 'function') {
+		callback = data;
+		data = null;
+	}
+
+	data = data || {};
+	chrome.runtime.sendMessage({name, data}, callback);
 }
 
 function expand(section, callback) {

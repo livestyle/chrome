@@ -149,12 +149,12 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 		case 'apply-cssom-patch':
 			return applyPatches(data.stylesheetUrl, data.patches);
 		case 'create-user-stylesheet':
-			callback(createUserStylesheet(message.data.url));
+			callback(createUserStylesheet(data.url));
 			return true;
 		case 'remove-user-stylesheet':
 			return removeUserStylesheet(data.url);
 		case 'validate-user-stylesheet':
-			callback(validateUserStylesheets(message.data.url));
+			callback(validateUserStylesheets(data.url));
 			return true;
 		case 'get-stylesheets':
 			callback(findStyleSheets(document.styleSheets));

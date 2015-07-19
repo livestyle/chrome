@@ -148,8 +148,6 @@ function resetModel() {
 	currentModel = null;
 }
 
-setupRemoteView($('.rv'));
-
 chrome.runtime.onMessage.addListener(function(message) {
 	if (message && message.name === 'log-updated') {
 		showErrorLogLink();
@@ -178,6 +176,7 @@ chrome.runtime.getBackgroundPage(function(bg) {
 	LiveStyle.editorController.on('change:active', updateActivityState);
 	LiveStyle.getCurrentModel(function(model, tab) {
 		setupModel(model);
+		setupRemoteView(model, $('.rv'));
 
 		if (/^file:/.test(tab.url)) {
 			$('.popup').classList.toggle('status__file-protocol', !LiveStyle.hasOpenedDevTools(tab.id));

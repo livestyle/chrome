@@ -14,9 +14,11 @@ export function send(name, data) {
 	}, 0);
 
 	return {
-		expect(expectedMessageName, validate, timeout=2000) {
+		expect(expectedMessageName, validate, timeout=1000) {
 			if (messageSent) {
-				return Promise.reject(new Error(`Message "${name}" already sent`));
+				var err = new Error(`Message "${expectedMessageName}" already sent`);
+				err.code = 'EMESSAGESENT';
+				return Promise.reject(err);
 			}
 
 			if (typeof validate === 'number') {
@@ -27,7 +29,8 @@ export function send(name, data) {
 			return new Promise(function(resolve, reject) {
 				var cancelId = setTimeout(function() {
 					client.off('message-receive', callback);
-					var err = new Error('Expected message timed out');
+					var err = new Error(`Expected message "${expectedMessageName}" timed out`);
+					err.code = 'EEXPECTTIMEOUT';
 					err.messageName = expectedMessageName;
 					reject(err);
 				}, timeout);
