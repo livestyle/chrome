@@ -21,8 +21,11 @@ export function checkConnection() {
 }
 
 export function getSession(localSite) {
-	return client.send('rv-get-session', {localSite})
-	.expect('rv-session', data => data.localSite === site)
+	return checkConnection()
+	.then(function() {
+		return client.send('rv-get-session', {localSite})
+		.expect('rv-session', data => data.localSite === site);
+	})
 	.then(null, function(err) {
 		if (isExpectError(err)) {
 			var err = new Error(`No active session for ${localSIte}`);
@@ -38,19 +41,12 @@ export function closeSession(localSite) {
 
 export function createSession(localSite) {
 	return checkConnection()
-	.then(checkIdentityPermission)
+	// .then(checkIdentityPermission)
 	.then(getUserToken)
 	.then(requestRvSession)
 	.then(function(payload) {
 		return client.send('rv-create-session', payload)
-		.expect('rv-session', 10000, data => data.localSite === localSite)
-		.then(null, function(err) {
-			if (isExpectError(err)) {
-				err = new Error('No response from LiveStyle app. Make sure it’s running');
-			}
-			err.code = 'ERVCREATESESSION';
-			throw err;
-		});
+		.expect('rv-session', 10000, data => data.localSite === localSite);
 	});
 }
 
@@ -58,11 +54,11 @@ export function createSession(localSite) {
  * Event router for Remote View messages
  */
 export function router(message, sender, callback) {
-	if (!message) {
-		return;
-	}
-
 	var data = message.data;
+	var errResponse = function(err) {
+		callback(errorJSON(err));
+	};
+
 	switch (message.name) {
 		case 'rv-check-connection':
 			checkConnection()
@@ -70,11 +66,11 @@ export function router(message, sender, callback) {
 			return true;
 		case 'rv-get-session':
 			getSession(data.localSite)
-			.then(callback, err => callback({error: err ? err.message : 'Unable to get RV session'}));
+			.then(callback, errResponse);
 			return true;
 		case 'rv-create-session':
-			getSession(data.localSite)
-			.then(callback, err => callback({error: err ? err.message : 'Unable to create RV session'}));
+			createSession(data.localSite)
+			.then(callback, errResponse);
 			return true;
 		case 'rv-close-session':
 			closeSession(data.localSite);
@@ -98,7 +94,7 @@ function checkIdentityPermission() {
 			}
 
 			// no permission to user identity, request it
-			chrome.permission.request(payload, function(granted) {
+			chrome.permissions.request(payload, function(granted) {
 				if (granted) {
 					resolve();
 				} else {
@@ -172,4 +168,24 @@ function requestRvSession(payload) {
 
 function isExpectError(err) {
 	return err && err.code === 'EEXPECTTIMEOUT';
+}
+
+function errorJSON(err) {
+	var json = {};
+	if (err instanceof Error) {
+		json.error = err.message;
+		if (err.code) {
+			json.errorCode = err.code;
+		}
+	} else if (typeof err === 'string') {
+		json.error = err;
+	} else if (typeof err === object) {
+		json.error = err.error;
+	}
+
+	if (!json.error) {
+		json.error = 'Unknown error format';
+	}
+
+	return json;
 }

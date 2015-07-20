@@ -70,9 +70,8 @@ export function active(callback) {
  * @param  {Function} callback
  */
 export function current(callback) {
-	var self = this;
 	activeTab(function(tab) {
-		self.get(tab, function(model) {
+		get(tab, function(model) {
 			callback(model, tab);
 		});
 	});
