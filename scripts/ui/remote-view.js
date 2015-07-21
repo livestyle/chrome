@@ -37,8 +37,7 @@ export default function(model, container) {
 	toggler.disabled = true;
 	sendMessage('rv-get-session', rvPayload, function(resp) {
 		toggler.disabled = false;
-		if (!resp || !resp.active || res.error) {
-			console.log('no active session for', url.origin);
+		if (!resp || resp.error) {
 			return;
 		}
 

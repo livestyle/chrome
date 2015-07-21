@@ -24,5 +24,10 @@
 		"default_popup": "./popup.html",
 		"default_icon": "./icon/ba-disabled.png"
 	},
+	"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0QgZqk+lijVzlshJqUdDxaEsSpzRKJQiPBTHaEmDRHLaydmLeNBvWMu1J+u67NDFVZ8+Ls2zzcyZ3RfZhB7TNBskZQ1rWxug/BEkLqXilPzXahWhGltl+BYsP9aHWgR8NM5Ea/3vQsJ1jDQpjfQEfQY2++cfA5QLs56XWcHGgwDRf3ei5TzkCzJVb19qUyqNoSWH1tkxn6wi1vld/zAkbstGeFL0Hjy8TO61WWHKqsyLQna3n/HfBrPuuZOzBCA0M6Ifq3NAOa1WeiwFyd8s23JCJ6576Y5nRn7D6EhcuCbaCBsM7wRMZc6IuJlzVVdSVqex/QbPHSIB/JVRt4trJwIDAQAB",
+	"oauth2": {
+		"client_id": "429076250235-900v534noe3vqva2v1makld1h26t2drq.apps.googleusercontent.com",
+		"scopes": ["email"]
+	},
 	"manifest_version": 2
 }

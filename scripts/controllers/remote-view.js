@@ -6,7 +6,7 @@
 
 import * as client from '../lib/client-expect';
 
-const RV_REQUEST_SESSION_URL = 'http://localhost:9001/connect';
+const RV_REQUEST_SESSION_URL = 'http://localhost:9000/connect';
 
 export function checkConnection() {
 	return client.send('rv-ping')
@@ -24,7 +24,7 @@ export function getSession(localSite) {
 	return checkConnection()
 	.then(function() {
 		return client.send('rv-get-session', {localSite})
-		.expect('rv-session', data => data.localSite === site);
+		.expect('rv-session', data => data.localSite === localSite);
 	})
 	.then(null, function(err) {
 		if (isExpectError(err)) {
@@ -41,10 +41,12 @@ export function closeSession(localSite) {
 
 export function createSession(localSite) {
 	return checkConnection()
+	.then(() => localSite)
 	// .then(checkIdentityPermission)
 	.then(getUserToken)
 	.then(requestRvSession)
 	.then(function(payload) {
+		console.log('creating session', payload);
 		return client.send('rv-create-session', payload)
 		.expect('rv-session', 10000, data => data.localSite === localSite);
 	});
@@ -108,6 +110,7 @@ function checkIdentityPermission() {
 }
 
 function getUserToken(localSite, oldToken) {
+	console.log('get user token', localSite, oldToken);
 	return new Promise(function(resolve, reject) {
 		var getToken = function() {
 			chrome.identity.getAuthToken({interactive: true}, function(token) {
@@ -130,13 +133,23 @@ function getUserToken(localSite, oldToken) {
 }
 
 function requestRvSession(payload) {
+	console.log('requesting session for', `localSite=${encodeURIComponent(payload.localSite)}`);
+
+	// var xhr = new XMLHttpRequest();
+
 	return fetch(RV_REQUEST_SESSION_URL, {
 		method: 'POST',
 		headers: {
-			Authorization: 'google ' + payload.token
-		}
+			Authorization: 'google ' + payload.token,
+			Accept: 'application/json',
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			localSite: payload.localSite
+		})
 	})
 	.then(function(res) {
+		console.log('got response', res);
 		if (res.ok) {
 			return res.json();
 		}
@@ -148,9 +161,11 @@ function requestRvSession(payload) {
 		}
 
 		// unable to handle this response, fail with JSON data
+		console.log('fallback to reject', Promise.reject);
 		return res.json().then(Promise.reject);
 	})
 	.then(null, function(err) {
+		console.error(err);
 		var message = null;
 		if (err instanceof Error) {
 			message = err.message;
