@@ -13,25 +13,26 @@ export function checkConnection() {
 	.expect('rv-pong')
 	.then(null, function(err) {
 		if (isExpectError(err)) {
-			var err = new Error('No connection with LiveStyle app');
+			err = new Error('No connection with LiveStyle app');
 			err.code = 'ERVNOCONNECTION';
-			throw err;
 		}
+		throw err;
 	});
 }
 
 export function getSession(localSite) {
 	return checkConnection()
 	.then(function() {
+		console.log('connection is active, get session for', localSite);
 		return client.send('rv-get-session', {localSite})
 		.expect('rv-session', data => data.localSite === localSite);
 	})
 	.then(null, function(err) {
 		if (isExpectError(err)) {
-			var err = new Error(`No active session for ${localSIte}`);
+			err = new Error(`No active session for ${localSIte}`);
 			err.code = 'ERVNOSESSION';
-			throw err;
 		}
+		throw err;
 	});
 }
 
@@ -48,7 +49,7 @@ export function createSession(localSite) {
 			.then(requestRvSession)
 			.then(function(payload) {
 				return client.send('rv-create-session', payload)
-				.expect('rv-session', 10000, data => data.localSite === localSite);
+				.expect('rv-session', 15000, data => data.localSite === localSite);
 			});
 		}
 	});
@@ -134,6 +135,8 @@ function getUserToken(localSite, oldToken) {
 }
 
 function requestRvSession(payload) {
+	var errMessage = 'Unable to create session, Remote View server is not available. Please try again later.';
+
 	return fetch(RV_REQUEST_SESSION_URL, {
 		method: 'POST',
 		headers: {
@@ -151,26 +154,20 @@ function requestRvSession(payload) {
 		}
 		
 		if (res.status === 401 && !payload.retry) {
-			console.log('token is obsolete, get new one');
 			// unauthorized request, might be because of expired token
 			return getUserToken(payload.localSite, payload.token)
 			.then(requestRvSession);
 		}
 
 		// unable to handle this response, fail with JSON data
-		return res.json().then(Promise.reject);
-	})
-	.then(null, function(err) {
-		var message = null;
-		if (err instanceof Error) {
-			message = err.message;
-		} else if (typeof err === 'object' && 'error' in err) {
-			message = err.error;
-		} else {
-			message = 'Unable to create RV session';
-		}
-
-		err = new Error(message);
+		return res.json()
+		.then(function(data) {
+			var err = new Error(data && data.error ? data.error.message : errMessage);
+			err.code = res.status;
+			throw err;
+		});
+	}, function() {
+		var err = new Error(errMessage);
 		err.code = 'ERVSESSION';
 		throw err;
 	});
@@ -189,7 +186,7 @@ function errorJSON(err) {
 		}
 	} else if (typeof err === 'string') {
 		json.error = err;
-	} else if (typeof err === object) {
+	} else if (err && typeof err === object) {
 		json.error = err.error;
 	}
 

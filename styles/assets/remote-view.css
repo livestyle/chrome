@@ -48,6 +48,14 @@
 	box-sizing: border-box;
 }
 
+.rv-comment a {
+	color: #ecf0f1;
+}
+
+.rv-comment a:hover {
+	color: #fff;
+}
+
 .rv-message {
 	position: relative;
 }
