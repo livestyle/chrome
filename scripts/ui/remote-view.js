@@ -12,7 +12,8 @@ var messages = {
 		'Remote View only works for web-sites with HTTP or HTTPS protocols. <span class="rv-learn-more">Learn more</span>'
 	),
 	connecting: message('Connecting ' + spinner),
-	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/app/">LiveStyle app</a> is running.')
+	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/app/">LiveStyle app</a> is running.'),
+	reset: message(null, null)
 };
 
 export default function(model, container) {
@@ -76,6 +77,7 @@ export default function(model, container) {
 		} else {
 			// close existing session
 			sendMessage('rv-close-session', rvPayload);
+			notify(container, messages.reset);
 		}
 	});
 }
@@ -104,11 +106,11 @@ export function notify(container, message) {
 		};
 	}
 
-	if (message.title) {
+	if (message.title || message.title === null) {
 		notifySection($('.rv-title', container), message.title);
 	}
 
-	if (message.comment) {
+	if (message.comment || message.comment === null) {
 		notifySection($('.rv-comment', container), message.comment);
 	}
 }

@@ -40,14 +40,17 @@ export function closeSession(localSite) {
 }
 
 export function createSession(localSite) {
-	return checkConnection()
-	.then(() => localSite)
-	// .then(checkIdentityPermission)
-	.then(getUserToken)
-	.then(requestRvSession)
-	.then(function(payload) {
-		return client.send('rv-create-session', payload)
-		.expect('rv-session', 10000, data => data.localSite === localSite);
+	return getSession(localSite)
+	.then(function(resp) {
+		if (resp.error) {
+			// no valid session, create it
+			return getUserToken(localSite)
+			.then(requestRvSession)
+			.then(function(payload) {
+				return client.send('rv-create-session', payload)
+				.expect('rv-session', 10000, data => data.localSite === localSite);
+			});
+		}
 	});
 }
 
@@ -148,6 +151,7 @@ function requestRvSession(payload) {
 		}
 		
 		if (res.status === 401 && !payload.retry) {
+			console.log('token is obsolete, get new one');
 			// unauthorized request, might be because of expired token
 			return getUserToken(payload.localSite, payload.token)
 			.then(requestRvSession);
