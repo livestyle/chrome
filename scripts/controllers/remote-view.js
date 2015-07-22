@@ -46,7 +46,6 @@ export function createSession(localSite) {
 	.then(getUserToken)
 	.then(requestRvSession)
 	.then(function(payload) {
-		console.log('creating session', payload);
 		return client.send('rv-create-session', payload)
 		.expect('rv-session', 10000, data => data.localSite === localSite);
 	});
@@ -110,7 +109,6 @@ function checkIdentityPermission() {
 }
 
 function getUserToken(localSite, oldToken) {
-	console.log('get user token', localSite, oldToken);
 	return new Promise(function(resolve, reject) {
 		var getToken = function() {
 			chrome.identity.getAuthToken({interactive: true}, function(token) {
@@ -133,10 +131,6 @@ function getUserToken(localSite, oldToken) {
 }
 
 function requestRvSession(payload) {
-	console.log('requesting session for', `localSite=${encodeURIComponent(payload.localSite)}`);
-
-	// var xhr = new XMLHttpRequest();
-
 	return fetch(RV_REQUEST_SESSION_URL, {
 		method: 'POST',
 		headers: {
@@ -149,7 +143,6 @@ function requestRvSession(payload) {
 		})
 	})
 	.then(function(res) {
-		console.log('got response', res);
 		if (res.ok) {
 			return res.json();
 		}
@@ -161,11 +154,9 @@ function requestRvSession(payload) {
 		}
 
 		// unable to handle this response, fail with JSON data
-		console.log('fallback to reject', Promise.reject);
 		return res.json().then(Promise.reject);
 	})
 	.then(null, function(err) {
-		console.error(err);
 		var message = null;
 		if (err instanceof Error) {
 			message = err.message;

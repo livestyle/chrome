@@ -4,13 +4,14 @@
 import {$, $$, toDom} from '../lib/utils';
 import tween from '../lib/tween';
 
+var spinner = '<span class="rv-spinner"><i class="rv-spinner__item"></i><i class="rv-spinner__item"></i><i class="rv-spinner__item"></i></span>';
 
 var messages = {
 	unavailable: message(
 		'Remote View is not available', 
 		'Remote View only works for web-sites with HTTP or HTTPS protocols. <span class="rv-learn-more">Learn more</span>'
 	),
-	connecting: message('Connecting'),
+	connecting: message('Connecting ' + spinner),
 	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/app/">LiveStyle app</a> is running.')
 };
 
@@ -30,7 +31,7 @@ export default function(model, container) {
 	}
 
 	var enabled = false;
-	var toggler = getToggler();
+	var toggler = getToggler(container);
 	var rvPayload = {localSite: url.origin};
 
 	// check if there’s active RV session for current web-site
@@ -42,7 +43,11 @@ export default function(model, container) {
 		}
 
 		enabled = toggler.checked = true;
-		notify(container, sessionMessage(resp));
+		var publicUrl = `http://${resp.publicId}`;
+		notify(container, {
+			title: `<a href="${publicUrl}" target="_blank">${publicUrl}</a>`,
+			comment: `Connected to ${resp.localSite}`
+		});
 	});
 
 	var _lastChange = 0; // prevents from accidental multiple clicks on toggler
@@ -54,7 +59,6 @@ export default function(model, container) {
 		_lastChange = Date.now();
 		enabled = this.checked;
 		if (enabled) {
-			console.log('creating session for', rvPayload);
 			// create new RV session.
 			// disable toggler until we get response from back-end, this will 
 			// prevent from accidental toggles
@@ -62,7 +66,6 @@ export default function(model, container) {
 			notify(container, messages.connecting);
 			sendMessage('rv-create-session', rvPayload, function(resp) {
 				toggler.disabled = false;
-				console.log('creating session response', resp);
 				if (resp.error) {
 					enabled = toggler.checked = false;
 					notify(container, errorMessage(resp));
@@ -72,14 +75,13 @@ export default function(model, container) {
 			});
 		} else {
 			// close existing session
-			console.log('close session for', rvPayload);
 			sendMessage('rv-close-session', rvPayload);
 		}
 	});
 }
 
 export function isEnabled(container) {
-	return getState(container);
+	return getToggler(container).checked;
 }
 
 export function isExpanded(section) {
@@ -201,8 +203,8 @@ function message(title, comment='') {
 function sessionMessage(session) {
 	var publicUrl = `http://${session.publicId}`;
 	return {
-		title: `<a href="${publicUrl}">${publicUrl}</a>`,
-		comment: `Use this URL to view ${session.localSite} in any internet-connect browser, mobile device, virual machine or share it with your friend and colleagues.`
+		title: `<a href="${publicUrl}" target="_blank">${publicUrl}</a>`,
+		comment: `Use this URL to view ${session.localSite} in any internet-connect browser, mobile device, virtual machine or share it with your friend and colleagues.`
 	};
 }
 
@@ -281,14 +283,6 @@ function collapse(section, callback) {
 	});
 }
 
-function setState(container, value) {
-	getToggler(container).checked = !!value;
-}
-
-function getState(container) {
-	return getToggler(container).checked;
-}
-
 function getToggler(container) {
-	return $('[name="rv-enabled"]');
+	return $('[name="rv-enabled"]', container);
 }
