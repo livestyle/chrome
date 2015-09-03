@@ -104,6 +104,10 @@
 	margin-top: -1px;
 }
 
+.rv-description a {
+	color: #fff;
+}
+
 .rv-description em {
 	font-style: normal;
 	color: #f1c22a;
