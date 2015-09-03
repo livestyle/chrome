@@ -133,6 +133,9 @@ function logPatches(prefix, patches) {
 	console.groupEnd();
 }
 
+function identify() {
+	client.send('client-id', {id: 'chrome'});
+}
 
 self.LiveStyle = utils.extend({
 	/**
@@ -261,4 +264,5 @@ client
 .on('diff', function(data) {
 	applyDiff(data);
 })
+.on('open identify-client', identify)
 .connect();

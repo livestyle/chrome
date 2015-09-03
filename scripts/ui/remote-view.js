@@ -12,7 +12,7 @@ var messages = {
 		'Remote View only works for web-sites with HTTP or HTTPS protocols. <span class="rv-learn-more">Learn more</span>'
 	),
 	connecting: message('Connecting ' + spinner),
-	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/app/" target="_blank">LiveStyle app</a> is running.'),
+	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.'),
 	reset: message(null, null)
 };
 

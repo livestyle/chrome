@@ -6,7 +6,7 @@
 
 import * as client from '../lib/client-expect';
 
-const RV_REQUEST_SESSION_URL = 'http://localhost:9000/connect';
+const RV_REQUEST_SESSION_URL = 'http://livestyle.io:9000/connect/';
 
 export function checkConnection() {
 	return client.send('rv-ping')
