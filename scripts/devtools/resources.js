@@ -203,8 +203,7 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
 });
 
 chrome.devtools.inspectedWindow.onResourceAdded.addListener(function(res) {
-	if (reStylesheet.test(res.url) && !stylesheets[res.url]) {
-		log('Added resource', res.url);
+	if (isStylesheetURL(res.url) && !stylesheets[res.url]) {
 		res.getContent(function(content) {
 			stylesheets[res.url] = new Resource(res, content);
 		});
