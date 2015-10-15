@@ -27,8 +27,8 @@ export default class LiveStyleModel extends Model {
 
 	/**
 	 * Returns virtual file associations. Unlike “real“ associations,
-	 * where user explicilty pick files, virtual ones contains guessed
-	 * associtiations for files user didn’t picked yet
+	 * where user explicitly pick files, virtual ones contains guessed
+	 * associations for files user didn’t picked yet
 	 * @return {Object}
 	 */
 	associations() {

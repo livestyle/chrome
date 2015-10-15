@@ -8,15 +8,17 @@
 'use strict';
 
 export default function(browserFiles, editorFiles, assocs) {
-	var result = {};
 	assocs = assocs || {};
 	browserFiles = browserFiles || [];
 	editorFiles = editorFiles || [];
 
-	browserFiles.forEach(function(browserFile) {
+	return browserFiles.reduce(function(result, browserFile) {
 		var editorFile = assocs[browserFile];
-		if (!editorFile) {
+		if (editorFile == null) {
 			// user didn’t picked association yet: guess it
+			// XXX compare with `null` and `undefined` because empty string
+			// means user forcibly removed association (for example, from 
+			// guessed association)
 			editorFile = ~editorFiles.indexOf(browserFile) ? browserFile : guessAssoc(editorFiles, browserFile);
 		} else if (!~editorFiles.indexOf(editorFile)) {
 			// we have association but user didn’t opened it yet:
@@ -24,9 +26,8 @@ export default function(browserFiles, editorFiles, assocs) {
 			editorFile = null;
 		}
 		result[browserFile] = editorFile;
-	});
-
-	return result;
+		return result;
+	}, {});
 }
 
 function pathLookup(path) {

@@ -240,7 +240,7 @@ function saveChanges(model) {
 	
 	// remove empty (unassociated) entries
 	Object.keys(assocs).forEach(function(key) {
-		if (!assocs[key]) {
+		if (assocs[key] == null) {
 			delete assocs[key];
 		}
 	});
