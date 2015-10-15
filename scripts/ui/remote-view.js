@@ -46,7 +46,7 @@ export default function(model, container) {
 		enabled = toggler.checked = true;
 		var publicUrl = `http://${resp.publicId}`;
 		notify(container, {
-			title: `<a href="${publicUrl}" target="_blank">${publicUrl}</a>`,
+			title: `<a href="${createPublicHref(resp.publicId, url)}" target="_blank">${publicUrl}</a>`,
 			comment: `Connected to ${resp.localSite}`
 		});
 	});
@@ -71,7 +71,7 @@ export default function(model, container) {
 					enabled = toggler.checked = false;
 					notify(container, errorMessage(resp));
 				} else {
-					notify(container, sessionMessage(resp));
+					notify(container, createSessionMessage(resp, url));
 				}
 			});
 		} else {
@@ -202,10 +202,11 @@ function message(title, comment='') {
 	return {title, comment};
 }
 
-function sessionMessage(session) {
+function createSessionMessage(session, localUrl) {
 	var publicUrl = `http://${session.publicId}`;
+	var publicHref = localUrl ? createPublicHref(session.publicId, localUrl) : publicUrl;
 	return {
-		title: `<a href="${publicUrl}" target="_blank">${publicUrl}</a>`,
+		title: `<a href="${publicHref}" target="_blank">${publicUrl}</a>`,
 		comment: `Use this URL to view ${session.localSite} in any internet-connect browser, mobile device, virtual machine or share it with your friend and colleagues.`
 	};
 }
@@ -287,4 +288,11 @@ function collapse(section, callback) {
 
 function getToggler(container) {
 	return $('[name="rv-enabled"]', container);
+}
+
+function createPublicHref(publicId, localUrl) {
+	if (typeof localUrl === 'string') {
+		localUrl = parseUrl(localUrl);
+	}
+	return `http://${publicId}${localUrl.pathname}${localUrl.search}`;
 }
