@@ -43,7 +43,7 @@ function renderFileItem(label, value, editorFilesView, isUserFile) {
 	}
 
 	return `<li class="file-list__item${(isUserFile ? ' file-list__item_user' : '')}">
-		<div class="file__browser" data-full-path="${value}">${label}</div>
+		<div class="file__browser" data-full-path="${value}" title="${value}">${label}</div>
 		<div class="file__editor">${editorFilesView}</div>
 		</li>`;
 }
