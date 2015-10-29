@@ -51,77 +51,94 @@ export function updateIconState() {
 
 export {editorController, errorStateTracker};
 
+/**
+ * Returns URI of associated editor file of given model for given 
+ * browser URI.
+ * @param  {LivestyleModel} model
+ * @param  {String} uri Editor URI
+ * @return {String}     Matched browser URL
+ */
+function matchedEditorUri(model, uri) {
+	// maybe this URI matches user stylesheet?
+	var user = model.get('userStylesheets');
+	uri = Object.keys(user).reduce((prev, key) => user[key] === uri ? key : prev, uri);
+	return model.associations()[uri];
+}
+
+/**
+ * Returns URI of associated browser file of given model for given 
+ * editor URI.
+ * @param  {LivestyleModel} model
+ * @param  {String} uri Editor URI
+ * @return {String}     Matched browser URL
+ */
+function matchedBrowserUri(model, uri) {
+	var assocs = model.associations();
+	var browserUri = null;
+	Object.keys(assocs).some(function(key) {
+		if (assocs[key] === uri) {
+			return browserUri = key;
+		}
+	});
+
+	var user = model.get('userStylesheets');
+	if (browserUri in user) {
+		browserUri = user[browserUri];
+	}
+
+	return browserUri;
+}
+
+function handleDiffForPage(page, data) {
+	var editorUri  = matchedEditorUri(page.model, data.uri);
+	var browserUri = matchedBrowserUri(page.model, data.uri);
+	if (editorUri) {
+		// This diff result is for browser file, meaning that browser
+		// file was updated and editor should receive these changes.
+		
+		// XXX send two 'incoming-updates' messages in case if updates 
+		// are coming from DevTools, e.g. user updates local stylesheet 
+		// then send it to all connected clients to update accordingly
+		client.send('incoming-updates', {
+			uri: data.uri,
+			patches: data.patches
+		});
+
+		if (page.model.get('updateDirection') !== 'to browser') {
+			client.send('incoming-updates', {
+				uri: editorUri,
+				patches: data.patches
+			});
+		}
+	} else if (browserUri) {
+		// Looks like this diff result is coming from editor file:
+		// patch corresponding browser file
+		client.send('incoming-updates', {
+			uri: browserUri,
+			patches: data.patches
+		});
+
+		if (page.model.get('updateDirection') !== 'to editor') {
+			logPatches(browserUri, data.patches);
+			chrome.tabs.sendMessage(page.tab.id, {
+				name: 'apply-cssom-patch',
+				data: {
+					stylesheetUrl: browserUri,
+					patches: data.patches
+				}
+			});
+			devtoolsController.saveDiff(page.tab.id, browserUri, data.patches);
+		}
+	}
+}
 
 function applyDiff(data) {
 	if (!data.patches || !data.patches.length) {
 		return;
 	}
 
-	modelController.active(function(models) {
-		models.forEach(function(item) {
-			var uri = data.uri;
-			var model = item.model;
-			var assocs = model.associations();
-			var user = model.get('userStylesheets');
-			var userTransposed = {};
-			Object.keys(user).forEach(key => userTransposed[user[key]] = key);
-
-			if (userTransposed[uri]) {
-				uri = userTransposed[uri];
-			}
-
-			if (uri in assocs) {
-				// This diff result is for browser file, meaning that browser
-				// file was updated and editor should receive these changes
-				
-				// XXX send two 'incoming-updates' messages in case if updates 
-				// are coming from DevTools, e.g. user updates local stylesheet 
-				// then send it to all connected clients to update accordingly
-				client.send('incoming-updates', {
-					uri: uri,
-					patches: data.patches
-				});
-
-				if (model.get('updateDirection') !== 'to browser') {
-					client.send('incoming-updates', {
-						uri: assocs[uri],
-						patches: data.patches
-					});
-				}
-				return;
-			}
-
-			// Looks like this diff result is coming from editor file:
-			// find corresponding browser file and patch it
-			var stylesheetUrl = null;
-			Object.keys(assocs).some(function(key) {
-				if (assocs[key] === uri) {
-					return stylesheetUrl = key;
-				}
-			});
-
-			if (stylesheetUrl in user) {
-				stylesheetUrl = user[stylesheetUrl];
-			}
-
-			if (stylesheetUrl) {
-				if (model.get('updateDirection') !== 'to editor') {
-					logPatches(stylesheetUrl, data.patches);
-					chrome.tabs.sendMessage(item.tab.id, {
-						name: 'apply-cssom-patch',
-						data: {
-							stylesheetUrl: stylesheetUrl,
-							patches: data.patches
-						}
-					});
-					devtoolsController.saveDiff(item.tab.id, stylesheetUrl, data.patches);
-				}
-				client.send('incoming-updates', {
-					uri: stylesheetUrl,
-					patches: data.patches
-				});
-			}
-		});
+	modelController.active(pages => {
+		pages.forEach(page => handleDiffForPage(page, data));
 	});
 }
 

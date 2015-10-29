@@ -3,7 +3,7 @@
  *
  * For generic CSS patching extension uses CSSOM
  * which is very fast even on large sources. The problem is
- * that these changes in CSSOM are not reflected original
+ * that these changes in CSSOM are not reflected into original
  * source, e.g. in DevTools you’ll still see unchanges properties.
  * Moreover, any change in DevTools will reset all CSSOM changes.
  *
@@ -19,7 +19,7 @@ var pendingPatches = {};
 var devtoolsPort = /^devtools\-page:(\d+)$/;
 
 export function saveDiff(tabId, stylesheetUrl, patches) {
-	if (this.isOpenedForTab(tabId)) {
+	if (isOpenedForTab(tabId)) {
 		// we have opened DevTools for this tab,
 		// send diff directly to it
 		console.log('DevTools opened, send diff directly');

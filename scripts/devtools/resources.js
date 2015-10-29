@@ -5,7 +5,6 @@
 'use strict';
 
 import client from 'livestyle-client';
-import deferred from '../lib/deferred';
 import {debounce} from '../lib/utils';
 import crc32 from '../lib/crc32';
 import EventEmitter from '../lib/event-emitter';
@@ -70,19 +69,15 @@ export function reset() {
 }
 
 function initStylesheetLoader() {
-	return deferred(function() {
-		var self = this;
-		// load all resources from inspected window
+	return new Promise(function(resolve, reject) {
 		chrome.devtools.inspectedWindow.getResources(function(resources) {
-			resources = resources.filter(function(res) {
-				return isStylesheetURL(res.url);
-			});
+			resources = resources.filter(res => isStylesheetURL(res.url));
 			stylesheets = {};
 
 			var next = function() {
 				if (!resources.length) {
 					log('Loaded stylesheets:', Object.keys(stylesheets));
-					return self.resolve(stylesheets);
+					return resolve(stylesheets);
 				}
 
 				var res = resources.pop();

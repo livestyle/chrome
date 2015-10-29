@@ -50,7 +50,7 @@ gulp.task('pack', ['build'], function() {
 		.pipe(gulp.dest(dest));
 });
 
-gulp.task('watch', function() {
+gulp.task('watch', ['build'], function() {
 	js.watch({sourceMap: true, uglify: false});
 	gulp.watch('./scripts/**/*.js', ['js']);
 	gulp.watch(src.assets, ['assets']);
