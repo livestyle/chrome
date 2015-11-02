@@ -200,7 +200,7 @@ class Resource {
 				this._patching = false;
 				this.patch();
 			});
-		}, 700);
+		}, 300);
 	}
 
 	reset() {
