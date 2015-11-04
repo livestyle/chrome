@@ -223,6 +223,7 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
 			content: content,
 			hash: crc32(content)
 		});
+		emit('update', res.url, content);
 	}
 });
 

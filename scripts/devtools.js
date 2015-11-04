@@ -33,13 +33,21 @@ port.onMessage.addListener(function(message) {
 				send('stylesheets', urls);
 			});
 			break;
+		case 'get-stylesheet-content':
+			resources.get(message.data.url, function(res) {
+				send('stylesheet-content', {
+					content: res ? res.content : null
+				});
+			});
+			break;
 		case 'reset':
 			resources.reset();
 			break;
 	}
 });
 
-resources.on('log', function(strings) {
-	log.apply(null, strings);
-});
+resources
+.on('log', strings => log(...strings))
+.on('update', (url, content) => send('resource-updated', {url, content}));
+
 log('Connected');

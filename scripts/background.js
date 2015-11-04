@@ -12,6 +12,7 @@ import * as iconController from './controllers/browser-action-icon';
 import * as errorLogger from './controllers/error-logger';
 import {router as rvRouter} from './controllers/remote-view';
 import * as userStylesheets from './helpers/user-stylesheets';
+import getStylesheetContent from './helpers/get-stylesheet-content';
 import * as utils from './lib/utils';
 
 var workerCommandQueue = patcher(client, {
@@ -194,7 +195,7 @@ iconController.watchErrors(errorStateTracker);
 
 // event router
 chrome.runtime.onMessage.addListener(rvRouter);
-chrome.runtime.onMessage.addListener(function(message) {
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 	switch (message.name) {
 		case 'add-user-stylesheet':
 			modelController.current(function(model, tab) {
@@ -232,10 +233,14 @@ chrome.runtime.onMessage.addListener(function(message) {
 				userStylesheets.remove(tab.id, url);
 			});
 			break;
+
+		case 'get-stylesheet-content':
+			getStylesheetContent(message.data.url, sender.tab && sender.tab.id, sendResponse);
+			return true;
 	}
 });
 
-// when tab is loaded, request unsaved changes for loaded
+// when tab is loaded, request unsaved changes
 chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
 	if (changeInfo.status === 'loading') {
 		devtoolsController.reset(id);

@@ -13,6 +13,8 @@
  */
 'use strict';
 
+import portExpect from '../lib/port-expect';
+
 var openedDevtools = {};
 var pendingPatches = {};
 
@@ -46,6 +48,14 @@ export function saveDiff(tabId, stylesheetUrl, patches) {
 	pendingPatches[tabId][stylesheetUrl] = pendingPatches[tabId][stylesheetUrl].concat(patches);
 }
 
+export function getPort(tabId) {
+	if (typeof tabId === 'object') {
+		tabId = tabId.id;
+	}
+
+	return openedDevtools[tabId];
+}
+
 export function isOpenedForTab(tabId) {
 	return !!getPort(tabId);
 }
@@ -65,30 +75,17 @@ export function stylesheets(tabId, callback) {
 		return callback([]);
 	}
 
-	var isResponded = false;
-	var port = getPort(tabId);
-	var respond = function(message) {
-		if (isResponded) {
-			return;
-		}
+	return portExpect(getPort(tabId), 'get-stylesheets', 'stylesheets')
+	.then(callback, err => callback([]));
+}
 
-		var urls = [];
-		if (message) {
-			if (message.name !== 'stylesheets') {
-				return;
-			}
-			urls = message.data;
-		}
+export function stylesheetContent(tabId, url) {
+	if (!this.isOpenedForTab(tabId)) {
+		return callback([]);
+	}
 
-		isResponded = true;
-		port.onMessage.removeListener(respond);
-		callback(urls);
-	};
-
-	port.onMessage.addListener(respond);
-	port.postMessage({name: 'get-stylesheets'});
-	// in case of any error in DevTools page, respond after some time
-	setTimeout(respond, 3000);
+	return portExpect(getPort(tabId), 'get-stylesheet-content', {url}, 'stylesheet-content')
+	.then(resp => resp.content);
 }
 
 function normalizeUrl(url) {
@@ -108,9 +105,12 @@ function devtoolsLog(strings) {
  * Handles incoming messages from DevTools connection port
  * @param  {Object} message Incoming message
  */
-function devtoolsMessageHandler(message) {
+function devtoolsMessageHandler(tabId, message) {
 	if (message.name === 'log') {
 		devtoolsLog(message.data);
+	} else if (message.name === 'resource-updated') {
+		// notify tabs about updates resources
+		chrome.tabs.sendMessage(tabId, message);
 	}
 }
 
@@ -118,14 +118,6 @@ function resetPatches(tabId) {
 	if (tabId in pendingPatches) {
 		delete pendingPatches[tabId];
 	}
-}
-
-function getPort(tabId) {
-	if (typeof tabId === 'object') {
-		tabId = tabId.id;
-	}
-
-	return openedDevtools[tabId];
 }
 
 chrome.runtime.onConnect.addListener(function(port) {
@@ -144,12 +136,16 @@ chrome.runtime.onConnect.addListener(function(port) {
 			delete pendingPatches[tabId];
 		}
 
-		port.onMessage.addListener(devtoolsMessageHandler);
+		var messageHandler = message => {
+			devtoolsMessageHandler(tabId, message);
+		};
+
+		port.onMessage.addListener(messageHandler);
 
 		port.onDisconnect.addListener(function() {
 			console.log('Closed devtools for', tabId);
 			delete openedDevtools[tabId];
-			port.onMessage.removeListener(devtoolsMessageHandler);
+			port.onMessage.removeListener(messageHandler);
 		});
 	}
 });

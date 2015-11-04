@@ -28,11 +28,9 @@ export default function(url) {
 			return resolve(shadowCSS[url]);
 		}
 
-		// is case if no one answers, reject promise
+		// reject promise if no answer for too long
 		var _timer = setTimeout(() => {
-			var err = new Error(`Unable to fetch ${url}: no response from background page`);
-			err.code = 'ESHADOWSTNORESPONSE';
-			reject(err);
+			reject(makeError('ESHADOWSTNORESPONSE', `Unable to fetch ${url}: no response from background page`));
 		}, 5000);
 
 		// fetch stylesheet contents first
@@ -47,15 +45,11 @@ export default function(url) {
 				if (resp == null) {
 					// `null` or `undefined` means error while fetching CSS contents,
 					// try again later
-					let err = new Error(`Content fetch request for ${url} returned null`);
-					err.code 'ESHADOWSTEMPTY';
-					return reject(err);
+					return reject(makeError('ESHADOWSTEMPTY', `Content fetch request for ${url} returned null`));
 				}
-
-				var style = getHost().createElement('style');
-				style.textContent = resp || '';
-				getHost().head.appendChild(style);
-				shadowCSS[url] = style;
+				
+				shadowCSS[url] = createShadowStylesheet(resp || '');
+				shadowCSS[url].ownerNode.dataset.href = url;
 			}
 
 			resolve(shadowCSS[url]);
@@ -66,8 +60,37 @@ export default function(url) {
 function getHost() {
 	if (!host) {
 		var iframe = document.createElement('iframe');
-		iframe.src = 'about:blank';
+		iframe.style.cssText = 'width:1px;height:1px;border:0;position:absolute;display:none';
+		iframe.id = 'livestyle-shadow-css';
+		var content = new Blob(['<html><head></head></html>'], {type: 'text/html'});
+		iframe.src = URL.createObjectURL(content);
+		document.body.appendChild(iframe);
 		host = iframe.contentDocument;
 	}
 	return host;
 }
+
+function createShadowStylesheet(content) {
+	var style = getHost().createElement('style');
+	getHost().head.appendChild(style);
+	if (style.sheet) {
+		style.sheet.disabled = true;
+	}
+	style.textContent = resp || '';
+	return style.sheet;
+}
+
+function makeError(code, message) {
+	var err = new Error(message || code);
+	err.code = code;
+	return err;
+}
+
+// listen to DevTools Resource updates
+chrome.runtime.onMessage.addListener(function(message) {
+	if (message && message.name === 'resource-updated' && shadowCSS[message.data.url]) {
+		var data = message.data;
+		console.log('received resource update for', data.url);
+		shadowCSS[data.url].ownerNode.textContent = data.content;
+	}
+});

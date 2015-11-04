@@ -14,7 +14,7 @@ function applyPatches(url, patches) {
 
 	var stylesheets = cssom.stylesheets();
 	if (stylesheets[url]) {
-		// console.log('apply patch %o on %o', patches, stylesheets[url]);
+		console.log('apply patch %o on %o', patches, stylesheets[url]);
 		cssom.patch(stylesheets[url], patches);
 	}
 }
@@ -28,7 +28,7 @@ function userStylesheets() {
  * @param  {Number} amount How many stylesheets should be created
  * @returns {Array} Array of stylesheet URLs
  */
-function createUserStylesheet(url) {
+function generateUserStylesheets(url) {
 	if (!Array.isArray(url)) {
 		url = [url];
 	}
@@ -36,17 +36,22 @@ function createUserStylesheet(url) {
 	var result = {};
 	url.forEach(function(internalUrl) {
 		console.log('Creating stylesheet', internalUrl);
-		var blob = new Blob([''], {type: 'text/css'});
-		var url = window.URL.createObjectURL(blob);
-		var link = document.createElement('link');
-		link.rel = 'stylesheet';
-		link.href = url;
-		link.dataset.livestyleId = internalUrl;
-		document.head.appendChild(link);
-		result[internalUrl] = url;
+		var uss = createUserStylesheet();
+		uss.dataset.livestyleId = internalUrl;
+		document.head.appendChild(uss);
+		result[internalUrl] = uss.href;
 	});
 
 	return result;
+}
+
+function createUserStylesheet(content) {
+	var blob = new Blob([content || ''], {type: 'text/css'});
+	var url = URL.createObjectURL(blob);
+	var link = document.createElement('link');
+	link.rel = 'stylesheet';
+	link.href = url;
+	return link;
 }
 
 /**
@@ -91,9 +96,7 @@ function validateUserStylesheets(url) {
 	});
 
 	// create missing
-	var missing = createUserStylesheet(url.filter(function(item) {
-		return !(item in exists);
-	}));
+	var missing = generateUserStylesheets(url.filter(item => !(item in exists)));
 
 	// re-create result hash with keys in right order
 	var result = {};
@@ -149,7 +152,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 		case 'apply-cssom-patch':
 			return applyPatches(data.stylesheetUrl, data.patches);
 		case 'create-user-stylesheet':
-			callback(createUserStylesheet(data.url));
+			callback(generateUserStylesheets(data.url));
 			return true;
 		case 'remove-user-stylesheet':
 			return removeUserStylesheet(data.url);
