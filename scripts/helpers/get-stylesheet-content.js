@@ -3,7 +3,7 @@
  * DevTools resource (faster, contains most recent version) or via XHR
  */
 'use strict';
-import devtools from '../controllers/devtools';
+import * as devtools from '../controllers/devtools';
 
 export default function(url, tabId, callback) {
 	if (typeof tabId === 'function') {

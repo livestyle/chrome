@@ -1,6 +1,7 @@
 'use strict';
 
 import * as cssom from 'livestyle-cssom-patcher';
+import shadowCSS from './helpers/shadow-css';
 
 function $$(sel, context) {
 	var items = (context || document).querySelectorAll(sel);
@@ -13,9 +14,30 @@ function applyPatches(url, patches) {
 	}
 
 	var stylesheets = cssom.stylesheets();
-	if (stylesheets[url]) {
+	var originalCSS = stylesheets[url];
+	if (!originalCSS) {
+		// no such stylessheet, aborting
+		return;
+	}
+
+	if (originalCSS.cssRules) {
 		console.log('apply patch %o on %o', patches, stylesheets[url]);
 		cssom.patch(stylesheets[url], patches);
+	} else {
+		// Empty `cssRules` property means security restrictions applied 
+		// by Chrome. Try Shadow CSS
+		shadowCSS(url).then(css => {
+			cssom.patch(css, patches).forEach(item => {
+				if (item.action === 'delete') {
+					originalCSS.deleteRule(item.index);
+				} else if (item.action === 'insert') {
+					originalCSS.insertRule(item.value, item.index);
+				} else if (item.action === 'update') {
+					originalCSS.deleteRule(item.index);
+					originalCSS.insertRule(item.value, item.index);
+				}
+			});
+		}, err => console.error(err));
 	}
 }
 

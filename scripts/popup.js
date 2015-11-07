@@ -178,9 +178,9 @@ chrome.runtime.getBackgroundPage(function(bg) {
 		setupModel(model);
 		setupRemoteView(model, $('.rv'));
 
-		if (/^file:/.test(model.get('url'))) {
-			$('.popup').classList.toggle('status__file-protocol', !LiveStyle.hasOpenedDevTools(tab.id));
-		}
+		// if (/^file:/.test(model.get('url'))) {
+		// 	$('.popup').classList.toggle('status__file-protocol', !LiveStyle.hasOpenedDevTools(tab.id));
+		// }
 
 		window.addEventListener('unload', function() {
 			resetModel();

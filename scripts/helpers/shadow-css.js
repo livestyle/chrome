@@ -25,7 +25,7 @@ var shadowCSS = {};
 export default function(url) {
 	return new Promise(function(resolve, reject) {
 		if (url in shadowCSS) {
-			return resolve(shadowCSS[url]);
+			return resolve(shadowCSS[url].sheet);
 		}
 
 		// reject promise if no answer for too long
@@ -36,7 +36,7 @@ export default function(url) {
 		// fetch stylesheet contents first
 		chrome.runtime.sendMessage({name: 'get-stylesheet-content', data: {url}}, resp => {
 			if (_timer) {
-				cleatTimeout(_timer);
+				clearTimeout(_timer);
 				_timer = null;
 			}
 
@@ -48,11 +48,11 @@ export default function(url) {
 					return reject(makeError('ESHADOWSTEMPTY', `Content fetch request for ${url} returned null`));
 				}
 				
-				shadowCSS[url] = createShadowStylesheet(resp || '');
-				shadowCSS[url].ownerNode.dataset.href = url;
+				shadowCSS[url] = createShadowStylesheet(resp);
+				shadowCSS[url].dataset.href = url;
 			}
 
-			resolve(shadowCSS[url]);
+			resolve(shadowCSS[url].sheet);
 		});
 	});
 };
@@ -76,8 +76,8 @@ function createShadowStylesheet(content) {
 	if (style.sheet) {
 		style.sheet.disabled = true;
 	}
-	style.textContent = resp || '';
-	return style.sheet;
+	style.textContent = content || '';
+	return style;
 }
 
 function makeError(code, message) {
@@ -90,7 +90,6 @@ function makeError(code, message) {
 chrome.runtime.onMessage.addListener(function(message) {
 	if (message && message.name === 'resource-updated' && shadowCSS[message.data.url]) {
 		var data = message.data;
-		console.log('received resource update for', data.url);
-		shadowCSS[data.url].ownerNode.textContent = data.content;
+		shadowCSS[data.url].textContent = data.content;
 	}
 });
