@@ -183,23 +183,32 @@ function updateModel(tab, model, callback) {
 	model.set('editorFiles', editorController.get('files'));
 	model.set('url', tab.url);
 	model.lastUpdate = Date.now();
-	var user = model.get('userStylesheets');
-	userStylesheets.validate(tab.id, Object.keys(user), function(stylesheets) {
-		model.set('userStylesheets', stylesheets || user);
-		var saveBrowserStylesheets = function(stylesheets) {
-			// XXX this thing looks like a hack: user stylesheets
-			// are skipped from CSSOM but available in DevTools.
-			// Should be a better way of precise user stylesheet detection
-			stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
-			model.set('browserFiles', stylesheets);
-			callback(model);
-		};
 
-		if (devtoolsController.isOpenedForTab(tab.id)) {
-			devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
-		} else {
-			chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
-		}
+	// Fetching page origin is potentially slow operation but required only once.
+	// Optimize this request
+	var p = model.get('origin') ? Promise.resolve(model.get('origin')) : getTabOrigin(tab);
+	p.then(origin => {
+		console.log('set model origin', origin);
+		model.set('origin', origin || '');
+
+		var user = model.get('userStylesheets');
+		userStylesheets.validate(tab.id, Object.keys(user), function(stylesheets) {
+			model.set('userStylesheets', stylesheets || user);
+			var saveBrowserStylesheets = function(stylesheets) {
+				// XXX this thing looks like a hack: user stylesheets
+				// are skipped from CSSOM but available in DevTools.
+				// Should be a better way of precise user stylesheet detection
+				stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
+				model.set('browserFiles', stylesheets);
+				callback(model);
+			};
+
+			if (devtoolsController.isOpenedForTab(tab.id)) {
+				devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
+			} else {
+				chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
+			}
+		});
 	});
 }
 
@@ -252,6 +261,12 @@ function saveChanges(model) {
 		userStylesheets: Object.keys(model.get('userStylesheets') || {})
 	};
 	storage.set(payload);
+}
+
+function getTabOrigin(tab) {
+	return new Promise(function(resolve, reject) {
+		chrome.tabs.sendMessage(tab.id, {name: 'get-origin'}, resolve);
+	});
 }
 
 /**

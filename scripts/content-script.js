@@ -2,6 +2,7 @@
 
 import * as cssom from 'livestyle-cssom-patcher';
 import shadowCSS from './helpers/shadow-css';
+import origin from './helpers/origin';
 
 function $$(sel, context) {
 	var items = (context || document).querySelectorAll(sel);
@@ -183,6 +184,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 			return true;
 		case 'get-stylesheets':
 			callback(findStyleSheets(document.styleSheets));
+			return true;
+		case 'get-origin':
+			callback(origin());
 			return true;
 	}
 });
