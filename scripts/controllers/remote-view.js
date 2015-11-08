@@ -4,6 +4,7 @@
  */
 'use strict';
 
+import {extend} from '../lib/utils';
 import * as client from '../lib/client-expect';
 
 const RV_REQUEST_SESSION_URL = 'http://livestyle.io:9000/connect/';
@@ -29,7 +30,7 @@ export function getSession(localSite) {
 	})
 	.then(null, function(err) {
 		if (isExpectError(err)) {
-			err = new Error(`No active session for ${localSIte}`);
+			err = new Error(`No active session for ${localSite}`);
 			err.code = 'ERVNOSESSION';
 		}
 		throw err;
@@ -46,6 +47,7 @@ export function createSession(localSite) {
 		if (resp.error) {
 			// no valid session, create it
 			return getUserToken(localSite)
+			.then(createHTTPServerIfRequired)
 			.then(requestRvSession)
 			.then(function(payload) {
 				return client.send('rv-create-session', payload)
@@ -171,6 +173,18 @@ function requestRvSession(payload) {
 		err.code = 'ERVSESSION';
 		throw err;
 	});
+}
+
+function createHTTPServerIfRequired(payload) {
+	if (!/^file:/.test(payload.localSite)) {
+		return Promise.resolve(payload);
+	}
+
+	var docroot = payload.localSite;
+	console.log('create HTTP server for %s', docroot);
+	return client.send('rv-create-http-server', {docroot})
+	.expect('rv-http-server', data => data.docroot === docroot)
+	.then(data => extend(payload, {localSite: data.origin}));
 }
 
 function isExpectError(err) {

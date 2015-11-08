@@ -9,7 +9,7 @@ var spinner = '<span class="rv-spinner"><i class="rv-spinner__item"></i><i class
 var messages = {
 	unavailable: message(
 		'Remote View is not available', 
-		'Remote View only works for web-sites with HTTP or HTTPS protocols. <span class="rv-learn-more">Learn more</span>'
+		'Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span class="rv-learn-more">Learn more</span>'
 	),
 	connecting: message('Connecting ' + spinner),
 	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.'),
@@ -25,15 +25,17 @@ export default function(model, container) {
 	});
 
 	var url = parseUrl(model.get('url'));
-	if (!/^https?:$/.test(url.protocol)) {
+	if (!/^(https?|file):$/.test(url.protocol)) {
 		container.classList.add('rv__unavailable');
 		notify(container, messages.unavailable);
 		return;
 	}
 
+	var origin = model.get('origin') || url.origin;
+	var localUrl = createLocalUrl(origin, model.get('url'));
 	var enabled = false;
 	var toggler = getToggler(container);
-	var rvPayload = {localSite: url.origin};
+	var rvPayload = {localSite: origin};
 
 	// check if there’s active RV session for current web-site
 	toggler.disabled = true;
@@ -46,7 +48,7 @@ export default function(model, container) {
 		enabled = toggler.checked = true;
 		var publicUrl = `http://${resp.publicId}`;
 		notify(container, {
-			title: `<a href="${createPublicHref(resp.publicId, url)}" target="_blank">${publicUrl}</a>`,
+			title: `<a href="${createPublicHref(resp.publicId, localUrl)}" target="_blank">${publicUrl}</a>`,
 			comment: `Connected to ${resp.localSite}`
 		});
 	});
@@ -71,7 +73,7 @@ export default function(model, container) {
 					enabled = toggler.checked = false;
 					notify(container, errorMessage(resp));
 				} else {
-					notify(container, createSessionMessage(resp, url));
+					notify(container, createSessionMessage(resp, localUrl));
 				}
 			});
 		} else {
@@ -295,4 +297,23 @@ function createPublicHref(publicId, localUrl) {
 		localUrl = parseUrl(localUrl);
 	}
 	return `http://${publicId}${localUrl.pathname}${localUrl.search}`;
+}
+
+/**
+ * Creates a local URL of given page URL for easier UX management.
+ * Mostly used for `file:` origins: creates a fake URL that relative to given
+ * origin. This fake URL is easier to parse and replace host name with RV domain
+ * @param  {String} origin 
+ * @param  {String} pageUrl
+ * @return {String}
+ */
+function createLocalUrl(origin, pageUrl) {
+	var url = pageUrl;
+	if (/^file:/.test(pageUrl) && pageUrl.indexOf(origin) === 0) {
+		url = 'http://livestyle/' + pageUrl.slice(origin.length)
+		.split(/[\\\/]/g)
+		.filter(Boolean)
+		.join('/');
+	}
+	return url;
 }
