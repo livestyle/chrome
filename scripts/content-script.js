@@ -22,7 +22,7 @@ function applyPatches(url, patches) {
 	}
 
 	if (originalCSS.cssRules) {
-		console.log('apply patch %o on %o', patches, stylesheets[url]);
+		// console.log('apply patch %o on %o', patches, stylesheets[url]);
 		cssom.patch(stylesheets[url], patches);
 	} else {
 		// Empty `cssRules` property means security restrictions applied 
