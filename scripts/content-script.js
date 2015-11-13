@@ -4,6 +4,8 @@ import * as cssom from 'livestyle-cssom-patcher';
 import shadowCSS from './helpers/shadow-css';
 import origin from './helpers/origin';
 
+var pendingShadowCSSPatches = [];
+
 function $$(sel, context) {
 	var items = (context || document).querySelectorAll(sel);
 	return Array.prototype.slice.call(items, 0);
@@ -27,7 +29,20 @@ function applyPatches(url, patches) {
 	} else {
 		// Empty `cssRules` property means security restrictions applied 
 		// by Chrome. Try Shadow CSS
+		var pending = !!pendingShadowCSSPatches.length;
+		pendingShadowCSSPatches = pendingShadowCSSPatches.concat(patches);
+		if (pending) {
+			// there’s already a request for patching shadow, simply delegate
+			// new patches to it
+			return;
+		}
+
 		shadowCSS(url).then(css => {
+			// Empty pending patches as soon as possible so new patching request 
+			// can trigger new patching session even there was an error during
+			// CSSOM syncing
+			var patches = pendingShadowCSSPatches.slice(0);
+			pendingShadowCSSPatches.length = 0;
 			cssom.patch(css, patches).forEach(item => {
 				if (item.action === 'delete') {
 					originalCSS.deleteRule(item.index);
