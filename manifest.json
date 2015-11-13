@@ -1,7 +1,7 @@
 {
 	"name": "LiveStyle Alpha",
 	"description": "LiveStyle — live CSS/LESS/SCSS tool of new generation",
-	"version": "0.9.6",
+	"version": "0.9.7",
 	"permissions": [
 		"tabs",
 		"storage",
