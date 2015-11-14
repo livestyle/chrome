@@ -12,6 +12,10 @@ body {
 	height: 100%;
 }
 
+a {
+	transition: color 0.2s;
+}
+
 .popup {
 	background: #fff;
 	font-size: 14px;
@@ -19,8 +23,12 @@ body {
 	color: #2c3f4f;
 	position: relative;
 	min-height: 300px;
-	overflow: auto;
+	overflow: hidden;
 	flex-grow: 1;
+}
+
+.popup_enabled {
+	overflow: auto;
 }
 
 .active-editor {
@@ -37,6 +45,7 @@ body {
 	padding: 0;
 	position: relative;
 	margin:0 0 20px;
+	z-index: 2;
 }
 
 .activity label {
@@ -127,10 +136,6 @@ body {
 	position: relative;
 	top: 1px;
 	opacity: 0;
-	-webkit-transition: opacity 0.2s;
-	-moz-transition: opacity 0.2s;
-	-ms-transition: opacity 0.2s;
-	-o-transition: opacity 0.2s;
 	transition: opacity 0.2s;
 }
 
@@ -139,11 +144,14 @@ body {
 }
 
 .file__remove:before {
-	font-family: 'Flat UI Icons';
-	content: '\e609';
+	font-family: 'Font Awesome';
+	content: '\f00d';
 	display: inline-block;
+	font-size: 1.4em;
 	padding: 4px;
 	margin: -4px;
+	position: relative;
+	top: -1px;
 }
 
 .file-list__item:hover .file__remove {
@@ -195,6 +203,56 @@ body {
 	position: absolute;
 	left: -9999px;
 	visibility: hidden;
+}
+
+.inactive-overlay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: #fff;
+	z-index: 1;
+	text-align: center;
+	padding-top: 200px;
+	transition: opacity 0.3s;
+}
+
+.inactive-overlay > p {
+	margin: 0 0 0.3em;
+}
+
+.popup_enabled .inactive-overlay {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.getting-started-link {
+	text-decoration: none;
+	font-size: 1.2em;
+	color: #999;
+}
+
+.getting-started-link:hover {
+	color: #000;
+}
+
+.getting-started-link::after {
+	font-family: 'Font Awesome';
+	content: '\f105';
+	margin-left: 5px;
+	display: inline-block;
+	margin-top: 0.1em;
+}
+
+.livestyle-homepage-link {
+	font-size: 0.8em;
+	text-decoration: none;
+	color: #3498db;
+}
+
+.livestyle-homepage-link:hover {
+	color: #2980b9;
 }
 
 .hidden {

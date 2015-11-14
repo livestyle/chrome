@@ -3,7 +3,7 @@
 	color: #fff;
 	flex-grow: 0;
 	flex-shrink: 0;
-	z-index: 2;
+	z-index: 3;
 	position: relative;
 	transition: background-color 0.25s;
 }

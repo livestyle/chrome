@@ -12,10 +12,12 @@ var updateDirections = ['both', 'to browser', 'to editor'];
 var currentModel = null;
 
 function sendMessage(name, data) {
-	chrome.runtime.sendMessage({
-		name: name,
-		data: data
-	});
+	if (typeof chrome !== 'undefined') {
+		chrome.runtime.sendMessage({
+			name: name,
+			data: data
+		});
+	}
 }
 
 function populateSelect(name, options, selected) {
@@ -93,7 +95,9 @@ function toggleEnabledState() {
 }
 
 function renderEnabledState() {
-	$('#fld-enabled').checked = !!currentModel.get('enabled');
+	var enabled = !!currentModel.get('enabled');
+	$('.popup').classList.toggle('popup_enabled', enabled);
+	$('#fld-enabled').checked = enabled;
 }
 
 /**
@@ -148,44 +152,41 @@ function resetModel() {
 	currentModel = null;
 }
 
-chrome.runtime.onMessage.addListener(function(message) {
-	if (message && message.name === 'log-updated') {
-		showErrorLogLink();
-	}
-});
-
-// bind model with view
-chrome.runtime.getBackgroundPage(function(bg) {
-	var LiveStyle = bg.LiveStyle;
-
-	function updateActivityState() {
-		$('.popup').classList.toggle('status__no-editor', !LiveStyle.isActive());
-	}
-
-	// keep track of errors
-	LiveStyle.errorStateTracker.on('change:error', toggleErrorStateMessage);
-	toggleErrorStateMessage(LiveStyle.errorStateTracker.get('error'));
-
-	if (LiveStyle.hasErrors()) {
-		showErrorLogLink();
-	}
-
-	updateActivityState();
-	setup();
-	LiveStyle.updateIconState();
-	LiveStyle.editorController.on('change:active', updateActivityState);
-	LiveStyle.getCurrentModel(function(model, tab) {
-		setupModel(model);
-		setupRemoteView(model, $('.rv'));
-
-		// if (/^file:/.test(model.get('url'))) {
-		// 	$('.popup').classList.toggle('status__file-protocol', !LiveStyle.hasOpenedDevTools(tab.id));
-		// }
-
-		window.addEventListener('unload', function() {
-			resetModel();
-			LiveStyle.editorController.off('change:active', updateActivityState);
-			LiveStyle.errorStateTracker.off('change:error', toggleErrorStateMessage);
-		}, false);
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+	chrome.runtime.onMessage.addListener(function(message) {
+		if (message && message.name === 'log-updated') {
+			showErrorLogLink();
+		}
 	});
-});
+
+	// bind model with view
+	chrome.runtime.getBackgroundPage(function(bg) {
+		var LiveStyle = bg.LiveStyle;
+		var updateActivityState = () => {
+			$('.popup').classList.toggle('status__no-editor', !LiveStyle.isActive());
+		};
+
+		// keep track of errors
+		LiveStyle.errorStateTracker.on('change:error', toggleErrorStateMessage);
+		toggleErrorStateMessage(LiveStyle.errorStateTracker.get('error'));
+
+		if (LiveStyle.hasErrors()) {
+			showErrorLogLink();
+		}
+
+		updateActivityState();
+		setup();
+		LiveStyle.updateIconState();
+		LiveStyle.editorController.on('change:active', updateActivityState);
+		LiveStyle.getCurrentModel(function(model, tab) {
+			setupModel(model);
+			setupRemoteView(model, $('.rv'));
+
+			window.addEventListener('unload', function() {
+				resetModel();
+				LiveStyle.editorController.off('change:active', updateActivityState);
+				LiveStyle.errorStateTracker.off('change:error', toggleErrorStateMessage);
+			}, false);
+		});
+	});
+}
