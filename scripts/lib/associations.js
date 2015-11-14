@@ -31,7 +31,7 @@ export default function(browserFiles, editorFiles, assocs) {
 }
 
 function pathLookup(path) {
-	return path.split('/').filter(Boolean);
+	return path.split('?')[0].split('/').filter(Boolean);
 }
 
 function guessAssoc(list, file) {
@@ -47,7 +47,15 @@ function guessAssoc(list, file) {
 	for (var i = 0, il = fileLookup.length; i < il; i++) {
 		prevCandidates = candidates;
 		candidates = candidates.filter(function(candidate) {
-			return fileLookup[i] == candidate.lookup.pop();
+			var part = candidate.lookup.pop();
+			if (fileLookup[i] === part) {
+				return true;
+			}
+
+			if (i === 0) {
+				// comparing file names: also try names without extension
+				return cleanFileName(fileLookup[i]) === cleanFileName(part);
+			}
 		});
 
 		if (candidates.length === 1) {
@@ -63,4 +71,8 @@ function guessAssoc(list, file) {
 	if (candidates && candidates.length) {
 		return candidates[0].path;
 	}
+}
+
+function cleanFileName(file) {
+	return file.replace(/\.\w+$/, '');
 }

@@ -63,6 +63,8 @@ describe('LiveStyle Model', function() {
 			'/assets/css/file2.css', 
 			'/assets/css/file3.css',
 			'/assets/css/file4.css',
+			'/assets/css/file5.css',
+			'/assets/css/file6.css?v=123'
 		]);
 
 		model.set('editorFiles', [
@@ -70,6 +72,8 @@ describe('LiveStyle Model', function() {
 
 			'/files/css2/file2.css',
 			'/files/css3/file2.css',
+			'/files/css3/file5.less',
+			'/files/css3/file6.scss',
 
 			'/assets/css/foo.css'
 		]);
@@ -80,6 +84,12 @@ describe('LiveStyle Model', function() {
 
 		// strict guessing
 		assert.equal(assocs['/assets/css/file1.css'], '/assets/css/file1.css');
+
+		// semi-strict guessing (match by extension)
+		assert.equal(assocs['/assets/css/file5.css'], '/files/css3/file5.less');
+
+		// semi-strict guessing (remove query sting)
+		assert.equal(assocs['/assets/css/file6.css?v=123'], '/files/css3/file6.scss');
 
 		// fuzzy guessing
 		assert.equal(assocs['/assets/css/file2.css'], '/files/css2/file2.css');
