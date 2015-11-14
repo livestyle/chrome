@@ -183,6 +183,7 @@ class Resource {
 				// current update to not revert CSSOM updates and apply pending
 				// patches since last patch() request
 				this._patching = false;
+				this.content = content;
 				return this.patch();
 			}
 
