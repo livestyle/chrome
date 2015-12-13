@@ -69,7 +69,7 @@ export function reset() {
 function initStylesheetLoader() {
 	return new Promise(function(resolve, reject) {
 		chrome.devtools.inspectedWindow.getResources(function(resources) {
-			resources = resources.filter(res => isStylesheetURL(res.url));
+			resources = resources.filter(isStylesheet);
 			stylesheets = {};
 
 			var next = function() {
@@ -87,6 +87,10 @@ function initStylesheetLoader() {
 			next();
 		});
 	});
+}
+
+function isStylesheet(res) {
+	return res.type ? res.type === 'stylesheet' : isStylesheetURL(res.url);
 }
 
 function isStylesheetURL(url) {
@@ -229,7 +233,7 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
 });
 
 chrome.devtools.inspectedWindow.onResourceAdded.addListener(function(res) {
-	if (isStylesheetURL(res.url) && !stylesheets[res.url]) {
+	if (isStylesheet(res) && !stylesheets[res.url]) {
 		res.getContent(function(content) {
 			stylesheets[res.url] = new Resource(res, content);
 		});

@@ -203,11 +203,17 @@ function updateModel(tab, model, callback) {
 				callback(model);
 			};
 
-			if (devtoolsController.isOpenedForTab(tab.id)) {
-				devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
-			} else {
-				chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
-			}
+			// XXX currently, if source maps are enabled, a stylesheet list from 
+			// DevTools returns generates source map stylesheets as well, which
+			// introduces a number of nasty issues. There’s no valid way
+			// to filter those source maps stylesheets.
+			// As a workaround, return list os stylesheets available from CSSOM
+			// if (devtoolsController.isOpenedForTab(tab.id)) {
+			// 	devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
+			// } else {
+			// 	chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
+			// }
+			chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
 		});
 	});
 }
