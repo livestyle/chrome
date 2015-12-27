@@ -50,4 +50,6 @@ resources
 .on('log', strings => log(...strings))
 .on('update', (url, content) => send('resource-updated', {url, content}));
 
+chrome.devtools.panels.create('LiveStyle', 'icon/icon48.png', 'deprecated.html');
+
 log('Connected');
