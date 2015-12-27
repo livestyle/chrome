@@ -1,6 +1,7 @@
 {
 	"name": "Emmet LiveStyle",
 	"description": "LiveStyle — the first bi-directional real-time edit tool for CSS, LESS and SCSS.",
+	"short_name": "LiveStyle",
 	"version": "1.0.0",
 	"permissions": [
 		"tabs",
