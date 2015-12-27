@@ -58,7 +58,7 @@ function applyPatches(url, patches) {
 }
 
 function userStylesheets() {
-	return $$('link[rel="stylesheet"]').filter(link => !!link.dataset.livestyleId);
+	return $$('link[rel="stylesheet"]').filter(link => !!lsId(link));
 }
 
 /**
@@ -99,7 +99,7 @@ function createUserStylesheet(content) {
 function removeUserStylesheet(url) {
 	console.log('Removing stylesheet', url);
 	userStylesheets().forEach(function(link) {
-		if (link.href === url || link.dataset.livestyleId == url) {
+		if (link.href === url || lsId(link) == url) {
 			removeLink(link);
 		}
 	});
@@ -126,10 +126,11 @@ function validateUserStylesheets(url) {
 	// remove redundant
 	var exists = {};
 	cur.forEach(function(item) {
-		if (!~url.indexOf(item.dataset.livestyleId)) {
+		var id = lsId(item);
+		if (!~url.indexOf(id)) {
 			removeLink(item);
 		} else {
-			exists[item.dataset.livestyleId] = item.href;
+			exists[id] = item.href;
 		}
 	});
 
@@ -155,7 +156,7 @@ function findStyleSheets(ctx, out) {
 	for (var i = 0, il = ctx.length, url, item; i < il; i++) {
 		item = ctx[i];
 		url = item.href;
-		if (~out.indexOf(url) || (item.ownerNode && item.ownerNode.dataset.livestyleId)) {
+		if (~out.indexOf(url) || lsId(item.ownerNode)) {
 			// stylesheet already added or it’s a user stylesheet
 			continue;
 		}
@@ -175,6 +176,11 @@ function findStyleSheets(ctx, out) {
 	}
 	
 	return out;
+}
+
+function lsId(node) {
+	var dataset = (node && node.dataset) || {};
+	return dataset.livestyleId;
 }
 
 // disable in-page LiveStyle extension
