@@ -207,13 +207,17 @@ function updateModel(tab, model, callback) {
 			// DevTools returns generates source map stylesheets as well, which
 			// introduces a number of nasty issues. There’s no valid way
 			// to filter those source maps stylesheets.
-			// As a workaround, return list os stylesheets available from CSSOM
-			// if (devtoolsController.isOpenedForTab(tab.id)) {
-			// 	devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
-			// } else {
-			// 	chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
-			// }
-			chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
+			// As a workaround, return list of stylesheets available from CSSOM
+
+			// XXX lots of people uses LiveStyle with local files (e.g. 
+			// file:// protocol). With CSSOM only they can’t see @import 
+			// stylesheets. For now, allow DevTools stylesheet fetching
+			// for file:// origins
+			if (devtoolsController.isOpenedForTab(tab.id) && /^file:/.test(origin || '')) {
+				devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
+			} else {
+				chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
+			}
 		});
 	});
 }

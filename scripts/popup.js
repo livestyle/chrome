@@ -182,6 +182,9 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
 			setupModel(model);
 			setupRemoteView(model, $('.rv'));
 
+			var displayFileWarning = /^file:/.test(model.get('origin') || '') && !LiveStyle.hasOpenedDevTools(tab.id);
+			$('.message_file-proto').classList.toggle('hidden', !displayFileWarning);
+
 			window.addEventListener('unload', function() {
 				resetModel();
 				LiveStyle.editorController.off('change:active', updateActivityState);

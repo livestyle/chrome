@@ -16,6 +16,11 @@ a {
 	transition: color 0.2s;
 }
 
+ol {
+	margin-left: 0;
+	padding-left: 0;
+}
+
 .popup {
 	background: #fff;
 	font-size: 14px;
@@ -253,6 +258,11 @@ a {
 
 .livestyle-homepage-link:hover {
 	color: #2980b9;
+}
+
+.message_file-proto {
+	color: #95a5a6;
+	font-size: 0.85em;
 }
 
 .hidden {

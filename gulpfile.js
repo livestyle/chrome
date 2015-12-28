@@ -4,6 +4,7 @@ var zip = require('gulp-zip');
 var js = require('js-bundler');
 var notifier = require('node-notifier');
 var through = require('through2');
+var pkg = require('./package.json');
 
 var production = process.argv.indexOf('--production') !== -1;
 var dest = './out';
@@ -41,7 +42,15 @@ gulp.task('js', function() {
 
 gulp.task('assets', function() {
 	return gulp.src(src.assets, src.options)
-		.pipe(gulp.dest(dest));
+	.pipe(through.obj(function(file, enc, next) {
+		if (path.basename(file.path) === 'manifest.json') {
+			var data = JSON.parse(file.contents.toString());
+			data.version = pkg.version;
+			file.contents = new Buffer(JSON.stringify(data), null, '\t');
+		}
+		next(null, file);
+	}))
+	.pipe(gulp.dest(dest));
 });
 
 gulp.task('pack', ['build'], function() {
