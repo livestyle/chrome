@@ -90,7 +90,9 @@ function initStylesheetLoader() {
 }
 
 function isStylesheet(res) {
-	return res.type ? res.type === 'stylesheet' : isStylesheetURL(res.url);
+	return res.type 
+		? (res.type === 'stylesheet' && res.url)
+		: isStylesheetURL(res.url);
 }
 
 function isStylesheetURL(url) {

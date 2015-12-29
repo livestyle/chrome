@@ -31,6 +31,10 @@
 	display: block;
 }
 
-.status__file-protocol .global-message_file-protocol {
+.status__is-chrome.status__no-devtools .global-message_chrome-protocol {
 	display: block;
+}
+
+.status__is-chrome .add-file {
+	display: none;
 }

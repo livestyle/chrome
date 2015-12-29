@@ -30,7 +30,7 @@ port.onMessage.addListener(function(message) {
 			break;
 		case 'get-stylesheets':
 			resources.list(function(urls) {
-				send('stylesheets', urls);
+				send('stylesheets', urls.filter(Boolean));
 			});
 			break;
 		case 'get-stylesheet-content':

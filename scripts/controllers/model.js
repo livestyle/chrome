@@ -213,7 +213,7 @@ function updateModel(tab, model, callback) {
 			// file:// protocol). With CSSOM only they can’t see @import 
 			// stylesheets. For now, allow DevTools stylesheet fetching
 			// for file:// origins
-			if (devtoolsController.isOpenedForTab(tab.id) && /^file:/.test(origin || '')) {
+			if (shouldGetResourcesFromDevtools(tab)) {
 				devtoolsController.stylesheets(tab.id, saveBrowserStylesheets);
 			} else {
 				chrome.tabs.sendMessage(tab.id, {name: 'get-stylesheets'}, saveBrowserStylesheets);
@@ -228,6 +228,10 @@ function updateModelIfNeeded(tab, model, callback) {
 	}
 
 	callback(model);
+}
+
+function shouldGetResourcesFromDevtools(tab) {
+	return devtoolsController.isOpenedForTab(tab.id) && /^(file|chrome):/.test(tab.url || '');
 }
 
 /**
