@@ -184,7 +184,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
 
 			var displayFileWarning = /^file:/.test(model.get('origin') || '') && !LiveStyle.hasOpenedDevTools(tab.id);
 			$('.message_file-proto').classList.toggle('hidden', !displayFileWarning);
-			$('.popup').classList.toggle('status__is-chrome', /^chrome:/.test(tab.url));
+			$('.popup').classList.toggle('status__is-chrome', /^chrome/.test(tab.url));
 			$('.popup').classList.toggle('status__no-devtools', !LiveStyle.hasOpenedDevTools(tab.id));
 
 			window.addEventListener('unload', function() {

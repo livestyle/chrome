@@ -231,7 +231,7 @@ function updateModelIfNeeded(tab, model, callback) {
 }
 
 function shouldGetResourcesFromDevtools(tab) {
-	return devtoolsController.isOpenedForTab(tab.id) && /^(file|chrome):/.test(tab.url || '');
+	return devtoolsController.isOpenedForTab(tab.id) && /^(file|chrome|chrome\-extension):/.test(tab.url || '');
 }
 
 /**
