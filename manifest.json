@@ -23,7 +23,7 @@
 		"js": ["scripts/content-script.js"],
 		"run_at": "document_start"
     }],
-    "content_security_policy": "script-src 'self' 'unsafe-eval' https://ssl.google-analytics.com; object-src 'self'",
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://ssl.google-analytics.com https://www.google.com; object-src 'self'",
     "devtools_page": "./devtools.html",
 	"browser_action": {
 		"default_title": "LiveStyle Control Panel",

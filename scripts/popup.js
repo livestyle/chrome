@@ -7,13 +7,12 @@ import compactPaths from './helpers/compact-paths';
 import * as selectBox from './ui/select-box';
 import {$, $$, copy, closest, toDom} from './lib/utils';
 import setupRemoteView from './ui/remote-view';
+import trackEvent from './lib/tracker';
 
 var updateDirections = ['both', 'to browser', 'to editor'];
 var currentModel = null;
 
-window._gaq = window._gaq || [];
-_gaq.push(['_setAccount', 'UA-4523560-11']);
-_gaq.push(['_trackEvent', 'Popup', 'open']);
+trackEvent('Popup', 'open');
 
 function sendMessage(name, data) {
 	if (typeof chrome !== 'undefined') {

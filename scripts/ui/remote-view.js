@@ -3,6 +3,7 @@
  */
 import {$, $$, toDom} from '../lib/utils';
 import tween from '../lib/tween';
+import trackEvent from '../lib/tracker';
 
 var spinner = '<span class="rv-spinner"><i class="rv-spinner__item"></i><i class="rv-spinner__item"></i><i class="rv-spinner__item"></i></span>';
 
@@ -10,6 +11,10 @@ var messages = {
 	unavailable: message(
 		'Remote View is not available', 
 		'Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span class="rv-learn-more">Learn more</span>'
+	),
+	noOrigin: message(
+		'Remote View is not available', 
+		'Unable to get URL origin for current page. Please <a href="http://github.com/livestyle/issues/issues" target="_blank">report this issue</a> with URL of your page.'
 	),
 	connecting: message('Connecting ' + spinner),
 	noApp: message('No LiveStyle App', 'Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.'),
@@ -28,10 +33,16 @@ export default function(model, container) {
 	if (!/^(https?|file):$/.test(url.protocol)) {
 		container.classList.add('rv__unavailable');
 		notify(container, messages.unavailable);
-		return;
+		return trackEvent('RV Error', 'unavailable', url.protocol);
 	}
 
 	var origin = model.get('origin') || url.origin;
+	if (!origin) {
+		container.classList.add('rv__unavailable');
+		notify(container, messages.noOrigin);
+		return trackEvent('RV Error', 'no-origin', model.get('url'));
+	}
+
 	var localUrl = createLocalUrl(origin, model.get('url'));
 	var enabled = false;
 	var toggler = getToggler(container);
@@ -74,6 +85,7 @@ export default function(model, container) {
 					notify(container, errorMessage(resp));
 				} else {
 					notify(container, createSessionMessage(resp, localUrl));
+					trackEvent('RV', 'new-session', url.protocol);
 				}
 			});
 		} else {
