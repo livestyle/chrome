@@ -12,6 +12,7 @@ var ctx = canvas.getContext('2d');
 var images = {
 	disabled: image('./icon/ba-disabled.png'),
 	active:   image('./icon/ba-active.png'),
+	warning:  image('./icon/ba-warning.png'),
 	error1:   image('./icon/ba-error1.png'),
 	error2:   image('./icon/ba-error2.png')
 };

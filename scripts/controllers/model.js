@@ -190,16 +190,23 @@ function updateModel(tab, model, callback) {
 	p.then(origin => {
 		console.log('set model origin', origin);
 		model.set('origin', origin || '');
+		model.set('needsRefresh', false);
 
 		var user = model.get('userStylesheets');
 		userStylesheets.validate(tab.id, Object.keys(user), function(stylesheets) {
 			model.set('userStylesheets', stylesheets || user);
 			var saveBrowserStylesheets = function(stylesheets) {
-				// XXX this thing looks like a hack: user stylesheets
-				// are skipped from CSSOM but available in DevTools.
-				// Should be a better way of precise user stylesheet detection
-				stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
-				model.set('browserFiles', stylesheets);
+				if (!stylesheets && chrome.runtime.lastError) {
+					model.set('needsRefresh', true);
+					console.error('Error while fetching list of stylesheets:', chrome.runtime.lastError.message);
+					console.info('Maybe try refreshing the page?');
+				} else {
+					// XXX this thing looks like a hack: user stylesheets
+					// are skipped from CSSOM but available in DevTools.
+					// Should be a better way of precise user stylesheet detection
+					stylesheets = (stylesheets || []).filter(url => !/^blob:/.test(url));
+					model.set('browserFiles', stylesheets);
+				}
 				callback(model);
 			};
 

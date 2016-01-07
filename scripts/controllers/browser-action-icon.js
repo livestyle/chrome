@@ -32,6 +32,9 @@ function updateIconState(tab, model) {
 	}
 
 	var state = model.get('enabled') ? 'active' : 'disabled';
+	if (state === 'active' && model.get('needsRefresh')) {
+		state = 'warning';
+	}
 	icon.state(tab, state);
 }
 

@@ -27,7 +27,8 @@
 	color: #2a82b7;
 }
 
-.status__no-editor .global-message_no-editor {
+.status__no-editor .global-message_no-editor,
+.status__needs-refresh .global-message_extension-update {
 	display: block;
 }
 
