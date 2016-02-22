@@ -1,0 +1,27 @@
+{
+	"name": "LiveStyle 2",
+	"description": "New LiveStyle extension",
+	"version": "2.0.0",
+	"permissions": [
+		"tabs",
+		"storage",
+		"identity",
+		"http://*/*",
+		"https://*/*"
+	],
+	"icons": {
+		"16":  "icon/icon16.png",
+		"48":  "icon/icon48.png",
+		"128": "icon/icon128.png"
+	},
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"content_scripts": [{
+		"matches": ["http://*/*", "https://*/*", "file:///*"],
+		"js": ["content-script.js"],
+		"run_at": "document_start"
+    }],
+    "devtools_page": "./devtools.html",
+	"manifest_version": 2
+}
