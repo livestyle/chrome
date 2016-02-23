@@ -8,17 +8,8 @@ import {SESSION} from './action-names';
 
 export {dispatch, subscribe, subscribeDeepKey, getState, getStateValue};
 
-function syncSessions() {
-    var state = getState();
-    updateSessions(state.pages, state.sessions).then(sessions => {
-        if (sessions !== state.sessions) {
-            dispatch({
-                type: UPDATE_LIST,
-                sessions
-            });
-        }
-    });
-}
+// Sync initial sessions
+syncSessions();
 
 // When user updates page model, re-scan all sessions
 subscribe(syncSessions, 'pages');
@@ -64,6 +55,7 @@ subscribeDeepKey('pages', 'userMapping', (model, page) => {
     var editorFiles = getStateValue('editorFiles');
     Object.keys(sessions).forEach(tabId => {
         if (sessions[tabId].page === page) {
+            console.info('updated user mapping');
             dispatch({
                 type: SESSION.UPDATE_MAPPING,
                 tabId,
@@ -77,6 +69,7 @@ subscribeDeepKey('pages', 'userMapping', (model, page) => {
 subscribeDeepKey('sessions', 'autoMapping', (session, tabId) => {
     var page = getStateValue('pages')[session.page];
     if (page) {
+        console.info('updated auto mapping');
         dispatch({
             type: SESSION.UPDATE_MAPPING,
             tabId,
@@ -85,6 +78,9 @@ subscribeDeepKey('sessions', 'autoMapping', (session, tabId) => {
         });
     }
 });
+
+// sync sessions when pages are updated
+subscribe(syncSessions, 'pages');
 
 // subscribe to Chrome lifecycle events and keep store up-to-date
 chrome.tabs.onCreated.addListener(syncSessions);
@@ -97,3 +93,15 @@ devtools.on('list-update', () => {
     var sessions = getStateValue('sessions');
     Object.keys(sessions).forEach(tabId => dispatch(fetchDevtoolsStylesheets(tabId)));
 });
+
+function syncSessions() {
+    var state = getState();
+    updateSessions(state.pages, state.sessions).then(sessions => {
+        if (sessions !== state.sessions) {
+            dispatch({
+                type: SESSION.UPDATE_LIST,
+                sessions
+            });
+        }
+    });
+}

@@ -92,7 +92,7 @@ chrome.runtime.onConnect.addListener(port => {
         port.onMessage.addListener(onPortMessage);
         port.onDisconnect.addListener(onPortDisconnect);
         emitter.emit('connect', port);
-        console.log('devtools connected %d, total connection: %d', +tabId, ports.size);
+        console.log('devtools connected %s, total connection: %d', port.name, ports.size);
     }
 });
 

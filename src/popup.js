@@ -8,7 +8,7 @@ import Popup from './ui/components/popup';
 import {getState, subscribe, dispatch} from './ui/app/store';
 import {UI} from './ui/app/action-names';
 
-var popup = tr.render(Popup, getState());
+const popup = tr.render(Popup, getState());
 
 document.body.appendChild(popup.target);
 document.addEventListener('click', evt => dispatch({type: UI.RESET_ACTIVE_PICKER}));

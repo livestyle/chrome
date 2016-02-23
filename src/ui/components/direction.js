@@ -16,9 +16,7 @@ export default tr.component({
 
 function cycleUpdateDirection() {
 	var dir = this.dataset.direction || updateDirections[0];
-    console.log('cur direction', dir);
 	var next = (updateDirections.indexOf(dir) + 1) % updateDirections.length;
-    console.log('next direction', next, updateDirections[next]);
     dispatch({
         type: PAGE.UPDATE_DIRECTION,
         direction: updateDirections[next]

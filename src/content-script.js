@@ -4,6 +4,8 @@ import * as cssom from 'livestyle-cssom-patcher';
 import shadowCSS from './lib/shadow-css';
 import origin from './lib/origin';
 
+console.log('aaa');
+
 var pendingShadowCSSPatches = [];
 
 function $$(sel, context) {
@@ -186,13 +188,16 @@ function lsId(node) {
 // disable in-page LiveStyle extension
 document.documentElement.setAttribute('data-livestyle-extension', 'available');
 
+console.log('content script loaded');
+
 chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+	console.log('got message', message);
 	if (!message) {
 		return;
 	}
 
 	var data = message.data;
-	switch (message.name) {
+	switch (message.action) {
 		case 'apply-cssom-patch':
 			return applyPatches(data.stylesheetUrl, data.patches);
 		case 'create-user-stylesheet':
@@ -204,6 +209,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 			callback(validateUserStylesheets(data.url));
 			return true;
 		case 'get-stylesheets':
+			console.log('requested stylesteets');
+			console.log(findStyleSheets(document.styleSheets));
 			callback(findStyleSheets(document.styleSheets));
 			return true;
 		case 'get-origin':

@@ -4,53 +4,44 @@ import {combineReducers} from 'redux';
 import {MODEL, UI} from './action-names';
 import {PAGE} from '../../app/action-names';
 
-const isExtension = /^chrome/.test(window.location.href);
-export default combineReducers({enabled, model, ui});
-
+export default combineReducers({model, ui});
 
 function enabled(state=false, action) {
     if (action.type === PAGE.TOGGLE_ENABLED) {
-        if (!isExtension) {
-            state = !state;
-        } else {
-            dispatch(action);
-        }
+        state = !state;
     }
     return state;
 }
 
 function model(state={}, action) {
+    // since model is generated automatically from host store,
+    // most model actions will modify host store (see store.js), which in turn
+    // will dispatch updated popup model. But for local development we will
+    // modify local model
     switch (action.type) {
         case MODEL.UPDATE:
-            state = action.model;
-            break;
-        // since model is generated automatically from host store,
-        // most model actions should modify host store, which in turn will dispatch
-        // updated popup model. But for local developing we will modify popup
-        // model instead
+            return action.model;
+
+        case PAGE.TOGGLE_ENABLED:
+            return {
+                ...state,
+                enabled: state.enabled
+            };
+
         case PAGE.UPDATE_FILE_MAPPING:
-            if (!isExtension) {
-                state = {
-                    ...state,
-                    mapping: {
-                        ...state.mapping,
-                        [action.browser]: action.editor
-                    }
-                };
-            } else {
-                dispatch(action);
-            }
-            break;
+            return {
+                ...state,
+                mapping: {
+                    ...state.mapping,
+                    [action.browser]: action.editor
+                }
+            };
+
         case PAGE.UPDATE_DIRECTION:
-            if (!isExtension) {
-                state = {
-                    ...state,
-                    direction: action.direction
-                };
-            } else {
-                dispatch(action);
-            }
-            break;
+            return {
+                ...state,
+                direction: action.direction
+            };
     }
 
     return state;
@@ -75,8 +66,4 @@ function ui(state={}, action) {
     }
 
     return state;
-}
-
-function dispatch(data) {
-    chrome.runtime.sendMessage({action: 'dispatch', data});
 }

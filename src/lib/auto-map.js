@@ -5,9 +5,12 @@
 
 export default function(browserFiles=[], editorFiles=[]) {
     return browserFiles.reduce((out, file) => {
-        out[file] = autoMap(file, editorFiles);
+        var mapped = autoMap(file, editorFiles);
+        if (mapped) {
+            out[file] = mapped;
+        }
         return out;
-    });
+    }, []);
 };
 
 function autoMap(file, list) {

@@ -1,47 +1,21 @@
 'use strict';
-
-export function $(selector, context=document) {
-	return context.querySelector(selector);
-}
-
-export function $$(selector, context=document) {
-	return toArray(context.querySelectorAll(selector));
-}
-
-export function toArray(obj, ix=0) {
-	return Array.from(obj);
-}
-
-export function toDom(html) {
-	var div = document.createElement('div');
-	div.innerHTML = html;
-	var result = div.firstChild;
-	div.removeChild(result);
-	return result;
-}
-
-export function closest(elem, sel) {
-	while (elem && elem !== document) {
-		if (elem.matches && elem.matches(sel)) {
-			return elem;
-		}
-		elem = elem.parentNode;
-	}
-}
-
 /**
  * Returns copy of given array with unique values
  * @param {Array} arr
  * @return {Array}
  */
 export function unique(arr) {
-	var lookup = [];
-	return arr.filter(val => {
-		if (lookup.indexOf(val) < 0) {
-			lookup.push(val);
-			return true;
-		}
-	});
+	return arr.filter(_uniqueHandler);
+}
+const _uniqueHandler = (val, i, arr) => arr.indexOf(val) === i;
+
+/**
+ * Returns normalized URL that can be used as a key in store
+ * @param  {String} url
+ * @return {String}
+ */
+export function normalizeUrl(url) {
+    return url.replace(/#.*$/, '');
 }
 
 /**

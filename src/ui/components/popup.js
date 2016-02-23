@@ -10,7 +10,8 @@ import {dispatch} from '../app/store';
 export default tr.component({
     render(props) {
         var content;
-        if (props.enabled) {
+        var isEnabled = !!props.model.enabled;
+        if (isEnabled) {
             content = <div className="popup__content">
                 <FileList {...props.model} active={props.ui.activePicker} />
                 <button className="add-file">Add stylesheet</button>
@@ -19,17 +20,18 @@ export default tr.component({
 
         return <div className="popup">
     		<fieldset className="activity">
-                <Toggler name="enabled" checked={props.enabled} onClick={toggleEnabled} />
+                <Toggler name="enabled" checked={isEnabled} onClick={toggleEnabled} />
     			<label htmlFor="fld-enabled">Enable LiveStyle</label>
     			<em>for current page with
                     <Direction direction={props.model.direction} />
                 updates</em>
     		</fieldset>
             {content}
-    	</div>
+    	</div>;
     }
 });
 
-function toggleEnabled() {
+function toggleEnabled(evt) {
+    evt.preventDefault();
     dispatch({type: PAGE.TOGGLE_ENABLED});
 }

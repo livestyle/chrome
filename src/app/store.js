@@ -57,15 +57,16 @@ export function subscribeDeepKey(rootKey, innerKey, onChange) {
                         // invoke handler only if specified key was updated
                         let prevValue = cur ? cur[innerKey] : undefined;
                         let nextValue = next ? next[innerKey] : undefined;
+                        currentState = nextState;
                         if (prevValue !== nextValue) {
-                            onChange(next, key, newValue, prevValue, innerKey);
+                            onChange(next, key, nextValue, prevValue, innerKey);
                         }
                     } else {
+                        currentState = nextState;
                         onChange(next, key);
                     }
                 }
             });
-            currentState = nextState;
         }
     };
 
