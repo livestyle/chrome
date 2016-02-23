@@ -1,12 +1,39 @@
 'use strict';
 
-import {createStore} from 'redux';
+import {createStore, applyMiddleware} from 'redux';
 import reducers from './reducers';
+import createLogger from 'redux-logger';
 
-const store = createStore(reducers, {
+var initialState = {
+    enabled: false,
     model: {},
     ui: {}
-});
+};
+
+var enhancer = null;
+
+if (process.env.NODE_ENV !== 'production') {
+    initialState.enabled = true;
+    initialState.model = {
+        direction: 'both',
+        browserFiles: [
+            'http://localhost:9000/css/main.css',
+            'http://localhost:9000/css/module/form.css'
+        ],
+        editorFiles: [
+            '/home/projects/foo/css/main.css',
+            '/home/projects/foo/css/assets/form.css',
+            '/home/projects/foo/css/assets/inner.css',
+            '/home/projects/foo/css/assets/guides.css'
+        ],
+        mapping: {
+            'http://localhost:9000/css/module/form.css': '/home/projects/foo/css/assets/inner.css'
+        }
+    };
+    enhancer = applyMiddleware(createLogger());
+}
+
+const store = createStore(reducers, initialState, enhancer);
 
 export function dispatch(data) {
     return store.dispatch(data);

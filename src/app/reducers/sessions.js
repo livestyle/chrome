@@ -14,16 +14,17 @@ const actionToKey = {
 };
 
 export default function(state={}, action) {
+    let session = state[action.tabId];
+
     if (action.type in actionToKey) {
         let key = actionToKey[action.type];
-        let session = state[action.tabId];
         if (session && !deepequal(action.items, session[key])) {
             state = {
                 ...state,
                 [action.tabId]: {
                     ...session,
                     [key]: action.items
-                };
+                }
             };
             var allStylesheets = getStylesheets();
             if (!deepequal(allStylesheets, state.stylesheets)) {
@@ -37,7 +38,6 @@ export default function(state={}, action) {
                 break;
 
             case SESSION.UPDATE_AUTO_MAPPING:
-                let session = state[action.tabId];
                 if (session && !deepequal(session.autoMapping, action.mapping)) {
                     state = {
                         ...state,
@@ -51,7 +51,6 @@ export default function(state={}, action) {
 
             case SESSION.UPDATE_MAPPING:
                 // calculate final mapping based on user and auto mappings
-                let session = state[action.tabId];
                 if (session) {
                     // auto-mapping always contains valid references but user ones
                     // may contain references for files that not yet opened in

@@ -18,12 +18,18 @@ gulp.task('script', () => {
 	.pipe(dest())
 });
 
-gulp.task('assets', () => {
+gulp.task('assets', ['resources'], () => {
 	return src('./src/*.{html,json}').pipe(dest());
 });
 
+gulp.task('resources', () => {
+	return gulp.src('./{icon,styles}/**').pipe(dest());
+});
+
 gulp.task('watch', ['build'], () => {
-	gulp.watch([ './src/**/*.js'], ['script']);
+	gulp.watch(['./src/**/*.js'], ['script']);
+	gulp.watch(['./{icon,styles}/**'], ['resources']);
+	gulp.watch(['./src/*.{html,json}'], ['assets']);
 });
 
 gulp.task('build', ['script', 'assets']);

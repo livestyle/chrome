@@ -42,7 +42,7 @@ subscribeDeepKey('sessions', 'stylesheets', (session, tabId) => {
     dispatch({
         type: SESSION.UPDATE_AUTO_MAPPING,
         tabId,
-        mapping: autoMap(session.stylesheets, getStateValue('editorFiles'));
+        mapping: autoMap(session.stylesheets, getStateValue('editorFiles'))
     });
 });
 
@@ -52,7 +52,7 @@ subscribe(files => {
         dispatch({
             type: SESSION.UPDATE_AUTO_MAPPING,
             tabId,
-            mapping: autoMap(sessions[tabId].stylesheets, files);
+            mapping: autoMap(sessions[tabId].stylesheets, files)
         });
     });
 }, 'editorFiles');
@@ -95,5 +95,5 @@ chrome.tabs.onReplaced.addListener(syncSessions);
 // When a list of DevTools resources is updated, update sessions stylesheets
 devtools.on('list-update', () => {
     var sessions = getStateValue('sessions');
-    Object.keys(sessions).forEach(tabId => dispatch(fetchDevtoolsStylesheets(tabId)));    
+    Object.keys(sessions).forEach(tabId => dispatch(fetchDevtoolsStylesheets(tabId)));
 });

@@ -16,7 +16,7 @@ export default tr.component({
             <ul className={cl('-picker')}>
                 {items.map(item => {
                     return <li
-                        className={cl('-item', item.selected && '-item_selected')}
+                        className={cl('-picker-item', item.selected && '-picker-item_selected')}
                         data-value={item.value}
                         onclick={props.onPick}>
                             {item.label}

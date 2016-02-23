@@ -4,7 +4,7 @@ export const PAGE = {
     TOGGLE_ENABLED: 'Toggle page enabled state',
     LAST_USED: 'Updates last used data',
     UPDATE_FILE_MAPPING: 'Explicitly map editor file to browser one',
-    UPDATE_DIRECTION: 'Update chnges transmit direction',
+    UPDATE_DIRECTION: 'Update changes transmit direction',
 
     DIRECTION_BOTH: 'both',
     DIRECTION_TO_BROWSER: 'to browser',

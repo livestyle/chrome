@@ -119,17 +119,17 @@ ol {
 	margin-bottom: 0;
 }
 
-.file__browser {
+.file-list__browser {
 	margin-bottom: 4px;
 	padding-left: 10px;
 }
 
-.file-list__item_user .file__browser {
+.file-list__item_user .file-list__browser {
 	/* color: #e57c2c; */
 	font-weight: bold;
 }
 
-.file__remove {
+.file-list__remove {
 	display: inline-block;
 	margin-left: 10px;
 	color: #bf382e;
@@ -144,11 +144,11 @@ ol {
 	transition: opacity 0.2s;
 }
 
-.file__remove:hover {
+.file-list__remove:hover {
 	color: #e64b3f;
 }
 
-.file__remove:before {
+.file-list__remove:before {
 	font-family: 'Font Awesome';
 	content: '\f00d';
 	display: inline-block;
@@ -163,7 +163,7 @@ ol {
 	opacity: 1;
 }
 
-.file__browser-addon {
+.file-list__browser-addon {
 	display: block;
 	white-space: nowrap;
 	overflow: hidden;
