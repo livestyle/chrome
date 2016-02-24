@@ -25,13 +25,14 @@
     "babel-plugin-transform-object-rest-spread": "^6.3.13",
     "babel-plugin-transform-react-jsx": "^6.4.0",
     "babel-preset-es2015": "^6.3.13",
+    "babel-register": "^6.5.2",
     "babelify": "^7.2.0",
     "browserify": "^12.0.1",
     "gulp": "^3.9.0",
     "gulp-uglify": "^1.5.1",
     "gulp-zip": "^3.0.2",
-    "watchify": "^3.7.0",
-    "mocha": "^2.2.1"
+    "mocha": "^2.2.1",
+    "watchify": "^3.7.0"
   },
   "dependencies": {
     "deep-equal": "^1.0.1",
@@ -43,5 +44,8 @@
     "redux-logger": "^2.5.2",
     "redux-thunk": "^1.0.3",
     "tiny-react": "sergeche/tiny-react"
+  },
+  "babel": {
+    "presets": ["babel-preset-es2015"]
   }
 }
