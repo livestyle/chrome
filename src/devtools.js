@@ -7,7 +7,10 @@ const wnd = chrome.devtools.inspectedWindow;
 const tabId = wnd.tabId;
 const port = chrome.runtime.connect({name: `devtools:${tabId}`});
 
-sendStylesheetList();
+getStylesheets().then(items => {
+    sendStylesheetList(items);
+    requestUpdatedContent(items);
+});
 
 wnd.onResourceContentCommitted.addListener((res, content) => {
     if (isStylesheet(res)) {
@@ -16,15 +19,19 @@ wnd.onResourceContentCommitted.addListener((res, content) => {
 });
 
 wnd.onResourceAdded.addListener(res => {
-    isStylesheet(res) && sendStylesheetList();
+    if (isStylesheet(res)) {
+        getStylesheets().then(sendStylesheetList);
+        requestUpdatedContent(res);
+    }
 });
 
 port.onMessage.addListener(message => {
-    if (message.action === 'update-resource') {
+    var {action, data} = message;
+    if (action === 'update-resource') {
         getStylesheets().then(resources => {
             resources.some(res => {
-                if (res.url === message.data.url) {
-                    res.setContent(message.data.content, true, err => {
+                if (res.url === data.url) {
+                    res.setContent(data.content, true, err => {
                         // tell sender that resource was updated
                         var response = {url: res.url};
                         if (err) {
@@ -36,12 +43,36 @@ port.onMessage.addListener(message => {
                 }
             });
         });
+    } else if (action === 'get-resource-content') {
+        getStylesheets().then(resources => {
+            resources.some(res => {
+                if (res.url === data.url) {
+                    res.getContent(content => {
+                        sendMessage('get-resource-content', {
+                            url: res.url,
+                            content
+                        });
+                    });
+                    return true;
+                }
+            });
+        });
     }
 });
 
-function sendStylesheetList() {
-    getStylesheets()
-    .then(resources => sendMessage('resource-list', {items: resources.map(res => res.url)}));
+function sendStylesheetList(items) {
+    sendMessage('resource-list', {items: items.map(resourceUrl)});
+}
+
+function requestUpdatedContent(items) {
+    if (!Array.isArray(items)) {
+        items = [items];
+    }
+    sendMessage('request-updated-content', {items: items.map(resourceUrl)});
+}
+
+function resourceUrl(res) {
+    return res.url;
 }
 
 function sendMessage(action, data) {

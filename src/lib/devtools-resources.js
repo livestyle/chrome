@@ -97,12 +97,38 @@ chrome.runtime.onConnect.addListener(port => {
 });
 
 function onPortMessage(message, port) {
-    console.log('received message', message.action);
-    switch (message.action) {
+    var {action, data} = message;
+    console.log('%c[DevTools]%c received message %c%s %con port %s', 'background-color:#344a5d;color:#fff', '', 'font-weight:bold;', action, '', port.name);
+    switch (action) {
         case 'resource-list':
-            return updateStylesheetList(port, message.data.items);
+            return updateStylesheetList(port, data.items);
         case 'resource-updated':
-            return onResourceUpdate(port, message.data);
+            return onResourceUpdate(port, data);
+        case 'request-updated-content':
+            // A DevTools just requested the latest content for resources.
+            // Assuming that all newly connected DevTools instances request
+            // updated content, eventually *all* already connected DevTools
+            // will have the same content for same resources.
+            // So, in order to get the most recent resource content, simply fetch
+            // if from port that is not given `port`
+            return data.items.forEach(url => {
+                if (stylesheetMap.has(url)) {
+                    Array.from(stylesheetMap.get(url)).some(subport => {
+                        if (subport !== port) {
+                            return getResourceContent(subport, url)
+                            .then(content => {
+                                lock(url);
+                                return updateResource(port, url, content);
+                            })
+                            .then(() => unlock(url))
+                            .catch(error => {
+                                unlock(url);
+                                console.error('Error while sending most recent content to', url, error);
+                            });
+                        }
+                    })
+                }
+            });
     }
 }
 
@@ -162,6 +188,7 @@ function removeStylesheetPortMappings(port) {
  */
 function onResourceUpdate(port, res) {
     if (isLocked(res.url)) {
+        console.log('updated resource is locked, do nothing');
         return;
     }
 
@@ -183,42 +210,74 @@ function onResourceUpdate(port, res) {
  * @return {Promise}
  */
 function updateResource(port, url, content) {
-    const messageName = 'update-resource';
-    console.log('updating resource %s in %s', url, port.name);
-    return new Promise(resolve => {
-        var onComplete = data => {
-            resolve(data);
+    return request(port, 'update-resource', ['url'], {url, content})
+    .catch(error => ({error}));
+}
+
+/**
+ * Fetches resource content for given URL from DevTools instance connected by `port`
+ * @param  {Port} port
+ * @param  {String} url
+ * @return {Promise}
+ */
+function getResourceContent(port, url) {
+    return request(port, 'get-resource-content', ['url'] , {url})
+    .then(resp => resp.content);
+}
+
+/**
+ * Generic request/response method: sends `messageName` message with `payload`
+ * data to given `port` and waits until `port` responds with the same message
+ * and content where values of `idKeys` equal to ones from `payload`
+ * @param  {Port} port
+ * @param  {String} messageName
+ * @param  {Array} idKeys
+ * @param  {Object} payload
+ * @return {Promise}
+ */
+function request(port, messageName, idKeys, payload) {
+    return new Promise((resolve, reject) => {
+        var onComplete = (err, data) => {
+            err ? reject(err) : resolve(data);
             port.onMessage.removeListener(onMessage);
             port.onDisconnect.removeListener(onDisconnect);
         };
         var onMessage = message => {
             // we send a `messageName` request to port and wait for the same massage
             // in response, which means transaction is complete
-            if (message.action === messageName && message.data.url === url) {
-                onComplete({success: true});
+            if (message.action === messageName) {
+                // make sure request and response data matches
+                let isValidResponse = idKeys.reduce((r, key) => r && message.data[key] === payload[key], true);
+                if (isValidResponse) {
+                    console.log('%c   ««« %c%s %c%s', 'color:red;font-weight:bold;font-size:1.2em', 'font-weight:bold;', messageName, 'color:gray;', port.name);
+                    onComplete(null, message.data);
+                }
             }
         };
         var onDisconnect = () => {
             var error = new Error('Port is disconnected');
             error.code = 'EPORTDISCONNECT';
-            onComplete({error});
+            onComplete(error);
         };
 
         port.onMessage.addListener(onMessage);
         port.onDisconnect.addListener(onDisconnect);
+
+        console.log('%c   »»» %c%s %c%s', 'color:red;font-weight:bold;font-size:1.2em', 'font-weight:bold;', messageName, 'color:gray;', port.name);
         port.postMessage({
             action: messageName,
-            data: {url, content}
+            data: payload
         });
 
         // for unexpected errors
         setTimeout(() => {
             var error = new Error('DevTools response timed out');
             error.code = 'EPORTTIMEOUT';
-            onComplete({error});
+            onComplete(error);
         }, 10000);
     });
 }
+
 
 function onListUpdate() {
     emitter.emit('list-update', Array.from(stylesheetMap.keys()));
