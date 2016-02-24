@@ -4,8 +4,6 @@ import * as cssom from 'livestyle-cssom-patcher';
 import shadowCSS from './lib/shadow-css';
 import origin from './lib/origin';
 
-console.log('aaa');
-
 var pendingShadowCSSPatches = [];
 
 function $$(sel, context) {
@@ -187,8 +185,6 @@ function lsId(node) {
 
 // disable in-page LiveStyle extension
 document.documentElement.setAttribute('data-livestyle-extension', 'available');
-
-console.log('content script loaded');
 
 chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 	console.log('got message', message);

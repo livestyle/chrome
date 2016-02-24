@@ -21,5 +21,9 @@ export const SESSION = {
 };
 
 export const EDITOR = {
-    SET_FILES: 'Update list of editor files'
+    SET_FILES: 'Update complete list of editor files',
+    CONNECT: 'Editor connected',
+    DISCONNECT: 'Editor disconnected',
+    CLEAR: 'Clear all connected editors',
+    UPDATE_FILE_LIST: 'Update opened file list in editor'
 };

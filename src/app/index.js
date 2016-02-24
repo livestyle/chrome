@@ -6,7 +6,7 @@ import * as devtools from '../lib/devtools-resources';
 import syncSessions from './sync-sessions';
 import updateBrowserIcon from './browser-icon';
 import updatePopups from './popup';
-import {SESSION} from './action-names';
+import {SESSION, EDITOR} from './action-names';
 
 export {dispatch, subscribe, subscribeDeepKey, getState, getStateValue};
 
@@ -53,7 +53,6 @@ subscribe(files => {
 
 // When user or LiveStyle updated file mappings, calculate final list
 subscribeDeepKey('pages', 'userMapping', (page, url) => {
-    // find all sessions for updated page
     var sessions = getStateValue('sessions');
     var editorFiles = getStateValue('editorFiles');
     Object.keys(sessions).forEach(tabId => {
@@ -69,6 +68,15 @@ subscribeDeepKey('sessions', 'autoMapping', (session, tabId) => {
         updateMapping(tabId, page.userMapping, session.stylesheets, getStateValue('editorFiles'));
     }
 });
+
+// Update aggregated list of editor files when connected editor updates
+subscribe(editors => {
+    var allFiles = Object.keys(editors).reduce((out, id) => out.concat(editors[id].files), []);
+    dispatch({
+        type: EDITOR.SET_FILES,
+        files: Array.from(new Set(allFiles))
+    });
+}, 'editors');
 
 // When a list of DevTools resources is updated, update sessions stylesheets
 devtools.on('list-update', () => Object.keys(getStateValue('sessions')).forEach(fetchDevtoolsStylesheets));

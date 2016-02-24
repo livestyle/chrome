@@ -19,6 +19,16 @@ export function normalizeUrl(url) {
 }
 
 /**
+ * Returns key from given object that contains given `value`
+ * @param  {Object} obj
+ * @param  {any} value
+ * @return {String}
+ */
+export function keyForValue(obj, value) {
+    return Object.keys(obj).reduce((out, key) => obj[key] === value ? key : out, null);
+}
+
+/**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
  * N milliseconds. If `immediate` is passed, trigger the function on the
@@ -78,13 +88,13 @@ export function stringifyPath(nodePath) {
  * @type {String}
  */
 export function stringifyPatch(patch) {
-	var str = this.stringifyPath(patch.path) + ' {\n' +
+	var str = stringifyPath(patch.path) + ' {\n' +
 		patch.update.map(prop => `  ${prop.name}: ${prop.value};\n`).join('') +
 		patch.remove.map(prop => `  /* ${prop.name}: ${prop.value}; */\n`).join('') +
 		'}';
 
 	if (patch.action === 'remove') {
-		str = '/* remove: ' + this.stringifyPath(patch.path) + ' */';
+		str = '/* remove: ' + stringifyPath(patch.path) + ' */';
 	}
 
 	if (patch.hints && patch.hints.length) {
@@ -92,11 +102,11 @@ export function stringifyPatch(patch) {
 		var self = this;
 
 		var before = (hint.before || []).map(function(p) {
-			return self.stringifyPath([p]);
+			return stringifyPath([p]);
 		}).join(' / ');
 
 		var after = (hint.after || []).map(function(p) {
-			return self.stringifyPath([p]);
+			return stringifyPath([p]);
 		}).join(' / ');
 
 		if (before) {

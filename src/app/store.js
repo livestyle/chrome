@@ -7,7 +7,7 @@ import reducers from './reducers';
 
 var middlewares = [thunk];
 if (process.env.NODE_ENV !== 'production') {
-    middlewares.push(createLogger());
+    middlewares.push(createLogger({collapsed: true}));
 }
 
 // @see store-example.js with model reference

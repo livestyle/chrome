@@ -18,7 +18,6 @@ export default function(state) {
 }
 
 chrome.runtime.onConnect.addListener((port, sender) => {
-    console.log('port connected', port, sender);
     if (port.name === 'popup') {
         // assign current tab id to explicitly identify session
         chrome.tabs.query({
