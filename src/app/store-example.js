@@ -49,7 +49,14 @@ export default const = {
             // Browser-to-editor file mappings “guessed” by LiveStyle. Will be
             // used if there’s no user mapping for given browser file or
             // user-mapped editor file is not yet opened in editor
-            autoMapping: {}
+            autoMapping: {},
+
+            // List of resource patches applied to given session. Mostly used by
+            // DevTools: session accumulates all incoming patches in this map
+            // (key is resource URI, value are patches) and DevTools,
+            // when connected or synchronized, will use these patches to update
+            // resources accordingly and then remove applied patches
+            patches: new Map()
         }
     },
 

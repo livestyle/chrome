@@ -7,8 +7,9 @@ import EventEmitter from 'eventemitter3';
 
 const ports = new Map();
 const stylesheetMap = new Map();
-const locks = new Set();
+const locks = new Map();
 const emitter = new EventEmitter();
+const ALL_PORTS = 'all';
 
 export function on(...args) {
     return emitter.on(...args);
@@ -23,11 +24,23 @@ export function off(...args) {
 }
 
 /**
+ * Check if DevTools is available for given tab id
+ * @param  {Number}  tabId
+ * @return {Boolean}
+ */
+export function isConnected(tabId) {
+    return !!findPort(tabId);
+}
+
+/**
  * Check if given resource is locked for update transaction
  * @param  {String} url
  */
-export function isLocked(url) {
-    return locks.has(url);
+export function isLocked(url, port=ALL_PORTS) {
+    if (typeof port === 'number') {
+        port = findPort(port);
+    }
+    return locks.has(url) && locks.get(url).has(port);
 }
 
 /**
@@ -40,25 +53,42 @@ export function has(url) {
 }
 
 /**
- * Sets `content` of resource with given URL in all connected DevTools.
- * Returns Promise which is resolved when resource in all connected DevTools.
+ * Sets content of resource with given URL in `tabId DevTools instance.
+ * Returns Promise which is resolved when resource is updated.
+ * @param  {Number} tabId
  * @param  {String} url
  * @param  {String} content
  * @return {Promise}
  */
-export function update(url, content) {
-    if (!has(url)) {
-        // no such resource in connected DevTools, abort
-        return Promise.resolve();
+export function update(tabId, url, content) {
+    var port = findPort(tabId);
+    if (!port) {
+        return errorNoDevTools(tabId);
     }
 
-    lock(url);
-    var ports = Array.from(stylesheetMap.get(url));
-    return Promise.all(ports.map(port => updateResource(port, url, content)))
-    .then(values => {
-        unlock(url);
-        console.log('all devtools instances are updated', url);
+    lock(url, port);
+    return request(port, 'update-resource', ['url'], {url, content})
+    .then(() => unlock(url, port))
+    .catch(err => {
+        unlock(url, port);
+        return Promise.reject(err);
     });
+}
+
+/**
+ * Fetches content of resource with given URL from `tabId` DevTools instance
+ * @param  {Number} tabId
+ * @param  {String} url
+ * @return {Promise}
+ */
+export function getContent(tabId, url) {
+    var port = findPort(tabId);
+    if (!port) {
+        return errorNoDevTools(tabId);
+    }
+
+    return request(port, 'get-resource-content', ['url'] , {url})
+    .then(resp => resp.content);
 }
 
 /**
@@ -67,13 +97,7 @@ export function update(url, content) {
  * @return {Array}
  */
 export function stylesheets(tabId) {
-    var port;
-    ports.forEach((value, key) => {
-        if (value === tabId) {
-            port = key;
-        }
-    });
-
+    var port = findPort(tabId);
     if (port) {
         return Array.from(stylesheetMap.entries())
         .reduce((out, [url, portSet]) => {
@@ -88,10 +112,11 @@ export function stylesheets(tabId) {
 chrome.runtime.onConnect.addListener(port => {
     var [name, tabId] = port.name.split(':');
     if (name === 'devtools') {
-        ports.set(port, +tabId);
+        port.tabId = +tabId;
+        ports.set(port, port.tabId);
         port.onMessage.addListener(onPortMessage);
         port.onDisconnect.addListener(onPortDisconnect);
-        emitter.emit('connect', port);
+        emitter.emit('connect', port, port.tabId);
         console.log('devtools connected %s, total connection: %d', port.name, ports.size);
     }
 });
@@ -104,31 +129,6 @@ function onPortMessage(message, port) {
             return updateStylesheetList(port, data.items);
         case 'resource-updated':
             return onResourceUpdate(port, data);
-        case 'request-updated-content':
-            // A DevTools just requested the latest content for resources.
-            // Assuming that all newly connected DevTools instances request
-            // updated content, eventually *all* already connected DevTools
-            // will have the same content for same resources.
-            // So, in order to get the most recent resource content, simply fetch
-            // if from port that is not given `port`
-            return data.items.forEach(url => {
-                if (stylesheetMap.has(url)) {
-                    Array.from(stylesheetMap.get(url)).some(subport => {
-                        if (subport !== port) {
-                            return getResourceContent(subport, url)
-                            .then(content => {
-                                lock(url);
-                                return updateResource(port, url, content);
-                            })
-                            .then(() => unlock(url))
-                            .catch(error => {
-                                unlock(url);
-                                console.error('Error while sending most recent content to', url, error);
-                            });
-                        }
-                    })
-                }
-            });
     }
 }
 
@@ -187,7 +187,7 @@ function removeStylesheetPortMappings(port) {
  * @param  {Object} res  Resource descriptor
  */
 function onResourceUpdate(port, res) {
-    if (isLocked(res.url)) {
+    if (isLocked(res.url, port)) {
         console.log('updated resource is locked, do nothing');
         return;
     }
@@ -197,32 +197,7 @@ function onResourceUpdate(port, res) {
     // (required for Re:view)
     // TODO check if Re:view enabled and filter port if disabled?
     emitter.emit('update', res.url, res.content);
-    update(res.url, res.content);
-}
-
-/**
- * Updates content of resource for given URL in connected DevTools instance,
- * identified by `port` connection. Returns a Promise that resolved
- * when resource is fully updated
- * @param  {Port} port
- * @param  {String} url
- * @param  {String} content
- * @return {Promise}
- */
-function updateResource(port, url, content) {
-    return request(port, 'update-resource', ['url'], {url, content})
-    .catch(error => ({error}));
-}
-
-/**
- * Fetches resource content for given URL from DevTools instance connected by `port`
- * @param  {Port} port
- * @param  {String} url
- * @return {Promise}
- */
-function getResourceContent(port, url) {
-    return request(port, 'get-resource-content', ['url'] , {url})
-    .then(resp => resp.content);
+    update(port.tabId, res.url, res.content);
 }
 
 /**
@@ -278,7 +253,6 @@ function request(port, messageName, idKeys, payload) {
     });
 }
 
-
 function onListUpdate() {
     emitter.emit('list-update', Array.from(stylesheetMap.keys()));
 }
@@ -289,16 +263,47 @@ function onListUpdate() {
  * @param  {String} url
  * @return
  */
-function lock(url) {
+function lock(url, port=ALL_PORTS) {
     console.log('locking', url);
-    locks.add(url);
+    if (!locks.has(url)) {
+        locks.set(url, new Set([port]));
+    } else {
+        locks.get(url).add(port);
+    }
 }
 
 /**
  * Removes resource lock for given URL
  * @param  {String} url
  */
-function unlock(url) {
+function unlock(url, port=ALL_PORTS) {
     console.log('unlocking', url);
-    locks.delete(url);
+    if (locks.has(url)) {
+        let value = locks.get(url);
+        value.delete(port);
+        if (!value.size) {
+            locks.delete(url);
+        }
+    }
+}
+
+/**
+ * Find port for given tab ID
+ * @param  {Number} tabId
+ * @return {Port}
+ */
+function findPort(tabId) {
+    var port;
+    ports.forEach((value, key) => {
+        if (value === tabId) {
+            port = key;
+        }
+    });
+    return port;
+}
+
+function errorNoDevTools(tabId) {
+    let err = new Error('No connected DevTools for tab ' + tabId);
+    err.code = 'ENODEVTOOLS';
+    return Promise.reject(err);
 }

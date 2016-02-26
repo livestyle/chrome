@@ -35,6 +35,7 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
+    "condense-patches": "livestyle/condense-patches",
     "deep-equal": "^1.0.1",
     "eventemitter3": "^1.1.1",
     "livestyle-client": "livestyle/client",
@@ -46,6 +47,8 @@
     "tiny-react": "sergeche/tiny-react"
   },
   "babel": {
-    "presets": ["babel-preset-es2015"]
+    "presets": [
+      "babel-preset-es2015"
+    ]
   }
 }

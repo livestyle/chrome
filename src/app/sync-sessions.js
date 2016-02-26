@@ -61,7 +61,8 @@ function updateSessions(tabs, pages, sessions) {
                 cssomStylesheets: null,
                 devtoolsStylesheets: null,
                 mapping: {},
-                autoMapping: {}
+                autoMapping: {},
+                patches: new Map()
             };
         });
     }

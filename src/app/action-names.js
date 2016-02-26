@@ -17,7 +17,9 @@ export const SESSION = {
     UPDATE_STYLESHEETS: 'Update browser stylesheets list',
     UPDATE_AUTO_MAPPING: 'Update browser-to-editor file auto mappings',
     UPDATE_MAPPING: 'Update browser-to-editor file mappings',
-    UPDATE_LIST: 'Update sessions list'
+    UPDATE_LIST: 'Update sessions list',
+    SAVE_RESOURCE_PATCHES: 'Save incoming resource patches',
+    RESET_RESOURCE_PATCHES: 'Reset saved resource patches',
 };
 
 export const EDITOR = {

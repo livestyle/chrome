@@ -5,70 +5,48 @@
 'use strict';
 const wnd = chrome.devtools.inspectedWindow;
 const tabId = wnd.tabId;
-const port = chrome.runtime.connect({name: `devtools:${tabId}`});
+var port;
 
-getStylesheets().then(items => {
-    sendStylesheetList(items);
-    requestUpdatedContent(items);
-});
+if (tabId) {
+    // create connection only if there’s valid inspected tab id
+    // (it will be undefined for abckground pages, for example)
+    port = chrome.runtime.connect({name: `devtools:${tabId}`});
+    getStylesheets().then(sendStylesheetList);
 
-wnd.onResourceContentCommitted.addListener((res, content) => {
+    wnd.onResourceContentCommitted.addListener(onResourceCommitted);
+    wnd.onResourceAdded.addListener(onResourceAdded);
+    port.onMessage.addListener(onPortMessage);
+}
+
+function onPortMessage(message) {
+    var {action, data} = message;
+    if (action === 'update-resource') {
+        getStylesheet(data.url)
+        .then(res => setContent(res, data.content, true))
+        .then(content => sendMessage(action, {url: data.url}))
+        .catch(error => sendMessage(action, {url: data.url, error}));
+    } else if (action === 'get-resource-content') {
+        getStylesheet(data.url)
+        .then(getContent)
+        .then(content => sendMessage(action, {url: data.url, content}))
+        .catch(error => sendMessage(action, {url: data.url, error}));
+    }
+}
+
+function onResourceAdded(res) {
+    if (isStylesheet(res)) {
+        getStylesheets().then(sendStylesheetList);
+    }
+}
+
+function onResourceCommitted(res, content) {
     if (isStylesheet(res)) {
         sendMessage('resource-updated', {url: res.url, content});
     }
-});
-
-wnd.onResourceAdded.addListener(res => {
-    if (isStylesheet(res)) {
-        getStylesheets().then(sendStylesheetList);
-        requestUpdatedContent(res);
-    }
-});
-
-port.onMessage.addListener(message => {
-    var {action, data} = message;
-    if (action === 'update-resource') {
-        getStylesheets().then(resources => {
-            resources.some(res => {
-                if (res.url === data.url) {
-                    res.setContent(data.content, true, err => {
-                        // tell sender that resource was updated
-                        var response = {url: res.url};
-                        if (err) {
-                            response.error = err;
-                        }
-                        sendMessage('update-resource', response);
-                    });
-                    return true;
-                }
-            });
-        });
-    } else if (action === 'get-resource-content') {
-        getStylesheets().then(resources => {
-            resources.some(res => {
-                if (res.url === data.url) {
-                    res.getContent(content => {
-                        sendMessage('get-resource-content', {
-                            url: res.url,
-                            content
-                        });
-                    });
-                    return true;
-                }
-            });
-        });
-    }
-});
+}
 
 function sendStylesheetList(items) {
     sendMessage('resource-list', {items: items.map(resourceUrl)});
-}
-
-function requestUpdatedContent(items) {
-    if (!Array.isArray(items)) {
-        items = [items];
-    }
-    sendMessage('request-updated-content', {items: items.map(resourceUrl)});
 }
 
 function resourceUrl(res) {
@@ -79,6 +57,20 @@ function sendMessage(action, data) {
     port.postMessage({action, data});
 }
 
+function getStylesheet(url) {
+    return getStylesheets().then(resources => {
+        var res = resources.filter(res => res.url === url)[0];
+        if (res) {
+            return res;
+        }
+
+        let err = new Error('Resource not found');
+        err.code = 'ENOTFOUND';
+        err.url = url;
+        return Promise.reject(err);
+    });
+}
+
 function getStylesheets() {
     return new Promise(resolve => {
         wnd.getResources(resources => resolve(resources.filter(isStylesheet)));
@@ -87,4 +79,14 @@ function getStylesheets() {
 
 function isStylesheet(res) {
 	return res.url && res.type === 'stylesheet';
+}
+
+function getContent(res) {
+    return new Promise(resolve => res.getContent(resolve));
+}
+
+function setContent(res, content, commit=false) {
+    return new Promise((resolve, reject) => {
+        res.setContent(content, commit, err => err ? reject(err) : resolve(content));
+    });
 }

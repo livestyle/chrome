@@ -1,10 +1,12 @@
 'use strict';
 import client from 'livestyle-client';
 import patcher from 'livestyle-patcher';
+import {stringifyPatch} from './lib/utils';
+import * as devtools from './lib/devtools-resources';
 import * as app from './app';
 import {forEditor, forBrowser} from './app/diff';
-import {stringifyPatch} from './lib/utils';
-import {EDITOR} from './app/action-names';
+import updateDevtoolsResource from './app/devtools-transactions';
+import {EDITOR, SESSION} from './app/action-names';
 
 const workerCommandQueue = patcher(client, {worker: './worker.js'});
 const CLIENT_ID = {id: 'chrome'};
@@ -36,6 +38,17 @@ workerCommandQueue.worker.addEventListener('message', function(message) {
 	}
 });
 
+// update DevTools resource when there are pending patches
+app.subscribeDeepKey('sessions', 'patches', (session, tabId) => {
+	applyDevtoolsPatches(+tabId, session.patches);
+});
+devtools.on('connect', (port, tabId) => {
+	var session = app.getStateValue('sessions')[tabId];
+	if (session) {
+		applyDevtoolsPatches(+tabId, session.patches);
+	}
+});
+
 // TODO request unsaved changes
 
 function identify() {
@@ -53,10 +66,49 @@ function applyDiff(diff) {
                 patches: payload.patches
             }
         });
+		app.dispatch({
+			type: SESSION.SAVE_RESOURCE_PATCHES,
+			tabId: +payload.tabId,
+			uri: payload.uri,
+			patches: payload.patches
+		});
+
         logPatches(payload.uri, payload.patches);
-        // TODO update DevTools resources
-        // TODO add pending patches for DevTools which are not yet opened for tab id
     });
+}
+
+function applyPatch(content, patches) {
+	return sendWorkerCommand('apply-patch', {
+		uri: `resource${Date.now()}`, // random name to skip command optimization
+		syntax: 'css',
+		content,
+		patches
+	});
+}
+
+function applyDevtoolsPatches(tabId, patches) {
+	if (devtools.isConnected(tabId)) {
+		patches.forEach((patches, url) => updateDevtoolsResource(tabId, url, applyPatch))
+	}
+}
+
+/**
+ * Sends command to LiveStyle worker directly
+ * @param  {String} name Command name
+ * @param  {Object} data Command payload
+ * @return {Promise}
+ */
+function sendWorkerCommand(name, data) {
+	return new Promise((resolve, reject) => {
+		workerCommandQueue.add(name, data, (status, response) => {
+			if (status === 'error') {
+				let err = new Error(response);
+				err.code = 'EWORKERERROR';
+				return reject(err);
+			}
+			resolve(response);
+		});
+	});
 }
 
 function logPatches(prefix, patches) {
