@@ -28,6 +28,12 @@ export function keyForValue(obj, value) {
     return Object.keys(obj).reduce((out, key) => obj[key] === value ? key : out, null);
 }
 
+export function error(code, message) {
+	var err = new Error(message || code);
+	err.code = code;
+	return err;
+}
+
 /**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
@@ -72,6 +78,37 @@ export function debounce(func, wait, immediate) {
 		return result;
 	};
 }
+
+/**
+ * Returns a function, that, when invoked, will only be triggered at most once
+ * during a given window of time.
+ * @param  {Function} func
+ * @param  {Number} wait
+ */
+export function throttle(func, wait) {
+	var context, args, timeout, result;
+	var previous = 0;
+	var later = function() {
+		previous = Date.now();
+		timeout = null;
+		result = func.apply(context, args);
+	};
+	return function() {
+		var now = Date.now();
+		var remaining = wait - (now - previous);
+		context = this;
+		args = arguments;
+		if (remaining <= 0) {
+			clearTimeout(timeout);
+			previous = now;
+			result = func.apply(context, args);
+		} else if (!timeout) {
+			timeout = setTimeout(later, remaining);
+		}
+		return result;
+	};
+}
+
 
 /**
  * Returns string representation for given node path

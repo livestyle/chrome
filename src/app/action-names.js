@@ -1,5 +1,9 @@
 'use strict';
 
+export const STATE = {
+    LOAD: 'Load state data'
+};
+
 export const PAGE = {
     TOGGLE_ENABLED: 'Toggle page enabled state',
     LAST_USED: 'Updates last used data',

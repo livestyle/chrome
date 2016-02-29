@@ -3,8 +3,8 @@
  * tabs in Chrome
  */
 'use strict';
-import {dispatch, getState} from './store';
-import {SESSION} from './action-names';
+import {dispatch, getState} from '../app/store';
+import {SESSION} from '../app/action-names';
 import {normalizeUrl} from '../lib/utils';
 
 var pending = false;

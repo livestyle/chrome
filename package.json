@@ -37,6 +37,7 @@
   "dependencies": {
     "condense-patches": "livestyle/condense-patches",
     "deep-equal": "^1.0.1",
+    "deepmerge": "^0.2.10",
     "eventemitter3": "^1.1.1",
     "livestyle-client": "livestyle/client",
     "livestyle-cssom-patcher": "livestyle/cssom-patcher",

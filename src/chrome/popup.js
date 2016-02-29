@@ -3,7 +3,7 @@
  * and sends updated data model
  */
 'use strict';
-import {getState, dispatch} from './';
+import {getState, dispatch} from '../app/store';
 import {normalizeUrl} from '../lib/utils';
 
 const popupPorts = new Set();
@@ -37,7 +37,6 @@ chrome.runtime.onConnect.addListener((port, sender) => {
 });
 
 function sendPopupModel(port, state=getState()) {
-    console.log('popup model', popupModelForTab(port.tabId, state));
     port.postMessage({
         action: 'model-update',
         data: popupModelForTab(port.tabId, state)

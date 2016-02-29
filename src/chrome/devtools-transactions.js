@@ -22,10 +22,10 @@
  *   create a new transaction if required
  */
 'use strict';
-import * as devtools from '../lib/devtools-resources';
-import {getStateValue, dispatch} from './store';
-import {debounce} from '../lib/utils';
-import {SESSION} from './action-names';
+import * as devtools from './devtools-resources';
+import {getStateValue, dispatch} from '../app/store';
+import {SESSION} from '../app/action-names';
+import {debounce, error} from '../lib/utils';
 
 const transactions = new Map();
 const updateDebounce = 1000;
@@ -43,14 +43,14 @@ function createTransaction(tabId, resourceUrl) {
 
 	var transaction = debounce(function(applyPatch) {
 		var snapshot;
-        console.info('Starting update transaction for', tabId, resourceUrl);
+        console.groupCollapsed('DevTools update transaction for', tabId, resourceUrl);
 		devtools.getContent(tabId, resourceUrl)
 		.then(content => {
 			// save patches snapshot and apply them on resource content
 			snapshot = getResourcePatches(tabId, resourceUrl);
 			if (!snapshot) {
 				// session was destroyed or empty patch list, aborting
-                console.info('No patches for %s resource, abort', resourceUrl);
+                console.info('No patches for resource, abort');
 				return cancel();
 			}
 
@@ -60,12 +60,12 @@ function createTransaction(tabId, resourceUrl) {
 			]);
 		})
 		.then(response => {
-            console.info('Resource patched, try to update content in', tabId, resourceUrl);
+            console.info('Resource patched, try to update content');
 			// make sure session still exists and no new patches were added
 			var curSnapshot = getResourcePatches(tabId, resourceUrl);
 			if (!curSnapshot) {
 				// session was destroyed, aborting
-				console.info('Session destroyed when patching %s resource, abort', resourceUrl);
+				console.info('Session destroyed when patching resource, abort');
 				return cancel();
 			}
 
@@ -82,19 +82,19 @@ function createTransaction(tabId, resourceUrl) {
 		})
 		.catch(err => {
 			// in most cases errors are harmless to continue
-            console.error('Got error', err);
-			// if (err.code !== 'ECANCEL') {
-			// }
+			if (err.code !== 'ECANCEL') {
+                console.error('Got error', err);
+			}
 		})
 		.then(() => {
             snapshot = null;
+            console.groupEnd();
 			var patches = getResourcePatches(tabId, resourceUrl);
 			if (patches) {
 				// there are pending patches, restart transaction
                 console.info('Pending patches, restart transaction for', tabId, resourceUrl);
 				transaction(applyPatch);
 			} else {
-                console.info('Transaction complete', tabId, resourceUrl);
 				transactions.delete(key);
 			}
 		});
@@ -108,18 +108,12 @@ function getKey(tabId, resourceUrl) {
 }
 
 function cancel() {
-    var err = new Error('Transaction was cancelled');
-    err.code = 'ECANCEL';
-    return Promise.reject(err);
+    return Promise.reject(error('ECANCEL', 'Transaction was cancelled'));
 }
 
 function rejectOnTimeout(timeout=1000) {
 	return new Promise((response, reject) => {
-		setTimeout(() => {
-			let err = new Error('Timeout');
-			err.code = 'ETIMEOUT';
-			reject(err);
-		}, timeout);
+		setTimeout(() => reject(error('ETIMEOUT', 'Timeout')), timeout);
 	});
 }
 
