@@ -50,7 +50,8 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         return diffTransactions.delete(key);
     }
 
-    console.groupCollapsed('DevTools diff transaction for', tabId, resourceUrl);
+    console.groupCollapsed('DevTools diff transaction for %s (tab id: %d)', resourceUrl, tabId);
+    console.time('Diff time');
     Promise.race([
         diff(session.devtoolsStylesheets.get(resourceUrl) || '', content),
         rejectOnTimeout(10000)
@@ -68,7 +69,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         // everything seems fine
         updateResourceInStore(tabId, resourceUrl, content);
 
-        // forge diff payload for client so default handler will apply it to
+        // Forge diff payload for client so default handler will apply it to
         // all editors and sessions
         client.send('diff', {
             excludeTabId: [tabId],
@@ -76,6 +77,10 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
             synaxt: 'css',
             patches
         });
+
+        // Force resource update to re-init stylesheets in tab iframes
+        // (required for Re:view)
+        return update(tabId, resourceUrl, content);
     })
     .catch(err => {
         console.error(err);
@@ -88,6 +93,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
     })
     .then(() => {
         // clean-up
+        console.timeEnd('Diff time');
         console.groupEnd();
         diffTransactions.delete(key);
         session = key = exists = null;
@@ -131,7 +137,7 @@ function onPortConnect(port) {
     ports.set(port.tabId, port);
     port.onMessage.addListener(onPortMessage);
     port.onDisconnect.addListener(onPortDisconnect);
-    console.log('devtools connected %s, total connection: %d', port.name, ports.size);
+    console.log('Port %s connected, total connection: %d', port.name, ports.size);
 
     // check if there’s active session for current tab id and update stylesheets
     var session = getStateValue('sessions')[tabId];
@@ -148,10 +154,10 @@ function onPortDisconnect(port) {
     // reset session DevTools stylesheets
     dispatch({
         type: SESSION.SET_DEVTOOLS_STYLESHEETS,
-        tabId,
+        tabId: port.tabId,
         items: new Map()
     });
-    console.log('devtools %s disconnected, total connection: %d', port.name, ports.size);
+    console.log('Port %s disconnected, total connection: %d', port.name, ports.size);
 }
 
 /**
@@ -300,7 +306,8 @@ function applyPatches(tabId, patches) {
 
 function createPatchTransaction(tabId, resourceUrl) {
     var snapshot;
-    console.groupCollapsed('DevTools patch transaction for', tabId, resourceUrl);
+    console.groupCollapsed('DevTools patch transaction for %s (tab id: %d)', resourceUrl, tabId);
+    console.time('Patch time');
     return getContent(tabId, resourceUrl)
     .then(content => {
         // save patches snapshot and apply them on resource content
@@ -338,8 +345,9 @@ function createPatchTransaction(tabId, resourceUrl) {
         return false;
     })
     .then(success => {
-        snapshot = null;
+        console.timeEnd('Patch time');
         console.groupEnd();
+        snapshot = null;
         return success;
     });
 }
