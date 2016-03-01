@@ -26,7 +26,7 @@ const saveDataToStorage = throttle(state => {
 }, 3000);
 
 client.on('message-send', function(name, data) {
-	console.log('send socket message %c%s', 'font-weight:bold', name);
+	console.log('send message %c%s', 'font-weight:bold', name);
 	if (name === 'diff') {
 		// sending `diff` message from worker:
 		// server won’t send it back to sender so handle it manually
@@ -38,7 +38,7 @@ client.on('message-send', function(name, data) {
 .on('editor-files',      data => dispatch({type: EDITOR.UPDATE_FILE_LIST, ...data}))
 .on('diff', applyDiff)
 .on('open identify-client', identify)
-.on('message-receive', (name, data) => console.log('message %c%s: %o', 'font-weight:bold', name, data))
+.on('message-receive', (name, data) => console.log('received message %c%s: %o', 'font-weight:bold', name, data))
 .connect();
 
 // When user updates page model, re-scan all sessions

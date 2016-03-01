@@ -45,7 +45,10 @@ export function forBrowser(diff, state=getState()) {
 		return [];
 	}
 
-    return Object.keys(state.sessions).reduce((out, tabId) => {
+    var excludeTabId = new Set(diff.excludeTabId || []);
+    return Object.keys(state.sessions)
+    .filter(tabId => !excludeTabId.has(+tabId))
+    .reduce((out, tabId) => {
         var session = state.sessions[tabId];
         var page = state.pages[session.page];
         var uri = keyForValue(session.mapping, diff.uri);

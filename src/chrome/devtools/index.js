@@ -2,8 +2,9 @@
  * Main controller to work with DevTools resources
  */
 'use strict';
+import client from 'livestyle-client';
 import {dispatch, subscribe, subscribeDeepKey, getStateValue} from '../../app/store';
-import {patch} from '../../app/patcher';
+import {diff, patch} from '../../app/patcher';
 import {SESSION} from '../../app/action-names';
 import {error, debounce} from '../../lib/utils';
 import request from './request';
@@ -12,7 +13,9 @@ const ports = new Map();
 const locks = new Set();
 const sessionIds = new Set();
 const patchTransactions = new Set();
+const diffTransactions = new Map();
 const patchDebounce = 1000;
+const diffDebounce = 1000;
 
 const applyPatch = debounce(function(tabId, resourceUrl) {
     var key = getKey(tabId, resourceUrl);
@@ -32,6 +35,64 @@ const applyPatch = debounce(function(tabId, resourceUrl) {
         }
     });
 }, patchDebounce);
+
+const calculateDiff = debounce(function(tabId, resourceUrl, content) {
+    var key = getKey(tabId, resourceUrl);
+    var exists = diffTransactions.has(key);
+    diffTransactions.set(key, content);
+    if (exists) { // diff transaction is already in progress
+        return;
+    }
+
+    var session = getStateValue('sessions')[tabId];
+    if (!session || !session.devtoolsStylesheets || !session.devtoolsStylesheets.has(resourceUrl)) {
+        // missing some important data, abort transaction
+        return diffTransactions.delete(key);
+    }
+
+    console.groupCollapsed('DevTools diff transaction for', tabId, resourceUrl);
+    Promise.race([
+        diff(session.devtoolsStylesheets.get(resourceUrl) || '', content),
+        rejectOnTimeout(10000)
+    ])
+    .then(patches => {
+        console.log('diff calculated', patches);
+        // diff calculated, check out current transaction lock value: if it’s
+        // not equal to one we’ve started transaction, then there were more content
+        // updates so we can simply discart current patches and calculate diff again
+        var curContent = diffTransactions.get(key);
+        if (curContent !== content) {
+            return cancel('Resource content was changed when diffing, abort');
+        }
+
+        // everything seems fine
+        updateResourceInStore(tabId, resourceUrl, content);
+
+        // forge diff payload for client so default handler will apply it to
+        // all editors and sessions
+        client.send('diff', {
+            excludeTabId: [tabId],
+            uri: resourceUrl,
+            synaxt: 'css',
+            patches
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        // check if we can restart transaction
+        var session = getStateValue('sessions')[tabId];
+        if (session && session.devtoolsStylesheets && session.devtoolsStylesheets.has(resourceUrl) && diffTransactions.has(key)) {
+            console.log('Restart transactions due to errors');
+            calculateDiff(tabId, resourceUrl, diffTransactions.get(key));
+        }
+    })
+    .then(() => {
+        // clean-up
+        console.groupEnd();
+        diffTransactions.delete(key);
+        session = key = exists = null;
+    });
+}, diffDebounce);
 
 chrome.runtime.onConnect.addListener(port => {
     if (/^devtools:/.test(port.name)) {
@@ -108,7 +169,8 @@ function onResourceUpdate(tabId, res) {
     // initiated this call to force update resources in embedded iframes as well
     // (required for Re:view)
     // TODO check if Re:view enabled and filter port if disabled?
-    update(tabId, res.url, res.content);
+    // update(tabId, res.url, res.content);
+    calculateDiff(tabId, res.url, res.content);
 }
 
 /**

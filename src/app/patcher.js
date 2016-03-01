@@ -48,3 +48,18 @@ export function patch(content, patches) {
 		patches
 	});
 }
+
+/**
+ * Calculate diff between two content samples
+ * @param  {String} oldContent
+ * @param  {String} newContent
+ * @return {Promise}
+ */
+export function diff(oldContent, newContent) {
+	return sendCommand('calculate-diff', {
+		uri: `resource${Date.now()}`, // random name to skip command optimization
+		syntax: 'css',
+		content: newContent,
+		previous: oldContent
+	});
+}
