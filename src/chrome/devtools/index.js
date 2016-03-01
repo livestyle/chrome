@@ -142,8 +142,8 @@ function onPortConnect(port) {
     // check if there’s active session for current tab id and update stylesheets
     var session = getStateValue('sessions')[tabId];
     if (session) {
-        setStylesheetsForSession(port.tabId);
-        applyPatches(tabId, session.patches);
+        setStylesheetsForSession(port.tabId)
+        .then(() => applyPatches(port.tabId, session.patches));
     }
 }
 
@@ -186,15 +186,17 @@ function onResourceUpdate(tabId, res) {
  */
 function setStylesheetsForSession(tabId) {
     var port = ports.get(tabId);
-    if (port) {
-        request(port, 'get-stylesheets')
-        .then(data => {
-            // convert items object to map
-            return Object.keys(data.items || {})
-            .reduce((out, key) => out.set(key, data.items[key]), new Map());
-        })
-        .then(items => dispatch({type: SESSION.SET_DEVTOOLS_STYLESHEETS, tabId, items}));
+    if (!port) {
+        return Promise.resolve();
     }
+
+    return request(port, 'get-stylesheets')
+    .then(data => {
+        // convert items object to map
+        return Object.keys(data.items || {})
+        .reduce((out, key) => out.set(key, data.items[key]), new Map());
+    })
+    .then(items => dispatch({type: SESSION.SET_DEVTOOLS_STYLESHEETS, tabId, items}));
 }
 
 /**

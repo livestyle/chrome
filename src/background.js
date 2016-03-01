@@ -151,7 +151,8 @@ function updateSessions(nextSessions) {
 }
 
 function fetchCSSOMStylesheets(tabId) {
-    chrome.tabs.sendMessage(+tabId, {action: 'get-stylesheets'}, items => {
+    // always request stylesheets from main main frame
+    chrome.tabs.sendMessage(+tabId, {action: 'get-stylesheets'}, {frameId: 0}, items => {
         dispatch({
             type: SESSION.SET_CSSOM_STYLESHEETS,
             tabId,

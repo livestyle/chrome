@@ -6,9 +6,39 @@ import origin from './lib/origin';
 
 var pendingShadowCSSPatches = [];
 
+// disable in-page LiveStyle extension
+document.documentElement.setAttribute('data-livestyle-extension', 'available');
+
+chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+	// console.log('got message', message);
+	if (!message) {
+		return;
+	}
+
+	var data = message.data;
+	switch (message.action) {
+		case 'apply-cssom-patch':
+			return applyPatches(data.stylesheetUrl, data.patches);
+		case 'create-user-stylesheet':
+			callback(generateUserStylesheets(data.url));
+			return true;
+		case 'remove-user-stylesheet':
+			return removeUserStylesheet(data.url);
+		case 'validate-user-stylesheet':
+			callback(validateUserStylesheets(data.url));
+			return true;
+		case 'get-stylesheets':
+			callback(findStyleSheets(document.styleSheets));
+			return true;
+		case 'get-origin':
+			callback(origin());
+			return true;
+	}
+});
+
+
 function $$(sel, context) {
-	var items = (context || document).querySelectorAll(sel);
-	return Array.prototype.slice.call(items, 0);
+	return Array.from((context || document).querySelectorAll(sel));
 }
 
 function applyPatches(url, patches) {
@@ -182,35 +212,3 @@ function lsId(node) {
 	var dataset = (node && node.dataset) || {};
 	return dataset.livestyleId;
 }
-
-// disable in-page LiveStyle extension
-document.documentElement.setAttribute('data-livestyle-extension', 'available');
-
-chrome.runtime.onMessage.addListener(function(message, sender, callback) {
-	console.log('got message', message);
-	if (!message) {
-		return;
-	}
-
-	var data = message.data;
-	switch (message.action) {
-		case 'apply-cssom-patch':
-			return applyPatches(data.stylesheetUrl, data.patches);
-		case 'create-user-stylesheet':
-			callback(generateUserStylesheets(data.url));
-			return true;
-		case 'remove-user-stylesheet':
-			return removeUserStylesheet(data.url);
-		case 'validate-user-stylesheet':
-			callback(validateUserStylesheets(data.url));
-			return true;
-		case 'get-stylesheets':
-			console.log('requested stylesteets');
-			console.log(findStyleSheets(document.styleSheets));
-			callback(findStyleSheets(document.styleSheets));
-			return true;
-		case 'get-origin':
-			callback(origin());
-			return true;
-	}
-});

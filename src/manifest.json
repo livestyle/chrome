@@ -25,7 +25,8 @@
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*", "file:///*"],
 		"js": ["content-script.js"],
-		"run_at": "document_start"
+		"run_at": "document_start",
+		"all_frames": true
     }],
     "devtools_page": "./devtools.html",
 	"manifest_version": 2
