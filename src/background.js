@@ -1,19 +1,16 @@
 'use strict';
 import client from 'livestyle-client';
-import patcher from 'livestyle-patcher';
-import deepmerge from 'livestyle-patcher';
 import {stringifyPatch, throttle, error} from './lib/utils';
 import autoMap from './lib/auto-map';
 import {dispatch, subscribe, subscribeDeepKey, getState, getStateValue} from './app/store';
 import {forEditor, forBrowser} from './app/diff';
 import {STATE, EDITOR, SESSION} from './app/action-names';
-import * as devtools from './chrome/devtools-resources';
-import updateDevtoolsResource from './chrome/devtools-transactions';
+import patcher from './app/patcher';
+import devtools from './chrome/devtools';
 import syncSessions from './chrome/sessions';
 import updateBrowserIcon from './chrome/browser-icon';
 import updatePopups from './chrome/popup';
 
-const workerCommandQueue = patcher(client, {worker: './worker.js'});
 const CLIENT_ID = {id: 'chrome'};
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
@@ -43,17 +40,6 @@ client.on('message-send', function(name, data) {
 .on('open identify-client', identify)
 .on('message-receive', (name, data) => console.log('message %c%s: %o', 'font-weight:bold', name, data))
 .connect();
-
-workerCommandQueue.worker.addEventListener('message', function(message) {
-	var payload = message.data;
-	if (payload.name === 'init') {
-		return console.log('%c%s', 'color:green;font-size:1.1em;font-weight:bold;', payload.data);
-	}
-
-	if (payload.status === 'error') {
-		console.error(payload.data);
-	}
-});
 
 // When user updates page model, re-scan all sessions
 subscribe(syncSessions, 'pages');
@@ -107,20 +93,6 @@ subscribe(editors => {
     });
 }, 'editors');
 
-// update DevTools resource when there are pending patches
-subscribeDeepKey('sessions', 'patches', (session, tabId) => {
-	applyDevtoolsPatches(+tabId, session.patches);
-});
-
-devtools.on('connect', (port, tabId) => {
-	var session = getSessions().get(tabId);
-	if (session) {
-		applyDevtoolsPatches(+tabId, session.patches);
-	}
-})
-// When a list of DevTools resources is updated, update sessions stylesheets
-.on('list-update', () => getSessions().forEach((session, tabId) => fetchDevtoolsStylesheets(tabId)));
-
 // Save LiveStyle data to storage
 subscribe(saveDataToStorage);
 
@@ -160,35 +132,6 @@ function applyDiff(diff) {
     });
 }
 
-function applyPatch(content, patches) {
-	return sendWorkerCommand('apply-patch', {
-		uri: `resource${Date.now()}`, // random name to skip command optimization
-		syntax: 'css',
-		content,
-		patches
-	});
-}
-
-function applyDevtoolsPatches(tabId, patches) {
-	if (devtools.isConnected(tabId)) {
-		patches.forEach((patches, url) => updateDevtoolsResource(tabId, url, applyPatch))
-	}
-}
-
-/**
- * Sends command to LiveStyle worker directly
- * @param  {String} name Command name
- * @param  {Object} data Command payload
- * @return {Promise}
- */
-function sendWorkerCommand(name, data) {
-	return new Promise((resolve, reject) => {
-		workerCommandQueue.add(name, data, (status, response) => {
-			status === 'error' ? reject(error('EWORKERERROR', response)) : resolve(response);
-		});
-	});
-}
-
 function logPatches(prefix, patches) {
 	console.groupCollapsed('apply diff on', prefix);
 	patches.forEach(p => console.log(stringifyPatch(p)));
@@ -204,10 +147,7 @@ function updateSessions(nextSessions) {
     var toUpdate = tabIds.filter(tabId => !curSessions.has(tabId));
 	curSessions.clear();
 	tabIds.forEach(tabId => curSessions.set(tabId, nextSessions[tabId]));
-    toUpdate.forEach(tabId => {
-        fetchCSSOMStylesheets(tabId);
-        fetchDevtoolsStylesheets(tabId);
-    });
+    toUpdate.forEach(fetchCSSOMStylesheets);
 }
 
 function fetchCSSOMStylesheets(tabId) {
@@ -217,14 +157,6 @@ function fetchCSSOMStylesheets(tabId) {
             tabId,
             items
         });
-    });
-}
-
-function fetchDevtoolsStylesheets(tabId) {
-    dispatch({
-        type: SESSION.SET_DEVTOOLS_STYLESHEETS,
-        tabId,
-        items: devtools.stylesheets(tabId)
     });
 }
 

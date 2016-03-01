@@ -8,56 +8,93 @@ import condense from 'condense-patches';
 import {SESSION} from '../action-names';
 
 const EMPTY_ARRAY = [];
-const stylesheetAction = {
-    [SESSION.SET_CSSOM_STYLESHEETS]: 'cssomStylesheets',
-    [SESSION.SET_DEVTOOLS_STYLESHEETS]: 'devtoolsStylesheets'
-};
 
 export default function(state={}, action) {
-    let session = state[action.tabId];
-
-    if (action.type in stylesheetAction) {
-        let key = stylesheetAction[action.type];
-        if (session && !deepequal(action.items, session[key])) {
-            session = {
-                ...session,
-                [key]: action.items
-            };
-
-            var allStylesheets = getStylesheets(session);
-            if (!deepequal(allStylesheets, session.stylesheets)) {
-                session.stylesheets = allStylesheets;
+    switch (action.type) {
+        case SESSION.UPDATE_LIST:
+            if (state !== action.sessions) {
+                state = action.sessions;
             }
+            break;
 
-            state = {
-                ...state,
-                [action.tabId]: session
-            };
-        }
-    } else {
-        switch (action.type) {
-            case SESSION.UPDATE_LIST:
-                if (state !== action.sessions) {
-                    state = action.sessions;
-                }
-                break;
+        case SESSION.SET_CSSOM_STYLESHEETS:
+            return setCSSOMStylesheets(state, action);
 
-            case SESSION.UPDATE_AUTO_MAPPING:
-                return updateAutoMapping(state, action);
+        case SESSION.SET_DEVTOOLS_STYLESHEETS:
+            return setDevToolsStylesheets(state, action);
 
-            case SESSION.UPDATE_MAPPING:
-                return updateMapping(state, action);
+        case SESSION.UPDATE_DEVTOOLS_STYLESHEET:
+            return updateDevToolsStylesheet(state, action);
 
-            case SESSION.SAVE_RESOURCE_PATCHES:
-                return saveResourcePatches(state, action);
+        case SESSION.UPDATE_AUTO_MAPPING:
+            return updateAutoMapping(state, action);
 
-            case SESSION.RESET_RESOURCE_PATCHES:
-                return resetResourcePatches(state, action);
-        }
+        case SESSION.UPDATE_MAPPING:
+            return updateMapping(state, action);
+
+        case SESSION.SAVE_RESOURCE_PATCHES:
+            return saveResourcePatches(state, action);
+
+        case SESSION.RESET_RESOURCE_PATCHES:
+            return resetResourcePatches(state, action);
     }
 
     return state;
 };
+
+function setCSSOMStylesheets(state, action) {
+    var session = state[action.tabId];
+    if (session && !deepequal(action.items, session.cssomStylesheets)) {
+        state = {
+            ...state,
+            [action.tabId]: updateStylesheetsIfNeeded({
+                ...session,
+                cssomStylesheets: action.items
+            })
+        };
+    }
+
+    return state;
+}
+
+function setDevToolsStylesheets(state, action) {
+    var session = state[action.tabId];
+    if (session) {
+        state = {
+            ...state,
+            [action.tabId]: updateStylesheetsIfNeeded({
+                ...session,
+                devtoolsStylesheets: action.items
+            })
+        };
+    }
+
+    return state;
+}
+
+function updateDevToolsStylesheet(state, action) {
+    var session = state[action.tabId];
+    if (session) {
+        state = {
+            ...state,
+            [action.tabId]: updateStylesheetsIfNeeded({
+                ...session,
+                devtoolsStylesheets: new Map(session.devtoolsStylesheets).set(action.url, action.content)
+            })
+        };
+    }
+
+    return state;
+}
+
+
+function updateStylesheetsIfNeeded(session, action) {
+    var allStylesheets = getStylesheets(session);
+    if (!deepequal(allStylesheets, session.stylesheets)) {
+        session.stylesheets = allStylesheets;
+    }
+    return session;
+}
 
 function updateAutoMapping(state, action) {
     var session = state[action.tabId];
@@ -129,7 +166,7 @@ function resetResourcePatches(state, action) {
 function getStylesheets(session) {
     var all = EMPTY_ARRAY.concat(
         session.cssomStylesheets || EMPTY_ARRAY,
-        session.devtoolsStylesheets || EMPTY_ARRAY
+        session.devtoolsStylesheets ? Array.from(session.devtoolsStylesheets.keys()) : EMPTY_ARRAY
     );
     return Array.from(new Set(all)).sort();
 }

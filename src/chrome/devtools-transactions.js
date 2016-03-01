@@ -95,6 +95,7 @@ function createTransaction(tabId, resourceUrl) {
                 console.info('Pending patches, restart transaction for', tabId, resourceUrl);
 				transaction(applyPatch);
 			} else {
+                key = transaction = null;
 				transactions.delete(key);
 			}
 		});

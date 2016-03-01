@@ -18,6 +18,7 @@ export const PAGE = {
 export const SESSION = {
     SET_CSSOM_STYLESHEETS: 'Update list of CSSOM stylesheets',
     SET_DEVTOOLS_STYLESHEETS: 'Update list of DevTools stylesheets',
+    UPDATE_DEVTOOLS_STYLESHEET: 'Update DevTools stylesheet content',
     UPDATE_STYLESHEETS: 'Update browser stylesheets list',
     UPDATE_AUTO_MAPPING: 'Update browser-to-editor file auto mappings',
     UPDATE_MAPPING: 'Update browser-to-editor file mappings',

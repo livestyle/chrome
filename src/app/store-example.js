@@ -38,9 +38,8 @@ export default const = {
             // if its currently fetching
             cssomStylesheets: [],
 
-            // list of stylesheets retreived from DevTools, might be falsy
-            // if its currently fetching
-            devtoolsStylesheets: [],
+            // Map of stylesheets (url + content) retreived from DevTools
+            devtoolsStylesheets: new Map(),
 
             // Browser-to-editor file mapping, calculated from `autoMapping` and
             // `userMapping` of matched `pages` model
