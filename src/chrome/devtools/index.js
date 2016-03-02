@@ -10,12 +10,12 @@ import {error, debounce} from '../../lib/utils';
 import request from './request';
 
 const ports = new Map();
-const locks = new Set();
+const pendingUpdates = new Map();
 const sessionIds = new Set();
 const patchTransactions = new Set();
 const diffTransactions = new Map();
-const patchDebounce = 1000;
-const diffDebounce = 1000;
+const patchDebounce = 200;
+const diffDebounce = 200;
 
 const applyPatch = debounce(function(tabId, resourceUrl) {
     var key = getKey(tabId, resourceUrl);
@@ -52,35 +52,42 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
 
     console.groupCollapsed('DevTools diff transaction for %s (tab id: %d)', resourceUrl, tabId);
     console.time('Diff time');
+    var prevContent = session.devtoolsStylesheets.get(resourceUrl) || '';
     Promise.race([
-        diff(session.devtoolsStylesheets.get(resourceUrl) || '', content),
+        diff(prevContent, content),
         rejectOnTimeout(10000)
     ])
     .then(patches => {
         console.log('diff calculated', patches);
+        // console.log('resource forcibly updated');
         // diff calculated, check out current transaction lock value: if it’s
         // not equal to one we’ve started transaction, then there were more content
         // updates so we can simply discart current patches and calculate diff again
         var curContent = diffTransactions.get(key);
         if (curContent !== content) {
+            // restore original content which was replaced in `update()` call
+            // updateResourceInStore(tabId, resourceUrl, prevContent);
             return cancel('Resource content was changed when diffing, abort');
         }
 
-        // everything seems fine
         updateResourceInStore(tabId, resourceUrl, content);
 
-        // Forge diff payload for client so default handler will apply it to
-        // all editors and sessions
+        // Forge diff payload for client so default handler from background page
+        // will apply it to all editors and sessions
         client.send('diff', {
-            excludeTabId: [tabId],
             uri: resourceUrl,
             synaxt: 'css',
             patches
         });
-
-        // Force resource update to re-init stylesheets in tab iframes
-        // (required for Re:view)
-        return update(tabId, resourceUrl, content);
+        var session = getStateValue('sessions')[tabId];
+        if (session && session.mapping[resourceUrl]) {
+            client.send('diff', {
+                skipDevToolsUpdate: [tabId],
+                uri: session.mapping[resourceUrl],
+                synaxt: 'css',
+                patches
+            });
+        }
     })
     .catch(err => {
         console.error(err);
@@ -96,7 +103,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         console.timeEnd('Diff time');
         console.groupEnd();
         diffTransactions.delete(key);
-        session = key = exists = null;
+        session = key = exists = prevContent = null;
     });
 }, diffDebounce);
 
@@ -122,7 +129,7 @@ subscribeDeepKey('sessions', 'patches', (session, tabId) => {
 
 function onPortMessage(message, port) {
     var {action, data} = message;
-    console.log('%c[DevTools]%c received message %c%s %con port %s', 'background-color:#344a5d;color:#fff', '', 'font-weight:bold;', action, '', port.name);
+    console.log('%c[DevTools]%c received message %c%s %cwith data %o on port %s', 'background-color:#344a5d;color:#fff', '', 'font-weight:bold;', action, '', data, port.name);
     switch (action) {
         case 'resource-updated':
             return onResourceUpdate(port.tabId, data);
@@ -167,16 +174,17 @@ function onPortDisconnect(port) {
  * @param  {Object} res  Resource descriptor
  */
 function onResourceUpdate(tabId, res) {
-    if (isLocked(tabId, res.url)) {
-        return console.log('updated resource is locked, do nothing');
+    // Handle edge case: we requested resource update, but before actual update
+    // happened, user updated DevTools, which results in multiple `resource-updated`
+    // message between `pendingUpdates` transaction.
+    // To properly handle this case, we will ensure that resource updated with
+    // content we asked for, otherwise request a diff
+    var key = getKey(tabId, res.url);
+    if (!pendingUpdates.has(key) || pendingUpdates.get(key) !== res.content) {
+        calculateDiff(tabId, res.url, res.content);
+    } else {
+        console.log('skip resource update, part of transaction');
     }
-
-    // Update resource content in all connected DevTools including one that
-    // initiated this call to force update resources in embedded iframes as well
-    // (required for Re:view)
-    // TODO check if Re:view enabled and filter port if disabled?
-    // update(tabId, res.url, res.content);
-    calculateDiff(tabId, res.url, res.content);
 }
 
 /**
@@ -213,14 +221,15 @@ export function update(tabId, url, content) {
         return errorNoDevTools(tabId);
     }
 
-    lock(tabId, url);
+    var key = getKey(tabId, url);
+    pendingUpdates.set(key, content);
     return request(port, 'update-resource', ['url'], {url, content})
     .then(() => {
-        unlock(tabId, url);
+        pendingUpdates.delete(key);
         updateResourceInStore(tabId, url, content);
     })
     .catch(err => {
-        unlock(tabId, url);
+        pendingUpdates.delete(key);
         return Promise.reject(err);
     });
 }
@@ -239,37 +248,6 @@ export function getContent(tabId, url) {
 
     return request(port, 'get-resource-content', ['url'] , {url})
     .then(resp => resp.content);
-}
-
-/**
- * Locks given resource for update transaction. If it’s locked, all incoming
- * events or updates for this resource will be ignored
- * @param  {Number} tabId
- * @param  {String} url
- * @return
- */
-function lock(tabId, url) {
-    console.log('locking %s (tab %d)', url, tabId);
-    locks.add(getKey(tabId, url));
-}
-
-/**
- * Removes resource lock for given URL
- * @param  {Number} tabId
- * @param  {String} url
- */
-function unlock(tabId, url) {
-    console.log('unlocking %s (tab %d)', url, tabId);
-    locks.delete(getKey(tabId, url));
-}
-
-/**
- * Check if given resource is locked for update transaction
- * @param  {Number} tabId
- * @param  {String} url
- */
-function isLocked(tabId, url) {
-    return locks.has(getKey(tabId, url));
 }
 
 function getKey(tabId, url) {

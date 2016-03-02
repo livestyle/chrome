@@ -114,26 +114,30 @@ function identify() {
 function applyDiff(diff) {
     forEditor(diff).forEach(payload => client.send('incoming-updates', payload));
     forBrowser(diff).forEach(payload => {
-        chrome.tabs.sendMessage(+payload.tabId, {
+        chrome.tabs.sendMessage(payload.tabId, {
             action: 'apply-cssom-patch',
             data: {
                 stylesheetUrl: payload.uri,
-                patches: payload.patches
+                patches: payload.patches,
+                innerFrameOnly: payload.skipDevToolsUpdate
             }
         });
-		dispatch({
-			type: SESSION.SAVE_RESOURCE_PATCHES,
-			tabId: +payload.tabId,
-			uri: payload.uri,
-			patches: payload.patches
-		});
+        if (!payload.skipDevToolsUpdate) {
+            console.log('save devtools patches from', payload);
+            dispatch({
+                type: SESSION.SAVE_RESOURCE_PATCHES,
+                tabId: payload.tabId,
+                uri: payload.uri,
+                patches: payload.patches
+            });
+        }
 
-        logPatches(payload.uri, payload.patches);
+        logPatches(+payload.tabId, payload.uri, payload.patches);
     });
 }
 
-function logPatches(prefix, patches) {
-	console.groupCollapsed('apply diff on', prefix);
+function logPatches(tabId, url, patches) {
+	console.groupCollapsed('apply diff on %s in tab %d', url, tabId);
 	patches.forEach(p => console.log(stringifyPatch(p)));
 	console.groupEnd();
 }

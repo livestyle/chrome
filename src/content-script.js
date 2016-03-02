@@ -18,7 +18,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 	var data = message.data;
 	switch (message.action) {
 		case 'apply-cssom-patch':
-			return applyPatches(data.stylesheetUrl, data.patches);
+			if (!data.innerFrameOnly || window !== window.top) {
+				applyPatches(data.stylesheetUrl, data.patches);
+			}
+			return;
 		case 'create-user-stylesheet':
 			callback(generateUserStylesheets(data.url));
 			return true;

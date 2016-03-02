@@ -3,8 +3,12 @@
  * update DevTools resources of the page
  */
 'use strict';
+import {debounce} from './lib/utils';
+
 const wnd = chrome.devtools.inspectedWindow;
 const tabId = wnd.tabId;
+const refreshTransactions = new Map();
+const pendingRefresh = new Set();
 var port;
 
 if (tabId) {
@@ -54,6 +58,7 @@ function onResourceAdded(res) {
 function onResourceCommitted(res, content) {
     if (isStylesheet(res)) {
         sendMessage('resource-updated', {url: res.url, content});
+        refresh(res, content);
     }
 }
 
@@ -101,4 +106,29 @@ function setContent(res, content, commit=false) {
     return new Promise((resolve, reject) => {
         res.setContent(content, commit, err => err ? reject(err) : resolve(content));
     });
+}
+
+/**
+ * Re-set content of updated resource: this effectively updates all DevTools
+ * resources inside inner iframes of inspected tab (required for Re:view)
+ * @param  {Resource} res
+ * @param  {String} content
+ */
+function refresh(res, content) {
+    var key = res.url;
+    if (pendingRefresh.has(key)) {
+        return;
+    }
+
+    if (!refreshTransactions.has(key)) {
+        refreshTransactions.set(key, debounce(function(res, content) {
+            refreshTransactions.delete(key);
+            pendingRefresh.add(key);
+            res.setContent(content, true, () => {
+                pendingRefresh.delete(key);
+                res = content = key = null;
+            });
+        }, 1000));
+    }
+    refreshTransactions.get(key)(res, content);
 }

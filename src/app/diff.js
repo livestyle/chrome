@@ -45,15 +45,17 @@ export function forBrowser(diff, state=getState()) {
 		return [];
 	}
 
-    var excludeTabId = new Set(diff.excludeTabId || []);
-    return Object.keys(state.sessions)
-    .filter(tabId => !excludeTabId.has(+tabId))
-    .reduce((out, tabId) => {
+    var skipDevToolsUpdate = new Set(diff.skipDevToolsUpdate || []);
+    return Object.keys(state.sessions).reduce((out, tabId) => {
+        tabId = +tabId;
         var session = state.sessions[tabId];
         var page = state.pages[session.page];
         var uri = keyForValue(session.mapping, diff.uri);
         if (uri && page && page.direction !== PAGE.DIRECTION_TO_EDITOR) {
-            out.push({uri, tabId, patches});
+            out.push({
+                uri, tabId, patches,
+                skipDevToolsUpdate: skipDevToolsUpdate.has(tabId)
+            });
         }
         return out;
     }, []);
