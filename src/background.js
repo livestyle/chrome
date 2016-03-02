@@ -84,6 +84,19 @@ subscribeDeepKey('sessions', 'autoMapping', (session, tabId) => {
     }
 });
 
+// For newly created sessions, request unsaved changes for mapped editor files
+subscribeDeepKey('sessions', 'mapping', (session, tabId) => {
+    var requested = session.requestedUnsavedFiles || new Set();
+    var files = Object.keys(session.mapping || {})
+    .map(key => session.mapping[key])
+    .filter(file => !requested.has(file));
+
+    if (files.length) {
+        dispatch({type: SESSION.ADD_REQUESTED_UNSAVED_FILES, files});
+        client.send('request-unsaved-changes', {files});
+    }
+});
+
 // Update aggregated list of editor files when connected editor updates
 subscribe(editors => {
     var allFiles = Object.keys(editors).reduce((out, id) => out.concat(editors[id].files), []);
@@ -104,8 +117,6 @@ storage.get(storageKey, data => {
 	});
 	syncSessions();
 });
-
-// TODO request unsaved changes
 
 function identify() {
 	client.send('client-id', CLIENT_ID);

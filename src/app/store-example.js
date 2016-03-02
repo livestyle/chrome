@@ -55,7 +55,10 @@ export default const = {
             // (key is resource URI, value are patches) and DevTools,
             // when connected or synchronized, will use these patches to update
             // resources accordingly and then remove applied patches
-            patches: new Map()
+            patches: new Map(),
+
+            // List of editor files that were requested for unsaved changes
+            requestedUnsavedFiles: new Set()
         }
     },
 

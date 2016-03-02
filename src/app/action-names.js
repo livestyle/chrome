@@ -25,6 +25,7 @@ export const SESSION = {
     UPDATE_LIST: 'Update sessions list',
     SAVE_RESOURCE_PATCHES: 'Save incoming resource patches',
     RESET_RESOURCE_PATCHES: 'Reset saved resource patches',
+    ADD_REQUESTED_UNSAVED_FILES: 'Add files that were requested for unsaved changes',
 };
 
 export const EDITOR = {

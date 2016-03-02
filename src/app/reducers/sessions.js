@@ -37,6 +37,9 @@ export default function(state={}, action) {
 
         case SESSION.RESET_RESOURCE_PATCHES:
             return resetResourcePatches(state, action);
+
+        case SESSION.ADD_REQUESTED_UNSAVED_FILES:
+            return addRequestedUnsavedFiles(state, action);
     }
 
     return state;
@@ -169,4 +172,18 @@ function getStylesheets(session) {
         session.devtoolsStylesheets ? Array.from(session.devtoolsStylesheets.keys()) : EMPTY_ARRAY
     );
     return Array.from(new Set(all)).sort();
+}
+
+function addRequestedUnsavedFiles(state, action) {
+    var session = state[action.tabId];
+    if (session) {
+        var requestedUnsavedFiles = new Set(session.requestedUnsavedFiles || []);
+        action.files.forEach(file => requestedUnsavedFiles.add(file));
+
+        state = {
+            ...state,
+            [action.tabId]: {...session, requestedUnsavedFiles}
+        };
+    }
+    return state;
 }
