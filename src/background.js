@@ -118,19 +118,15 @@ function applyDiff(diff) {
             action: 'apply-cssom-patch',
             data: {
                 stylesheetUrl: payload.uri,
-                patches: payload.patches,
-                innerFrameOnly: payload.skipDevToolsUpdate
+                patches: payload.patches
             }
         });
-        if (!payload.skipDevToolsUpdate) {
-            console.log('save devtools patches from', payload);
-            dispatch({
-                type: SESSION.SAVE_RESOURCE_PATCHES,
-                tabId: payload.tabId,
-                uri: payload.uri,
-                patches: payload.patches
-            });
-        }
+        dispatch({
+            type: SESSION.SAVE_RESOURCE_PATCHES,
+            tabId: payload.tabId,
+            uri: payload.uri,
+            patches: payload.patches
+        });
 
         logPatches(+payload.tabId, payload.uri, payload.patches);
     });

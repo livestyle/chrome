@@ -15,7 +15,7 @@ const sessionIds = new Set();
 const patchTransactions = new Set();
 const diffTransactions = new Map();
 const patchDebounce = 200;
-const diffDebounce = 200;
+const diffDebounce = 150;
 
 const applyPatch = debounce(function(tabId, resourceUrl) {
     var key = getKey(tabId, resourceUrl);
@@ -59,7 +59,6 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
     ])
     .then(patches => {
         console.log('diff calculated', patches);
-        // console.log('resource forcibly updated');
         // diff calculated, check out current transaction lock value: if it’s
         // not equal to one we’ve started transaction, then there were more content
         // updates so we can simply discart current patches and calculate diff again
@@ -82,7 +81,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         var session = getStateValue('sessions')[tabId];
         if (session && session.mapping[resourceUrl]) {
             client.send('diff', {
-                skipDevToolsUpdate: [tabId],
+                excludeTabId: [tabId],
                 uri: session.mapping[resourceUrl],
                 synaxt: 'css',
                 patches
@@ -120,6 +119,9 @@ subscribe(sessions => {
     sessionIds.clear();
     tabIds.forEach(tabId => sessionIds.add(tabId));
     newSessions.forEach(setStylesheetsForSession);
+
+    // update activity state for each connected port
+    ports.forEach(sendActivityState);
 }, 'sessions');
 
 // update DevTools resource when there are pending patches
@@ -152,6 +154,7 @@ function onPortConnect(port) {
         setStylesheetsForSession(port.tabId)
         .then(() => applyPatches(port.tabId, session.patches));
     }
+    sendActivityState(port);
 }
 
 function onPortDisconnect(port) {
@@ -329,5 +332,12 @@ function createPatchTransaction(tabId, resourceUrl) {
         console.groupEnd();
         snapshot = null;
         return success;
+    });
+}
+
+function sendActivityState(port) {
+    port.postMessage({
+        action: 'activity-state',
+        data: {enabled: sessionIds.has(port.tabId)}
     });
 }

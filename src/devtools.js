@@ -10,6 +10,7 @@ const tabId = wnd.tabId;
 const refreshTransactions = new Map();
 const pendingRefresh = new Set();
 var port;
+var isActive = false;
 
 if (tabId) {
     // create connection only if there’s valid inspected tab id
@@ -23,6 +24,10 @@ if (tabId) {
 function onPortMessage(message) {
     var {action, data} = message;
     switch (action) {
+        case 'activity-state':
+            isActive = !!data.enabled;
+            break;
+
         case 'update-resource':
             return getStylesheet(data.url)
             .then(res => setContent(res, data.content, true))
@@ -50,24 +55,20 @@ function onPortMessage(message) {
 }
 
 function onResourceAdded(res) {
-    if (isStylesheet(res)) {
+    if (isActive && isStylesheet(res)) {
         getContent(res).then(content => sendMessage('resource-added', {url: res.url, content}));
     }
 }
 
 function onResourceCommitted(res, content) {
-    if (isStylesheet(res)) {
+    if (isActive && isStylesheet(res)) {
         sendMessage('resource-updated', {url: res.url, content});
         refresh(res, content);
     }
 }
 
 function sendStylesheetList(items) {
-    sendMessage('resource-list', {items: items.map(resourceUrl)});
-}
-
-function resourceUrl(res) {
-    return res.url;
+    sendMessage('resource-list', {items: items.map(res => res.url)});
 }
 
 function sendMessage(action, data) {
@@ -124,11 +125,11 @@ function refresh(res, content) {
         refreshTransactions.set(key, debounce(function(res, content) {
             refreshTransactions.delete(key);
             pendingRefresh.add(key);
-            res.setContent(content, true, () => {
+            res.setContent(content, false, () => {
                 pendingRefresh.delete(key);
                 res = content = key = null;
             });
-        }, 1000));
+        }, 800));
     }
     refreshTransactions.get(key)(res, content);
 }
