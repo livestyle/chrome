@@ -1,20 +1,21 @@
 'use strict';
 import client from 'livestyle-client';
-import {stringifyPatch, throttle, error} from './lib/utils';
-import autoMap from './lib/auto-map';
+import {stringifyPatch, throttle, objToMap, error} from './lib/utils';
 import {dispatch, subscribe, subscribeDeepKey, getState, getStateValue} from './app/store';
 import {forEditor, forBrowser} from './app/diff';
 import {STATE, EDITOR, SESSION} from './app/action-names';
 import patcher from './app/patcher';
-import devtools from './chrome/devtools';
+import devtoolsUpdate from './chrome/devtools';
 import syncSessions from './chrome/sessions';
 import updateBrowserIcon from './chrome/browser-icon';
 import updatePopups from './chrome/popup';
+import getStylesheetContent from './chrome/get-stylesheet-content';
 
 const CLIENT_ID = {id: 'chrome'};
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
 const curSessions = new Map();
+const mainFrame = {frameId: 0};
 
 // TODO import data from old storage
 const saveDataToStorage = throttle(state => {
@@ -57,33 +58,6 @@ subscribe(updateBrowserIcon, 'sessions');
 // If sessions were updated, fetch stylesheets for new ones
 subscribe(updateSessions, 'sessions');
 
-// Update browser-to-editor file mappings if either session `stylesheets`
-// or `editorFiles` were updated
-subscribeDeepKey('sessions', 'stylesheets', (session, tabId) => {
-    updateAutoMapping(tabId, session.stylesheets, getStateValue('editorFiles'));
-});
-
-subscribe(files => {
-    getSessions().forEach((session, tabId) => updateAutoMapping(tabId, session.stylesheets, files));
-}, 'editorFiles');
-
-// When user or LiveStyle updated file mappings, calculate final list
-subscribeDeepKey('pages', 'userMapping', (page, url) => {
-    var editorFiles = getStateValue('editorFiles');
-    getSessions().forEach((session, tabId) => {
-        if (session.page === url) {
-            updateMapping(tabId, page.userMapping, session.stylesheets, editorFiles);
-        }
-    });
-});
-
-subscribeDeepKey('sessions', 'autoMapping', (session, tabId) => {
-    var page = getStateValue('pages')[session.page];
-    if (page) {
-        updateMapping(tabId, page.userMapping, session.stylesheets, getStateValue('editorFiles'));
-    }
-});
-
 // For newly created sessions, request unsaved changes for mapped editor files
 subscribeDeepKey('sessions', 'mapping', (session, tabId) => {
     var requested = session.requestedUnsavedFiles || new Set();
@@ -106,6 +80,14 @@ subscribe(editors => {
     });
 }, 'editors');
 
+// When a user stylesheets updated in host page, update matched sessions as well
+subscribeDeepKey('pages', 'userStylesheets', (page, url) => {
+    var sessions = getStateValue('sessions');
+    Object.keys(sessions)
+    .filter(tabId => sessions[tabId].page === url)
+    .forEach(tabId => syncUserStylesheets(+tabId, sessions[tabId], page));
+});
+
 // Save LiveStyle data to storage
 subscribe(saveDataToStorage);
 
@@ -116,6 +98,18 @@ storage.get(storageKey, data => {
 		state: data[storageKey] || {}
 	});
 	syncSessions();
+});
+
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    if (message.name === 'get-stylesheet-content' && sender.tab) {
+        getStylesheetContent(sender.tab.id, message.data.url)
+        .then(sendResponse)
+        .catch(err => {
+            console.error('Unable to fetch stylesheet content', err);
+            sendResponse(null);
+        });
+        return true;
+    }
 });
 
 function identify() {
@@ -158,12 +152,18 @@ function updateSessions(nextSessions) {
     var toUpdate = tabIds.filter(tabId => !curSessions.has(tabId));
 	curSessions.clear();
 	tabIds.forEach(tabId => curSessions.set(tabId, nextSessions[tabId]));
-    toUpdate.forEach(fetchCSSOMStylesheets);
+
+    var pages = getStateValue('pages');
+    toUpdate.forEach(tabId => {
+        var session = nextSessions[tabId];
+        fetchCSSOMStylesheets(tabId);
+        syncUserStylesheets(tabId, session, pages[session.page]);
+    });
 }
 
 function fetchCSSOMStylesheets(tabId) {
-    // always request stylesheets from main main frame
-    chrome.tabs.sendMessage(+tabId, {action: 'get-stylesheets'}, {frameId: 0}, items => {
+    // always request stylesheets from main frame
+    chrome.tabs.sendMessage(+tabId, {action: 'get-stylesheets'}, mainFrame, items => {
         dispatch({
             type: SESSION.SET_CSSOM_STYLESHEETS,
             tabId,
@@ -172,29 +172,59 @@ function fetchCSSOMStylesheets(tabId) {
     });
 }
 
-function updateMapping(tabId, mapping, browser, editor) {
-    dispatch({
-        type: SESSION.UPDATE_MAPPING,
-        tabId,
-        mapping: getValidMappings(mapping, browser, editor)
-    });
-}
-
-function updateAutoMapping(tabId, browser, editor) {
-    dispatch({
-        type: SESSION.UPDATE_AUTO_MAPPING,
-        tabId,
-        mapping: autoMap(browser, editor)
-    });
-}
-
-function getValidMappings(mappings, browser, editor) {
-    browser = new Set(browser);
-    editor = new Set(editor);
-    return Object.keys(mappings).reduce((out, key) => {
-        if (browser.has(key) && editor.has(mappings[key])) {
-            out[key] = mappings[key];
-        }
+/**
+ * Synchronizes user stylesheets with page in given `tabId`: removes redundant
+ * and adds missing stylesheets
+ * @param  {Number} tabId
+ * @param  {Object} session
+ * @param  {Object} page
+ * @return {Promise}
+ */
+function syncUserStylesheets(tabId, session, page) {
+    var pageStylesheets = page.userStylesheets || [];
+    var sessionStylesheets = session.userStylesheets || new Map();
+    var items = pageStylesheets.reduce((out, id) => {
+        out[id] = sessionStylesheets.get(id) || null;
         return out;
     }, {});
+
+    return createUserStylesheetUrls(tabId, items)
+    .then(items => new Promise(resolve => {
+        chrome.tabs.sendMessage(tabId, {
+            action: 'sync-user-stylesheets',
+            data: {items}
+        }, resp => {
+            if (resp) {
+                dispatch({
+                    type: SESSION.SET_USER_STYLESHEETS,
+                    tabId,
+                    items: objToMap(resp)
+                });
+            }
+            resolve(resp);
+        });
+    }));
 }
+
+/**
+ * Creates local URLs for new user stylesheets (e.g. `items` with empty values)
+ * @param  {Object} items User stylesheet mappings
+ * @return {Promise}
+ */
+function createUserStylesheetUrls(tabId, items) {
+    return new Promise(resolve => {
+        var emptyItems = Object.keys(items).filter(id => !items[id]);
+        if (!emptyItems.length) {
+            return resolve(items);
+        }
+
+        // create URLs in main frame only
+        chrome.tabs.sendMessage(tabId, {
+            action: 'create-user-stylesheet-url',
+            data: {userId: emptyItems}
+        }, mainFrame, resp => {
+            resolve({...items, ...(resp || {})});
+        });
+    });
+}
+``

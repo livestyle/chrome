@@ -50,12 +50,15 @@ function popupModelForTab(tabId, state) {
     }
 
     var page = state.pages[session.page];
+    var userStylesheets = {};
+    (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
     return {
         enabled: page.enabled,
         direction: page.direction,
         editorFiles: state.editorFiles,
         browserFiles: session.stylesheets,
-        mapping: session.mapping
+        mapping: session.mapping,
+        userStylesheets
     };
 }
 

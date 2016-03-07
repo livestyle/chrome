@@ -28,6 +28,7 @@
 		"run_at": "document_start",
 		"all_frames": true
     }],
+	"web_accessible_resources": ["styles/user-stylesheet.css"],
     "devtools_page": "./devtools.html",
 	"manifest_version": 2
 }

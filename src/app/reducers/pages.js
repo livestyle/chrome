@@ -20,6 +20,10 @@ export default function(state={}, action) {
                     lastUsed: Date.now()
                 }
             };
+        case PAGE.ADD_USER_STYLESHEET:
+            return addUserStylesheet(state, action);
+        case PAGE.REMOVE_USER_STYLESHEET:
+            return removeUserStylesheet(state, action);
     }
 
     return state;
@@ -70,6 +74,33 @@ function updateDirection(state, action) {
                 ...page,
                 direction: action.direction
             }
+        };
+    }
+
+    return state;
+}
+
+function addUserStylesheet(state, action) {
+    var page = state[action.page];
+    if (page) {
+        let userStylesheets = page.userStylesheets ? page.userStylesheets.slice(0) : [];
+        userStylesheets.push(`css${Date.now()}`);
+        state = {
+            ...state,
+            [action.page]: {...page, userStylesheets}
+        };
+    }
+
+    return state;
+}
+
+function removeUserStylesheet(state, action) {
+    var page = state[action.page];
+    if (page && page.userStylesheets && page.userStylesheets.indexOf(action.id) !== -1) {
+        let userStylesheets = page.userStylesheets.filter(id => id !== action.id);
+        state = {
+            ...state,
+            [action.page]: {...page, userStylesheets}
         };
     }
 

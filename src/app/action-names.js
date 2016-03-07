@@ -9,6 +9,8 @@ export const PAGE = {
     LAST_USED: 'Updates last used data',
     UPDATE_FILE_MAPPING: 'Explicitly map editor file to browser one',
     UPDATE_DIRECTION: 'Update changes transmit direction',
+    ADD_USER_STYLESHEET: 'Add user stylesheet',
+    REMOVE_USER_STYLESHEET: 'Remove user stylesheet',
 
     DIRECTION_BOTH: 'both',
     DIRECTION_TO_BROWSER: 'to browser',
@@ -18,14 +20,14 @@ export const PAGE = {
 export const SESSION = {
     SET_CSSOM_STYLESHEETS: 'Update list of CSSOM stylesheets',
     SET_DEVTOOLS_STYLESHEETS: 'Update list of DevTools stylesheets',
+    SET_USER_STYLESHEETS: 'Update list user stylesheets',
     UPDATE_DEVTOOLS_STYLESHEET: 'Update DevTools stylesheet content',
     UPDATE_STYLESHEETS: 'Update browser stylesheets list',
-    UPDATE_AUTO_MAPPING: 'Update browser-to-editor file auto mappings',
     UPDATE_MAPPING: 'Update browser-to-editor file mappings',
     UPDATE_LIST: 'Update sessions list',
     SAVE_RESOURCE_PATCHES: 'Save incoming resource patches',
     RESET_RESOURCE_PATCHES: 'Reset saved resource patches',
-    ADD_REQUESTED_UNSAVED_FILES: 'Add files that were requested for unsaved changes',
+    ADD_REQUESTED_UNSAVED_FILES: 'Add files that were requested for unsaved changes'
 };
 
 export const EDITOR = {

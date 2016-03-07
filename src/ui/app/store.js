@@ -14,7 +14,8 @@ import {MODEL} from './action-names';
 
 const port = connectToApp();
 const externalActions = new Set([
-    PAGE.TOGGLE_ENABLED, PAGE.UPDATE_DIRECTION, PAGE.UPDATE_FILE_MAPPING
+    PAGE.TOGGLE_ENABLED, PAGE.UPDATE_DIRECTION, PAGE.UPDATE_FILE_MAPPING,
+    PAGE.ADD_USER_STYLESHEET, PAGE.REMOVE_USER_STYLESHEET
 ]);
 
 var enhancer = null;

@@ -23,14 +23,11 @@ export default function(state={}, action) {
         case SESSION.SET_DEVTOOLS_STYLESHEETS:
             return setDevToolsStylesheets(state, action);
 
+        case SESSION.SET_USER_STYLESHEETS:
+            return setUserStylesheets(state, action);
+
         case SESSION.UPDATE_DEVTOOLS_STYLESHEET:
             return updateDevToolsStylesheet(state, action);
-
-        case SESSION.UPDATE_AUTO_MAPPING:
-            return updateAutoMapping(state, action);
-
-        case SESSION.UPDATE_MAPPING:
-            return updateMapping(state, action);
 
         case SESSION.SAVE_RESOURCE_PATCHES:
             return saveResourcePatches(state, action);
@@ -75,6 +72,21 @@ function setDevToolsStylesheets(state, action) {
     return state;
 }
 
+function setUserStylesheets(state, action) {
+    var session = state[action.tabId];
+    if (session) {
+        state = {
+            ...state,
+            [action.tabId]: updateStylesheetsIfNeeded({
+                ...session,
+                userStylesheets: action.items
+            })
+        };
+    }
+
+    return state;
+}
+
 function updateDevToolsStylesheet(state, action) {
     var session = state[action.tabId];
     if (session) {
@@ -90,46 +102,12 @@ function updateDevToolsStylesheet(state, action) {
     return state;
 }
 
-
 function updateStylesheetsIfNeeded(session, action) {
     var allStylesheets = getStylesheets(session);
     if (!deepequal(allStylesheets, session.stylesheets)) {
         session.stylesheets = allStylesheets;
     }
     return session;
-}
-
-function updateAutoMapping(state, action) {
-    var session = state[action.tabId];
-    if (session && !deepequal(session.autoMapping, action.mapping)) {
-        state = {
-            ...state,
-            [action.tabId]: {
-                ...session,
-                autoMapping: action.mapping
-            }
-        };
-    }
-    return state;
-}
-
-function updateMapping(state, action) {
-    var session = state[action.tabId];
-    // calculate final mapping based on user and auto mappings
-    if (session) {
-        // auto-mapping always contains valid file references
-        let mapping = {
-            ...session.autoMapping,
-            ...action.mapping
-        };
-        if (!deepequal(session.mapping, mapping)) {
-            state = {
-                ...state,
-                [action.tabId]: {...session, mapping}
-            };
-        }
-    }
-    return state;
 }
 
 function saveResourcePatches(state, action) {
@@ -169,8 +147,9 @@ function resetResourcePatches(state, action) {
 function getStylesheets(session) {
     var all = EMPTY_ARRAY.concat(
         session.cssomStylesheets || EMPTY_ARRAY,
-        session.devtoolsStylesheets ? Array.from(session.devtoolsStylesheets.keys()) : EMPTY_ARRAY
-    );
+        session.devtoolsStylesheets ? Array.from(session.devtoolsStylesheets.keys()) : EMPTY_ARRAY,
+        session.userStylesheets ? Array.from(session.userStylesheets.values()) : EMPTY_ARRAY
+    ).filter(Boolean);
     return Array.from(new Set(all)).sort();
 }
 

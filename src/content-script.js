@@ -1,6 +1,7 @@
 'use strict';
 
 import * as cssom from 'livestyle-cssom-patcher';
+import {default as syncUserStylesheets, isUserStylesheet, createUrl} from './chrome/user-stylesheet';
 import shadowCSS from './lib/shadow-css';
 import origin from './lib/origin';
 
@@ -19,27 +20,24 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 	switch (message.action) {
 		case 'apply-cssom-patch':
 			return applyPatches(data.stylesheetUrl, data.patches);
-		case 'create-user-stylesheet':
-			callback(generateUserStylesheets(data.url));
-			return true;
-		case 'remove-user-stylesheet':
-			return removeUserStylesheet(data.url);
-		case 'validate-user-stylesheet':
-			callback(validateUserStylesheets(data.url));
-			return true;
 		case 'get-stylesheets':
 			callback(findStyleSheets(document.styleSheets));
+			return true;
+		case 'create-user-stylesheet-url':
+			callback(data.userId.reduce((out, id) => {
+				out[id] = createUrl(id);
+				return out;
+			}, {}));
+			return true;
+		case 'sync-user-stylesheets':
+			console.log('requested stylesheet sync', message);
+			callback(syncUserStylesheets(data.items));
 			return true;
 		case 'get-origin':
 			callback(origin());
 			return true;
 	}
 });
-
-
-function $$(sel, context) {
-	return Array.from((context || document).querySelectorAll(sel));
-}
 
 function applyPatches(url, patches) {
 	if (!url || !patches || !patches.length) {
@@ -87,94 +85,6 @@ function applyPatches(url, patches) {
 	}
 }
 
-function userStylesheets() {
-	return $$('link[rel="stylesheet"]').filter(link => !!lsId(link));
-}
-
-/**
- * Creates `amount` new stylesheets on current page
- * @param  {Number} amount How many stylesheets should be created
- * @returns {Array} Array of stylesheet URLs
- */
-function generateUserStylesheets(url) {
-	if (!Array.isArray(url)) {
-		url = [url];
-	}
-
-	var result = {};
-	url.forEach(function(internalUrl) {
-		console.log('Creating stylesheet', internalUrl);
-		var uss = createUserStylesheet();
-		uss.dataset.livestyleId = internalUrl;
-		document.head.appendChild(uss);
-		result[internalUrl] = uss.href;
-	});
-
-	return result;
-}
-
-function createUserStylesheet(content) {
-	var blob = new Blob([content || ''], {type: 'text/css'});
-	var url = URL.createObjectURL(blob);
-	var link = document.createElement('link');
-	link.rel = 'stylesheet';
-	link.href = url;
-	return link;
-}
-
-/**
- * Removes stylesheet with given URL (blob or internal LiveStyle ID)
- * @param  {String} url
- */
-function removeUserStylesheet(url) {
-	console.log('Removing stylesheet', url);
-	userStylesheets().forEach(function(link) {
-		if (link.href === url || lsId(link) == url) {
-			removeLink(link);
-		}
-	});
-}
-
-function removeLink(link) {
-	link.parentNode.removeChild(link);
-	window.URL.revokeObjectURL(link.href);
-}
-
-/**
- * Validates given user stylesheets: adds missing and removes redundant ones
- * @param  {String} url Internal URL or array of URLs
- * @return {Object}     Hash where key is given URL and value if stylesheets’
- * blob URL
- */
-function validateUserStylesheets(url) {
-	var result = {};
-	var cur = userStylesheets();
-	if (!Array.isArray(url)) {
-		url = [url];
-	}
-
-	// remove redundant
-	var exists = {};
-	cur.forEach(function(item) {
-		var id = lsId(item);
-		if (!~url.indexOf(id)) {
-			removeLink(item);
-		} else {
-			exists[id] = item.href;
-		}
-	});
-
-	// create missing
-	var missing = generateUserStylesheets(url.filter(item => !(item in exists)));
-
-	// re-create result hash with keys in right order
-	var result = {};
-	url.forEach(function(item) {
-		result[item] = exists[item] ||  missing[item];
-	});
-	return result;
-}
-
 /**
  * Findes all stylesheets in given context, including
  * nested `@import`s
@@ -186,7 +96,7 @@ function findStyleSheets(ctx, out) {
 	for (var i = 0, il = ctx.length, url, item; i < il; i++) {
 		item = ctx[i];
 		url = item.href;
-		if (~out.indexOf(url) || lsId(item.ownerNode)) {
+		if (~out.indexOf(url) || isUserStylesheet(item.ownerNode)) {
 			// stylesheet already added or it’s a user stylesheet
 			continue;
 		}
@@ -206,9 +116,4 @@ function findStyleSheets(ctx, out) {
 	}
 
 	return out;
-}
-
-function lsId(node) {
-	var dataset = (node && node.dataset) || {};
-	return dataset.livestyleId;
 }

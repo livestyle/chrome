@@ -20,7 +20,10 @@ export default const = {
             lastUsed: 1456088041245,
 
             // Browser-to-editor file mapping, hand-picked by user
-            userMapping: {}
+            userMapping: {},
+
+            // IDs of user-generated styleshets
+            userStylesheets: []
         }
     },
 
@@ -41,14 +44,12 @@ export default const = {
             // Map of stylesheets (url + content) retreived from DevTools
             devtoolsStylesheets: new Map(),
 
-            // Browser-to-editor file mapping, calculated from `autoMapping` and
-            // `userMapping` of matched `pages` model
-            mapping: {},
+            // Map of user stylesheets (persistent ID => page-local URL)
+            userStylesheets: new Map(),
 
-            // Browser-to-editor file mappings “guessed” by LiveStyle. Will be
-            // used if there’s no user mapping for given browser file or
-            // user-mapped editor file is not yet opened in editor
-            autoMapping: {},
+            // Browser-to-editor file mapping, automatically calculated from
+            // `editorFiles`, `pages.userMapping` and `session.stylesheets`
+            mapping: {},
 
             // List of resource patches applied to given session. Mostly used by
             // DevTools: session accumulates all incoming patches in this map

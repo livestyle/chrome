@@ -129,7 +129,7 @@ ol {
 	font-weight: bold;
 }
 
-.file-list__remove {
+.file-list__item-remove {
 	display: inline-block;
 	margin-left: 10px;
 	color: #bf382e;
@@ -144,11 +144,11 @@ ol {
 	transition: opacity 0.2s;
 }
 
-.file-list__remove:hover {
+.file-list__item-remove:hover {
 	color: #e64b3f;
 }
 
-.file-list__remove:before {
+.file-list__item-remove:before {
 	font-family: 'Font Awesome';
 	content: '\f00d';
 	display: inline-block;
@@ -159,7 +159,7 @@ ol {
 	top: -1px;
 }
 
-.file-list__item:hover .file__remove {
+.file-list__item:hover .file-list__item-remove {
 	opacity: 1;
 }
 

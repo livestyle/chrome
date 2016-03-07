@@ -43,7 +43,8 @@ function onPortMessage(message) {
         case 'get-stylesheets':
             return getStylesheets()
             .then(resources => {
-                return Promise.all(resources.map(getContent))
+                var stylesheets = resources.filter(res => !isUserStylesheet(res));
+                return Promise.all(stylesheets.map(getContent))
                 .then(contents => contents.reduce((out, content, i) => {
                     out[resources[i].url] = content;
                     return out;
@@ -132,4 +133,8 @@ function refresh(res, content) {
         }, 800));
     }
     refreshTransactions.get(key)(res, content);
+}
+
+function isUserStylesheet(res) {
+    return /^blob:/.test(res.url);
 }

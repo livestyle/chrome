@@ -14,7 +14,7 @@ export default tr.component({
         if (isEnabled) {
             content = <div className="popup__content">
                 <FileList {...props.model} active={props.ui.activePicker} />
-                <button className="add-file">Add stylesheet</button>
+                <button className="add-file" onclick={addUserStylesheet}>Add stylesheet</button>
             </div>;
         }
 
@@ -34,4 +34,9 @@ export default tr.component({
 function toggleEnabled(evt) {
     evt.preventDefault();
     dispatch({type: PAGE.TOGGLE_ENABLED});
+}
+
+function addUserStylesheet(evt) {
+    evt.preventDefault();
+    dispatch({type: PAGE.ADD_USER_STYLESHEET});
 }

@@ -18,6 +18,16 @@ export function normalizeUrl(url) {
     return url.replace(/#.*$/, '');
 }
 
+export function objToMap(obj) {
+	return Object.keys(obj || {}).reduce((out, key) => out.set(key, obj[key]), new Map());
+}
+
+export function mapToObj(map) {
+	var out = new Map();
+	map.forEach((v, k) => out[k] = v);
+	return out;
+}
+
 /**
  * Returns key from given object that contains given `value`
  * @param  {Object} obj

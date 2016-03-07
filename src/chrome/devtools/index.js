@@ -6,7 +6,7 @@ import client from 'livestyle-client';
 import {dispatch, subscribe, subscribeDeepKey, getStateValue} from '../../app/store';
 import {diff, patch} from '../../app/patcher';
 import {SESSION} from '../../app/action-names';
-import {error, debounce} from '../../lib/utils';
+import {error, debounce, objToMap} from '../../lib/utils';
 import request from './request';
 
 const ports = new Map();
@@ -129,6 +129,15 @@ subscribeDeepKey('sessions', 'patches', (session, tabId) => {
 	applyPatches(+tabId, session.patches);
 });
 
+/**
+ * Update DevTools data for session of given `tabId`
+ * @param  {Number} tabId
+ * @return {Promise}
+ */
+export default function(tabId) {
+    return setStylesheetsForSession(tabId);
+}
+
 function onPortMessage(message, port) {
     var {action, data} = message;
     console.log('%c[DevTools]%c received message %c%s %cwith data %o on port %s', 'background-color:#344a5d;color:#fff', '', 'font-weight:bold;', action, '', data, port.name);
@@ -201,17 +210,15 @@ function setStylesheetsForSession(tabId) {
         return Promise.resolve();
     }
 
-    return request(port, 'get-stylesheets')
-    .then(data => {
-        // convert items object to map
-        return Object.keys(data.items || {})
-        .reduce((out, key) => out.set(key, data.items[key]), new Map());
-    })
-    .then(items => dispatch({type: SESSION.SET_DEVTOOLS_STYLESHEETS, tabId, items}));
+    return request(port, 'get-stylesheets').then(data => dispatch({
+        type: SESSION.SET_DEVTOOLS_STYLESHEETS,
+        tabId,
+        items: objToMap(data.items)
+    }));
 }
 
 /**
- * Sets content of resource with given URL in `tabId DevTools instance.
+ * Sets content of resource with given URL in `tabId` DevTools instance.
  * Returns Promise which is resolved when resource is updated.
  * @param  {Number} tabId
  * @param  {String} url

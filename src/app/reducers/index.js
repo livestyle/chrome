@@ -6,9 +6,12 @@ import sessions from './sessions';
 import editors from './editors';
 import editorFiles from './editor-files';
 import stateReducer from './state';
+import mappingReducer from './mapping';
 
 const keyReducers = combineReducers({pages, sessions, editors, editorFiles});
 
-export default function(state, action) {
-    return stateReducer(keyReducers(state, action), action);
+export default function(state={}, action) {
+    var prev = state;
+    var next = stateReducer(keyReducers(state, action), action);
+    return mappingReducer(prev, next);
 };
