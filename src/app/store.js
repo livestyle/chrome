@@ -14,7 +14,8 @@ if (process.env.NODE_ENV !== 'production') {
 const store = createStore(reducers, {
     editorFiles: [],
     pages: {},
-    sessions: {}
+    sessions: {},
+    remoteView: {}
 }, applyMiddleware(...middlewares));
 
 export function dispatch(data) {

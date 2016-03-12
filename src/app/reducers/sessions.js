@@ -23,6 +23,9 @@ export default function(state={}, action) {
         case SESSION.SET_DEVTOOLS_STYLESHEETS:
             return setDevToolsStylesheets(state, action);
 
+        case SESSION.SET_ORIGIN:
+            return setOrigin(state, action);
+
         case SESSION.SET_USER_STYLESHEETS:
             return setUserStylesheets(state, action);
 
@@ -96,6 +99,21 @@ function updateDevToolsStylesheet(state, action) {
                 ...session,
                 devtoolsStylesheets: new Map(session.devtoolsStylesheets).set(action.url, action.content)
             })
+        };
+    }
+
+    return state;
+}
+
+function setOrigin(state, action) {
+    var session = state[action.tabId];
+    if (session && session.origin !== action.origin) {
+        state = {
+            ...state,
+            [action.tabId]: {
+                ...session,
+                origin: action.origin
+            }
         };
     }
 

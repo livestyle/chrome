@@ -9,13 +9,14 @@
 import {createStore, applyMiddleware} from 'redux';
 import createLogger from 'redux-logger';
 import reducers from './reducers';
-import {PAGE} from '../../app/action-names';
+import {PAGE, REMOTE_VIEW} from '../../app/action-names';
 import {MODEL} from './action-names';
 
 const port = connectToApp();
 const externalActions = new Set([
     PAGE.TOGGLE_ENABLED, PAGE.UPDATE_DIRECTION, PAGE.UPDATE_FILE_MAPPING,
-    PAGE.ADD_USER_STYLESHEET, PAGE.REMOVE_USER_STYLESHEET
+    PAGE.ADD_USER_STYLESHEET, PAGE.REMOVE_USER_STYLESHEET,
+    REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION
 ]);
 
 var enhancer = null;
@@ -28,6 +29,7 @@ if (!port) { // no port, local development
     initialState.model = {
         enabled: true,
         page: 'http://localhost:9000',
+        origin: 'http://localhost:9000',
         direction: 'both',
         browserFiles: [
             'http://localhost:9000/css/main.css',
@@ -41,6 +43,9 @@ if (!port) { // no port, local development
         ],
         mapping: {
             'http://localhost:9000/css/module/form.css': '/home/projects/foo/css/assets/inner.css'
+        },
+        remoteView: {
+            state: 'connected'
         }
     };
 }

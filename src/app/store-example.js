@@ -33,6 +33,9 @@ export default const = {
             // Reference to page in `pages` key
             page: 'http://example.com:9000/test.html',
 
+            // current session origin
+            origin: 'http://example.com:9000',
+
             // array of stylesheets available for current page, calculated
             // value from `cssomStylesheets` and `devtoolsStylesheets`
             stylesheets: [],
@@ -71,5 +74,24 @@ export default const = {
         // A page where error appeared (key of `pages` model)
         page: 'http://example.com:9000/test.html',
         error: null
-    }]
+    }],
+
+    // Remote View state and sessions
+    removeView: {
+        // Wether current browser client is connected to LiveStyle App
+        connected: true,
+
+        // Currently active Remote View sessions, Map
+        sessions: {
+            // Key is a session origin
+            'http://localhost:8080': {
+                // current session connection state, see REMOTE_VIEW.STATE_*
+                state: 'connected',
+                publicId: 'rv.livestyle.io',
+				localSite: 'http://localhost:8080',
+				connectUrl: 'http://livestyle.io:9001',
+				expiresAt: Date.now(),
+            }
+        }
+    }
 };

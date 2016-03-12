@@ -157,18 +157,22 @@ function updateSessions(nextSessions) {
     toUpdate.forEach(tabId => {
         var session = nextSessions[tabId];
         fetchCSSOMStylesheets(tabId);
+        fetchOrigin(tabId);
         syncUserStylesheets(tabId, session, pages[session.page]);
     });
 }
 
 function fetchCSSOMStylesheets(tabId) {
     // always request stylesheets from main frame
-    chrome.tabs.sendMessage(+tabId, {action: 'get-stylesheets'}, mainFrame, items => {
-        dispatch({
-            type: SESSION.SET_CSSOM_STYLESHEETS,
-            tabId,
-            items
-        });
+    chrome.tabs.sendMessage(tabId, {action: 'get-stylesheets'}, mainFrame, items => {
+        dispatch({type: SESSION.SET_CSSOM_STYLESHEETS, tabId, items});
+    });
+}
+
+function fetchOrigin(tabId) {
+    // always request origin from main frame
+    chrome.tabs.sendMessage(tabId, {action: 'get-origin'}, mainFrame, origin => {
+        dispatch({type: SESSION.SET_ORIGIN, tabId, origin});
     });
 }
 
@@ -207,7 +211,8 @@ function syncUserStylesheets(tabId, session, page) {
 }
 
 /**
- * Creates local URLs for new user stylesheets (e.g. `items` with empty values)
+ * Creates local URLs for new user stylesheets (e.g. `items` with empty values).
+ * These URLs can be used across inner frames
  * @param  {Object} items User stylesheet mappings
  * @return {Promise}
  */
@@ -227,4 +232,3 @@ function createUserStylesheetUrls(tabId, items) {
         });
     });
 }
-``

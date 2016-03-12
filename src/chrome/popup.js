@@ -4,9 +4,12 @@
  */
 'use strict';
 import {getState, dispatch} from '../app/store';
+import {REMOTE_VIEW} from '../app/action-names';
+import {createSession, closeSession} from '../app/remote-view';
 import {normalizeUrl} from '../lib/utils';
 
 const popupPorts = new Set();
+const EMPTY_OBJECT = {};
 
 /**
  * Default handler: sends popup model, created from given state, to all connected
@@ -50,15 +53,20 @@ function popupModelForTab(tabId, state) {
     }
 
     var page = state.pages[session.page];
+    var remoteView = state.remoteView.connected
+        && state.remoteView.sessions.get(session.origin)
+        || EMPTY_OBJECT;
     var userStylesheets = {};
     (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
     return {
         enabled: page.enabled,
+        origin: session.origin,
         direction: page.direction,
         editorFiles: state.editorFiles,
         browserFiles: session.stylesheets,
         mapping: session.mapping,
-        userStylesheets
+        userStylesheets,
+        remoteView
     };
 }
 
@@ -75,11 +83,17 @@ function onPopupMessage(message, port) {
                 return console.warn('No tab for', port.tabId);
             }
 
-            dispatch({
-                ...message.data,
-                page: normalizeUrl(tab.url),
-                tabId: tab.id
-            });
+            if (message.data.type === REMOTE_VIEW.SET_SESSION) {
+                createSession(message.data.localSite);
+            } else if (message.data.type === REMOTE_VIEW.REMOVE_SESSION) {
+                closeSession(message.data.localSite);
+            } else {
+                dispatch({
+                    ...message.data,
+                    page: normalizeUrl(tab.url),
+                    tabId: tab.id
+                });
+            }
         });
     }
 }

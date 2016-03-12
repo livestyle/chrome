@@ -20,7 +20,7 @@ export const PAGE = {
 export const SESSION = {
     SET_CSSOM_STYLESHEETS: 'Update list of CSSOM stylesheets',
     SET_DEVTOOLS_STYLESHEETS: 'Update list of DevTools stylesheets',
-    SET_USER_STYLESHEETS: 'Update list user stylesheets',
+    SET_ORIGIN: 'Set session origin',
     UPDATE_DEVTOOLS_STYLESHEET: 'Update DevTools stylesheet content',
     UPDATE_STYLESHEETS: 'Update browser stylesheets list',
     UPDATE_MAPPING: 'Update browser-to-editor file mappings',
@@ -36,4 +36,16 @@ export const EDITOR = {
     DISCONNECT: 'Editor disconnected',
     CLEAR: 'Clear all connected editors',
     UPDATE_FILE_LIST: 'Update opened file list in editor'
+};
+
+export const REMOTE_VIEW = {
+    SET_STATUS: 'Set Remote View activity status',
+    SET_SESSION: 'Set Remote View session data',
+    REMOVE_SESSION: 'Remove Remote View session',
+    UPDATE_SESSION_LIST: 'Update list of available Remote View sessions',
+
+    // Remote View session connection state
+    STATE_CONNECTED: 'connected',
+    STATE_PENDING: 'pending',
+    STATE_ERROR: 'error'
 };
