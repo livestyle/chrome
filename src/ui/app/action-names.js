@@ -6,5 +6,6 @@ export const MODEL = {
 
 export const UI = {
     TOGGLE_ACTIVE_PICKER: 'Toggle active editor file picker display',
-    RESET_ACTIVE_PICKER: 'Reset active editor file picker'
+    RESET_ACTIVE_PICKER: 'Reset active editor file picker',
+    SET_RV_DESCRIPTION_STATE: 'Set Remote View description display state'
 };

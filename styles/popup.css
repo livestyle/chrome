@@ -4,10 +4,9 @@
 @import url(./assets/button.css);
 @import url(./assets/global-message.css);
 @import url(./assets/remote-view.css);
+@import url(./assets/spinner.css);
 
 body {
-	display: flex;
-	flex-direction: column;
 	font-family: 'PT Sans', Arial, sans-serif;
 	height: 100%;
 }
@@ -19,6 +18,13 @@ a {
 ol {
 	margin-left: 0;
 	padding-left: 0;
+}
+
+.layout {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	height: 100%;
 }
 
 .popup {

@@ -41,6 +41,7 @@ if (!port) { // no port, local development
             '/home/projects/foo/css/assets/inner.css',
             '/home/projects/foo/css/assets/guides.css'
         ],
+        userStylesheets: {},
         mapping: {
             'http://localhost:9000/css/module/form.css': '/home/projects/foo/css/assets/inner.css'
         },

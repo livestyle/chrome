@@ -55,12 +55,16 @@ function ui(state={}, action) {
                 activePicker: state.activePicker !== action.picker ? action.picker : null
             };
             break;
+
         case UI.RESET_ACTIVE_PICKER:
             if (state.activePicker) {
-                state = {
-                    ...state,
-                    activePicker: null
-                };
+                state = {...state, activePicker: null};
+            }
+            break;
+
+        case UI.SET_RV_DESCRIPTION_STATE:
+            if (state.rvDescription !== action.state) {
+                state = {...state, rvDescription: action.state};
             }
             break;
     }

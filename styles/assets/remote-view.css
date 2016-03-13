@@ -8,18 +8,18 @@
 	transition: background-color 0.25s;
 }
 
-.rv-header, .rv-description {
+.rv__header, .rv__description {
 	position: relative;
 	overflow: hidden;
 	font-size: 13px;
 	line-height: 1.4;
 }
 
-.rv-header {
+.rv__header {
 	position: relative;
 }
 
-.rv-title {
+.rv__title {
 	font-size: 18px;
 	padding: 7px 20px 2px;
 	line-height: 22px;
@@ -29,17 +29,17 @@
 	text-overflow: ellipsis;
 }
 
-.rv-title a {
+.rv__title a {
 	color: inherit;
 	text-decoration: none;
 	font-size: 0.9em;
 }
 
-.rv-title a:hover {
+.rv__title a:hover {
 	text-decoration: underline;
 }
 
-.rv-comment {
+.rv__comment {
 	color: #f1c22a;
 	position: relative;
 	font-size: 12px;
@@ -48,25 +48,25 @@
 	box-sizing: border-box;
 }
 
-.rv-comment a {
+.rv__comment a {
 	color: #ecf0f1;
 }
 
-.rv-comment a:hover {
+.rv__comment a:hover {
 	color: #fff;
 }
 
-.rv-message {
+.rv__message {
 	position: relative;
 }
 
-.rv-learn-more {
+.rv__learn-more {
 	cursor: pointer;
 	border-bottom: 1px dotted currentColor;
 	color: #ecf0f1;
 }
 
-.rv-learn-more:hover {
+.rv__learn-more:hover {
 	color: #fff;
 }
 
@@ -93,7 +93,7 @@
 	background-color: #e57c2c;
 }
 
-.rv-description {
+.rv__description {
 	position: absolute;
 	left: 0;
 	right: 0;
@@ -104,60 +104,24 @@
 	margin-top: -1px;
 }
 
-.rv-description a {
+.rv__description a {
 	color: #fff;
 }
 
-.rv-description em {
+.rv__description em {
 	font-style: normal;
 	color: #f1c22a;
 }
 
 /* Unavailable state */
-.rv__unavailable {
+.rv_unavailable {
 	background-color: #bdc3c7;
 }
 
-.rv__unavailable .toggler {
+.rv_unavailable .toggler {
 	display: none;
 }
 
-.rv__unavailable .rv-comment {
+.rv_unavailable .rv__comment {
 	color: #ecf0f1;
-}
-
-/* Spinner */
-.rv-spinner {
-	display: inline-block;
-	margin-left: 5px;
-}
-
-.rv-spinner__item {
-	display: inline-block;
-	width: 4px;
-	height: 4px;
-	background: #fff;
-	border-radius: 2px;
-	vertical-align: middle;
-	animation: rv-spinner 0.7s infinite;
-}
-
-.rv-spinner__item:nth-of-type(2) {
-	animation-delay: 0.1s;
-}
-
-.rv-spinner__item:nth-of-type(3) {
-	animation-delay: 0.2s;
-}
-
-@keyframes rv-spinner {
-	from {
-		transform: scale(0);
-		opacity: 1;
-	}
-
-	to {
-		transform: scale(2);
-		opacity: 0;
-	}
 }

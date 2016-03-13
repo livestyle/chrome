@@ -1,0 +1,35 @@
+/* Spinner */
+.spinner {
+	display: inline-block;
+	margin-left: 5px;
+}
+
+.spinner__item {
+	display: inline-block;
+	width: 4px;
+	height: 4px;
+	background: #fff;
+	border-radius: 2px;
+	vertical-align: middle;
+	animation: spinner 0.7s infinite;
+}
+
+.spinner__item:nth-of-type(2) {
+	animation-delay: 0.1s;
+}
+
+.spinner__item:nth-of-type(3) {
+	animation-delay: 0.2s;
+}
+
+@keyframes spinner {
+	from {
+		transform: scale(0);
+		opacity: 1;
+	}
+
+	to {
+		transform: scale(2);
+		opacity: 0;
+	}
+}

@@ -17,7 +17,7 @@ export function request(client, name, data) {
         return new Promise((resolve, reject) => {
             var cancelId = setTimeout(function() {
                 client.off('message-receive', callback);
-                var err = new Error(`Expected message "${expectedMessageName}" timed out`);
+                var err = new Error(`Expected message "${expectedName}" timed out`);
                 err.code = 'EEXPECTTIMEOUT';
                 err.messageName = expectedName;
                 reject(err);
@@ -45,6 +45,6 @@ export function request(client, name, data) {
             client.on('message-receive', callback);
         });
     };
-    
+
     return p;
 }
