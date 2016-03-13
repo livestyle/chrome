@@ -20,6 +20,7 @@ export const PAGE = {
 export const SESSION = {
     SET_CSSOM_STYLESHEETS: 'Update list of CSSOM stylesheets',
     SET_DEVTOOLS_STYLESHEETS: 'Update list of DevTools stylesheets',
+    SET_USER_STYLESHEETS: 'Set user stylesheets for session',
     SET_ORIGIN: 'Set session origin',
     UPDATE_DEVTOOLS_STYLESHEET: 'Update DevTools stylesheet content',
     UPDATE_STYLESHEETS: 'Update browser stylesheets list',
