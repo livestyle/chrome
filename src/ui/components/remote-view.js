@@ -4,26 +4,44 @@ import tr from 'tiny-react';
 import Toggler from './toggler';
 import Spinner from './spinner';
 import {bem} from '../utils';
-import {dispatch} from '../app/store';
-import {UI} from '../app/action-names';
+import {dispatch, getStateValue} from '../app/store';
+import {REMOTE_VIEW} from '../app/action-names';
 import tween from '../../lib/tween';
 
 const cl = bem('rv');
+const messages = {
+    'default': message(
+        'Remote View',
+        <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></span>
+    ),
+	'unavailable': message(
+		'Remote View is not available',
+        <span>Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></span>
+	),
+	'no-origin': message(
+		'Remote View is not available',
+        <span>Unable to get URL origin for current page. Please <a href="http://github.com/livestyle/issues/issues" target="_blank">report this issue</a> with URL of your page.</span>
+	),
+	'connecting': message(<span>Connecting <Spinner /></span>),
+	'no-app': message(
+        'No LiveStyle App',
+        <span>Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.</span>
+    )
+};
 
 export default tr.component({
     render(props) {
-        var description = this.getDescriptionState(props.ui);
-        console.log('description state', description);
+        var rvUI = props.ui.remoteView;
         return <div
-            className={cl('', description.state === 'expanded' && '_expanded')}
-            transition={description.transition}>
+            className={cl('', `_${rvUI.descriptionState || 'collapsed'}`)}
+            transition={rvUI.transition}>
     		<header className={cl('-header')}>
                 <Toggler name="rv-enabled" checked={!!props} onClick={toggleEnabled} />
                 <div className={cl('-title')}>
     				<div className={cl('-message')}>Remote View</div>
     			</div>
     			<div className={cl('-comment')}>
-    				<div className={cl('-message')}>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onClick={description.handler}>Learn more</span></div>
+    				<div className={cl('-message')}>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></div>
     			</div>
     		</header>
     		<section className={cl('-description')}>
@@ -33,33 +51,34 @@ export default tr.component({
     			<p><strong>Remote View is a paid service available for free during beta-testing.</strong></p>
     		</section>
     	</div>
-    },
-
-    getDescriptionState(props) {
-        var state = props.rvDescription || 'collapsed';
-        var handler = state === 'collapsed' ? expandDescription
-            : (state === 'expanded' ? collapseDescription : undefined);
-        var transition = typeof state === 'function' ? state : undefined;
-        return {state, handler, transition};
     }
 });
+
+function message(title, comment=null) {
+	return {title, comment};
+}
 
 function toggleEnabled() {
 
 }
 
-function expandDescription() {
-    console.log('expand description');
-    setDescriptionState(expandDescriptionTransition);
+function toggleDescription() {
+    var props = getStateValue('ui.remoteView');
+    if (props.transition) {
+        return undefined;
+    }
+
+    setTransition(props.descriptionState === 'expanded'
+        ? collapseDescriptionTransition
+        : expandDescriptionTransition);
 }
 
-function collapseDescription() {
-    console.log('collapse description');
-    setDescriptionState(collapseDescriptionTransition);
+function setTransition(transition) {
+    dispatch({type: REMOTE_VIEW.SET_TRANSITION, transition});
 }
 
 function setDescriptionState(state) {
-    dispatch({type: UI.SET_RV_DESCRIPTION_STATE, state});
+    dispatch({type: REMOTE_VIEW.SET_DESCRIPTION_STATE, state});
 }
 
 function expandDescriptionTransition(root) {

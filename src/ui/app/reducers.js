@@ -1,8 +1,9 @@
 'use strict';
 
 import {combineReducers} from 'redux';
-import {MODEL, UI} from './action-names';
+import {MODEL, UI, REMOTE_VIEW} from './action-names';
 import {PAGE} from '../../app/action-names';
+import {replaceValue} from '../../lib/utils';
 
 export default combineReducers({model, ui});
 
@@ -48,23 +49,42 @@ function model(state={}, action) {
 }
 
 function ui(state={}, action) {
+    var remoteView = state.remoteView || {};
     switch (action.type) {
         case UI.TOGGLE_ACTIVE_PICKER:
-            state = {
-                ...state,
-                activePicker: state.activePicker !== action.picker ? action.picker : null
-            };
-            break;
+            return replaceValue(state, 'activePicker', action.picker ? action.picker : null);
 
         case UI.RESET_ACTIVE_PICKER:
             if (state.activePicker) {
-                state = {...state, activePicker: null};
+                state = replaceValue(state, 'activePicker', null);
             }
             break;
 
-        case UI.SET_RV_DESCRIPTION_STATE:
-            if (state.rvDescription !== action.state) {
-                state = {...state, rvDescription: action.state};
+        case REMOTE_VIEW.SET_TRANSITION:
+            if (remoteView.transition !== action.transition) {
+                state = replaceValue(state, 'remoteView.transition', action.transition);
+            }
+            break;
+
+        case REMOTE_VIEW.SET_DESCRIPTION_STATE:
+            if (remoteView.descriptionState !== action.state) {
+                state = replaceValue(state, 'remoteView.descriptionState', action.state);
+                // reset transition as well
+                state.remoteView.transition = null;
+            }
+            break;
+
+        case REMOTE_VIEW.PUSH_MESSAGE:
+            if (remoteView.messages[remoteView.messages.length - 1] !== action.message) {
+                let messages = remoteView.messages.slice();
+                messages.push(action.message);
+                state = replaceValue(state, 'remoteView.messages', action.messages);
+            }
+            break;
+
+        case REMOTE_VIEW.SHIFT_MESSAGE:
+            if (remoteView.messages.length > 1) {
+                state = replaceValue(state, 'remoteView.messages', remoteView.messages.slice(1));
             }
             break;
     }

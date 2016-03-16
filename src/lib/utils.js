@@ -29,6 +29,28 @@ export function mapToObj(map) {
 }
 
 /**
+ * Updates `key` value in given `obj` by creating new instances of intermediate
+ * object of deep `key`
+ * @param  {Object} obj
+ * @param  {String} key
+ * @param  {any} value
+ * @return {Object}
+ */
+export function replaceValue(obj, key, value) {
+	var result = {...obj};
+	var ctx = result;
+	var parts = key.split('.');
+	var lastKey = parts.pop();
+	parts.forEach(k => {
+		var inner = k in ctx ? {...ctx[k]} : {};
+		ctx[k] = inner;
+		ctx = inner;
+	});
+	ctx[lastKey] = value;
+	return result;
+}
+
+/**
  * Returns key from given object that contains given `value`
  * @param  {Object} obj
  * @param  {any} value

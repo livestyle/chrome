@@ -22,7 +22,11 @@ const externalActions = new Set([
 var enhancer = null;
 var initialState = {
     model: {},
-    ui: {}
+    ui: {
+        remoteView: {
+            messages: ['default']
+        }
+    }
 };
 
 if (!port) { // no port, local development
