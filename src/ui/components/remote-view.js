@@ -3,7 +3,7 @@
 import tr from 'tiny-react';
 import Toggler from './toggler';
 import Spinner from './spinner';
-import {bem} from '../utils';
+import {bem, $, $$} from '../utils';
 import {dispatch, getStateValue} from '../app/store';
 import {REMOTE_VIEW} from '../app/action-names';
 import tween from '../../lib/tween';
@@ -32,16 +32,19 @@ const messages = {
 export default tr.component({
     render(props) {
         var rvUI = props.ui.remoteView;
+        var msg = getMessages(props);
         return <div
             className={cl('', `_${rvUI.descriptionState || 'collapsed'}`)}
             transition={rvUI.transition}>
     		<header className={cl('-header')}>
-                <Toggler name="rv-enabled" checked={!!props} onClick={toggleEnabled} />
+                <Toggler name="rv-enabled" onClick={toggleEnabled} />
                 <div className={cl('-title')}>
-    				<div className={cl('-message')}>Remote View</div>
+                    {outputMessage(msg.primary.title)}
+                    {msg.secondary && msg.secondary.title ? outputMessage(msg.secondary.title, 'secondary') : undefined}
     			</div>
     			<div className={cl('-comment')}>
-    				<div className={cl('-message')}>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></div>
+                    {outputMessage(msg.primary.comment || messages.default.comment)}
+                    {msg.secondary && msg.secondary.comment ? outputMessage(msg.secondary.comment, 'secondary') : undefined}
     			</div>
     		</header>
     		<section className={cl('-description')}>
@@ -59,7 +62,29 @@ function message(title, comment=null) {
 }
 
 function toggleEnabled() {
+    // check how messaging works
+    addMessage('connecting');
+    addMessage('unavailable');
+}
 
+function addMessage(message) {
+    dispatch({
+        type: REMOTE_VIEW.PUSH_MESSAGE,
+        message,
+        transition: messageTransition
+    });
+}
+
+function getMessages(props) {
+    var rv = props.ui.remoteView;
+    return {
+        primary: messages[rv.messages[0] || 'default'],
+        secondary: messages[rv.messages[1]]
+    };
+}
+
+function outputMessage(content, key='primary') {
+    return <div key={key} className={cl('-message', '-message_' + key)}>{content}</div>
 }
 
 function toggleDescription() {
@@ -107,4 +132,61 @@ function descriptionTransition(root, content, offset, reverse, complete) {
 			content.style.height = (offset * pos) + 'px';
 		}
 	});
+}
+
+function messageTransition(root) {
+    Promise.all([
+        swapMessage($('.rv__title', root)),
+        swapMessage($('.rv__comment', root))
+    ].filter(Boolean))
+    .then(() => dispatch({
+        type: REMOTE_VIEW.SHIFT_MESSAGE,
+        transition: messageTransitionComplete
+    }));
+}
+
+function messageTransitionComplete(root) {
+    resetMessageAfterSwap($('.rv__title', root));
+    resetMessageAfterSwap($('.rv__comment', root));
+    if (getStateValue('ui.remoteView.messages').length > 1) {
+        setTransition(messageTransition);
+    }
+}
+
+function swapMessage(container) {
+    // measure sizes and positions for previous message
+    var msg = $$('.rv__message', container);
+    if (msg.length === 1) {
+        // only one message, no transition
+        return;
+    }
+
+	var [pm, sm] = msg;
+    sm.style.display = 'block';
+	var pcRect = pm.getBoundingClientRect();
+	var ncRect = sm.getBoundingClientRect();
+
+	// get ready for animation
+	var dh = ncRect.height - pcRect.height;
+	container.style.height = pcRect.height + 'px';
+
+    return new Promise(complete => {
+        tween({
+    		easing: 'outExpo',
+    		duration: 300,
+            complete,
+    		step(pos) {
+    			pm.style.transform = sm.style.transform = `translateY(${-pos * pcRect.height}px)`;
+    			if (dh) {
+    				container.style.height = (pcRect.height + pos * dh) + 'px';
+    			}
+    		}
+    	});
+    });
+}
+
+function resetMessageAfterSwap(container) {
+    var msg = $$('.rv__message', container);
+    msg.forEach(m => m.style.transform = m.style.display = '');
+    container.style.height = '';
 }

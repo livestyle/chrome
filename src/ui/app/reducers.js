@@ -78,13 +78,19 @@ function ui(state={}, action) {
             if (remoteView.messages[remoteView.messages.length - 1] !== action.message) {
                 let messages = remoteView.messages.slice();
                 messages.push(action.message);
-                state = replaceValue(state, 'remoteView.messages', action.messages);
+                state = replaceValue(state, 'remoteView.messages', messages);
+                if (action.transition) {
+                    state.remoteView.transition = action.transition;
+                }
             }
             break;
 
         case REMOTE_VIEW.SHIFT_MESSAGE:
             if (remoteView.messages.length > 1) {
                 state = replaceValue(state, 'remoteView.messages', remoteView.messages.slice(1));
+                if (action.transition) {
+                    state.remoteView.transition = action.transition;
+                }
             }
             break;
     }

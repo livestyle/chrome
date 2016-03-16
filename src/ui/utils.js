@@ -18,3 +18,11 @@ export function bem(prefix) {
         return Array.from(classList).join(' ');
     }
 }
+
+export function $(selector, context=document) {
+	return context.querySelector(selector);
+}
+
+export function $$(selector, context=document) {
+	return Array.from(context.querySelectorAll(selector));
+}

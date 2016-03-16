@@ -21,9 +21,7 @@
 
 .rv__title {
 	font-size: 18px;
-	padding: 7px 20px 2px;
 	line-height: 22px;
-	box-sizing: border-box;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -43,9 +41,7 @@
 	color: #f1c22a;
 	position: relative;
 	font-size: 12px;
-	padding: 0 20px 7px;
 	overflow: hidden;
-	box-sizing: border-box;
 }
 
 .rv__comment a {
@@ -58,6 +54,18 @@
 
 .rv__message {
 	position: relative;
+}
+
+.rv__message_secondary {
+	display: none;
+}
+
+.rv__title .rv__message {
+	padding: 7px 20px 2px;
+}
+
+.rv__comment .rv__message {
+	padding: 0 20px 7px;
 }
 
 .rv__learn-more {
