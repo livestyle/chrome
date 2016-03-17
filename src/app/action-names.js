@@ -42,6 +42,7 @@ export const EDITOR = {
 export const REMOTE_VIEW = {
     SET_STATUS: 'Set Remote View activity status',
     SET_SESSION: 'Set Remote View session data',
+    CREATE_SESSION: 'Create Remote View session',
     REMOVE_SESSION: 'Remove Remote View session',
     UPDATE_SESSION_LIST: 'Update list of available Remote View sessions',
 

@@ -5,7 +5,8 @@ import Toggler from './toggler';
 import Spinner from './spinner';
 import {bem, $, $$} from '../utils';
 import {dispatch, getStateValue} from '../app/store';
-import {REMOTE_VIEW} from '../app/action-names';
+import {UI} from '../app/action-names';
+import {REMOTE_VIEW} from '../../app/action-names';
 import tween from '../../lib/tween';
 
 const cl = bem('rv');
@@ -31,13 +32,21 @@ const messages = {
 
 export default tr.component({
     render(props) {
-        var rvUI = props.ui.remoteView;
-        var msg = getMessages(props);
+        var session = props.session || {};
+        var ui = props.ui || {};
+        var msg = getRecentMessages(props);
+        var stateToggler;
+        if (session.state === REMOTE_VIEW.STATE_CONNECTED) {
+            stateToggler = disable;
+        } else if (session.state !== REMOTE_VIEW.STATE_PENDING) {
+            stateToggler = enable;
+        }
+
         return <div
-            className={cl('', `_${rvUI.descriptionState || 'collapsed'}`)}
-            transition={rvUI.transition}>
+            className={cl('', `_${ui.descriptionState || 'collapsed'}`)}
+            transition={ui.transition}>
     		<header className={cl('-header')}>
-                <Toggler name="rv-enabled" onClick={toggleEnabled} />
+                <Toggler name="rv-enabled" checked={session.state && session.state !== REMOTE_VIEW.STATE_PENDING} onClick={stateToggler} />
                 <div className={cl('-title')}>
                     {outputMessage(msg.primary.title)}
                     {msg.secondary && msg.secondary.title ? outputMessage(msg.secondary.title, 'secondary') : undefined}
@@ -61,26 +70,38 @@ function message(title, comment=null) {
 	return {title, comment};
 }
 
-function toggleEnabled() {
-    // check how messaging works
-    addMessage('connecting');
-    addMessage('unavailable');
+function enable() {
+    dispatch({type: REMOTE_VIEW.CREATE_SESSION});
 }
 
-function addMessage(message) {
-    dispatch({
-        type: REMOTE_VIEW.PUSH_MESSAGE,
-        message,
-        transition: messageTransition
-    });
+function disable() {
+    dispatch({type: REMOTE_VIEW.REMOVE_SESSION});
 }
 
-function getMessages(props) {
-    var rv = props.ui.remoteView;
+function getRecentMessages(props) {
     return {
-        primary: messages[rv.messages[0] || 'default'],
-        secondary: messages[rv.messages[1]]
+        primary: getMessage(props.ui.messages[0] || 'default'),
+        secondary: getMessage(props.ui.messages[1])
     };
+}
+
+function getMessage(name) {
+    if (typeof name === 'string') {
+        return messages[name];
+    }
+
+    name = name || {};
+    if (name.name && name.name in messages) {
+        return messages[name.name];
+    }
+
+    if (name.name === 'error') {
+        return message(name.code, name.message);
+    }
+
+    if ('title' in name || 'comment' in name) {
+        return name;
+    }
 }
 
 function outputMessage(content, key='primary') {
@@ -99,11 +120,11 @@ function toggleDescription() {
 }
 
 function setTransition(transition) {
-    dispatch({type: REMOTE_VIEW.SET_TRANSITION, transition});
+    dispatch({type: UI.RV_SET_TRANSITION, transition});
 }
 
 function setDescriptionState(state) {
-    dispatch({type: REMOTE_VIEW.SET_DESCRIPTION_STATE, state});
+    dispatch({type: UI.RV_SET_DESCRIPTION_STATE, state});
 }
 
 function expandDescriptionTransition(root) {
@@ -140,7 +161,7 @@ function messageTransition(root) {
         swapMessage($('.rv__comment', root))
     ].filter(Boolean))
     .then(() => dispatch({
-        type: REMOTE_VIEW.SHIFT_MESSAGE,
+        type: UI.RV_SHIFT_MESSAGE,
         transition: messageTransitionComplete
     }));
 }

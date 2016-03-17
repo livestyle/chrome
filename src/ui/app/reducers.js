@@ -1,11 +1,27 @@
 'use strict';
 
 import {combineReducers} from 'redux';
-import {MODEL, UI, REMOTE_VIEW} from './action-names';
-import {PAGE} from '../../app/action-names';
+import {MODEL, UI} from './action-names';
+import {PAGE, REMOTE_VIEW} from '../../app/action-names';
 import {replaceValue} from '../../lib/utils';
 
-export default combineReducers({model, ui});
+const combined = combineReducers({model, ui});
+
+export default function(state={}, action) {
+    state = combined(state, action);
+    if (action.type === MODEL.UPDATE) {
+        // when overall model is updated, set Remote View UI according to
+        // session data
+        var uiProps = ui(state.ui, {
+            type: UI.RV_PUSH_MESSAGE,
+            message: getRemoteViewUIMessage(action.model.remoteView)
+        });
+        if (uiProps !== state.ui) {
+            state = {...state, ui: uiProps};
+        }
+    }
+    return state;
+};
 
 function enabled(state=false, action) {
     if (action.type === PAGE.TOGGLE_ENABLED) {
@@ -60,13 +76,13 @@ function ui(state={}, action) {
             }
             break;
 
-        case REMOTE_VIEW.SET_TRANSITION:
+        case UI.RV_SET_TRANSITION:
             if (remoteView.transition !== action.transition) {
                 state = replaceValue(state, 'remoteView.transition', action.transition);
             }
             break;
 
-        case REMOTE_VIEW.SET_DESCRIPTION_STATE:
+        case UI.RV_SET_DESCRIPTION_STATE:
             if (remoteView.descriptionState !== action.state) {
                 state = replaceValue(state, 'remoteView.descriptionState', action.state);
                 // reset transition as well
@@ -74,7 +90,7 @@ function ui(state={}, action) {
             }
             break;
 
-        case REMOTE_VIEW.PUSH_MESSAGE:
+        case UI.RV_PUSH_MESSAGE:
             if (remoteView.messages[remoteView.messages.length - 1] !== action.message) {
                 let messages = remoteView.messages.slice();
                 messages.push(action.message);
@@ -85,7 +101,7 @@ function ui(state={}, action) {
             }
             break;
 
-        case REMOTE_VIEW.SHIFT_MESSAGE:
+        case UI.RV_SHIFT_MESSAGE:
             if (remoteView.messages.length > 1) {
                 state = replaceValue(state, 'remoteView.messages', remoteView.messages.slice(1));
                 if (action.transition) {
@@ -96,4 +112,35 @@ function ui(state={}, action) {
     }
 
     return state;
+}
+
+/**
+ * Returns message for Remote View UI that describes given Remote View session
+ * state
+ * @param  {Object} session Remote View session data
+ * @return {String|Object}
+ */
+function getRemoteViewUIMessage(session={}) {
+    switch (session.state) {
+        case REMOTE_VIEW.STATE_PENDING:
+            return 'connecting';
+
+        case REMOTE_VIEW.STATE_CONNECTED:
+            return 'connected';
+
+        case REMOTE_VIEW.STATE_ERROR:
+            // extract some common errors
+            switch (session.error.code) {
+                case 'ENOAPP': return 'no-app';
+                case 'ERVNOORIGIN': return 'no-origin';
+                case 'ERVINVALIDORIGIN': return 'unavailable';
+                default: return {
+                    name: 'error',
+                    code: session.error.code,
+                    message: session.error.message
+                };
+            }
+    }
+
+    return 'default';
 }

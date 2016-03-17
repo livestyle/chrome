@@ -33,7 +33,12 @@ export function checkConnection() {
 }
 
 export function createSession(localSite) {
-	return getSession(localSite)
+	return validateOrigin(localSite)
+	.then(localSite => {
+		setSessionData({state: REMOTE_VIEW.STATE_PENDING, localSite});
+		return localSite;
+	})
+	.then(getSession)
 	.then(session => {
 		if (session.error) {
 			// no valid session, create it
@@ -42,22 +47,20 @@ export function createSession(localSite) {
 				errorResetHandlers.delete(localSite);
 			}
 
-			setSessionData({state: REMOTE_VIEW.STATE_PENDING, localSite});
 			return getUserToken(localSite)
 			.then(createHTTPServerIfRequired)
 			.then(requestRvSession)
 			.then(payload => {
 				return request('rv-create-session', payload)
 				.expect('rv-session', 15000, data => data.localSite === localSite);
-			})
-			// if session was successfully created, its data will be updated
-			// by `rv-session` event listener. Here we’ll handle any possible
-			// errors that could happen
-			.catch(error => {
-				setSessionData({state: REMOTE_VIEW.STATE_PENDING, localSite, error});
-				scheduleErrorSessionRemove(localSite);
 			});
+			// if session was successfully created, its data will be updated
+			// by `rv-session` event listener in client.
 		}
+	})
+	.catch(error => {
+		setSessionData({state: REMOTE_VIEW.STATE_ERROR, localSite, error});
+		scheduleErrorSessionRemove(localSite);
 	});
 }
 
@@ -68,11 +71,13 @@ export function closeSession(localSite) {
 export function getSession(localSite) {
 	return checkConnection()
 	.then(connected => {
-		if (connected) {
-			console.log('connection is active, get session for', localSite);
-			return request('rv-get-session', {localSite})
-			.expect('rv-session', data => data.localSite === localSite);
+		if (!connected) {
+			return Promise.reject(error('ENOAPP', 'No connection to LiveStyle app. It is running?'))
 		}
+
+		console.log('connection is active, get session for', localSite);
+		return request('rv-get-session', {localSite})
+		.expect('rv-session', data => data.localSite === localSite);
 	})
 	.catch(err => {
 		if (isExpectError(err)) {
@@ -80,6 +85,18 @@ export function getSession(localSite) {
 		}
 		return Promise.reject(err);
 	});
+}
+
+export function validateOrigin(url) {
+	if (!url) {
+		return Promise.reject(error('ERVNOORIGIN', 'Local site origin is empty'));
+	}
+
+	if (!/^(https?|file):/.test(url)) {
+		return Promise.reject(error('ERVINVALIDORIGIN', 'Invalid local site origin: only HTTP(S) and FILE protocols are supported'));
+	}
+
+	return Promise.resolve(url);
 }
 
 function requestSessionList() {
@@ -101,7 +118,7 @@ function clearSessionData(id) {
 
 function scheduleErrorSessionRemove(id) {
 	errorResetHandlers.set(id, setTimeout(() => {
-		var sessions = getStateValue('sessions');
+		var sessions = getStateValue('remoteView');
 		if (sessions && sessions.has(id) && sessions.get(id).state === REMOTE_VIEW.STATE_ERROR) {
 			clearSessionData(id);
 		}

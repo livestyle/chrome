@@ -53,9 +53,7 @@ function popupModelForTab(tabId, state) {
     }
 
     var page = state.pages[session.page];
-    var remoteView = state.remoteView.connected
-        && state.remoteView.sessions.get(session.origin)
-        || EMPTY_OBJECT;
+    var remoteView = state.remoteView.sessions.get(session.origin);
     var userStylesheets = {};
     (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
     return {
@@ -83,10 +81,11 @@ function onPopupMessage(message, port) {
                 return console.warn('No tab for', port.tabId);
             }
 
-            if (message.data.type === REMOTE_VIEW.SET_SESSION) {
-                createSession(message.data.localSite);
-            } else if (message.data.type === REMOTE_VIEW.REMOVE_SESSION) {
-                closeSession(message.data.localSite);
+            var session = getSessionForTabId(tab.id);
+            if (session && message.data.type === REMOTE_VIEW.CREATE_SESSION) {
+                createSession(session.origin);
+            } else if (session && message.data.type === REMOTE_VIEW.REMOVE_SESSION) {
+                closeSession(session.origin);
             } else {
                 dispatch({
                     ...message.data,
@@ -108,4 +107,8 @@ function onPopupDisconnect(port) {
     port.onMessage.removeListener(onPopupMessage);
     port.onDisconnect.removeListener(onPopupDisconnect);
     popupPorts.delete(port);
+}
+
+function getSessionForTabId(tabId) {
+    return getState().sessions[tabId];
 }

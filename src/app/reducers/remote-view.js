@@ -28,11 +28,8 @@ export default function(state={}, action) {
             };
 
         case REMOTE_VIEW.REMOVE_SESSION:
-            state = {
-                ...state,
-                sessions: new Map(state.sessions)
-            };
-            state.sessions.delete(action.id);
+            state = {...state, sessions: new Map(state.sessions)};
+            state.sessions.delete(action.localSite);
             break;
 
         case REMOTE_VIEW.UPDATE_SESSION_LIST:
