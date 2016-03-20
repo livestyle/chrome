@@ -76,18 +76,20 @@ function ui(state={}, action) {
             }
             break;
 
-        case UI.RV_SET_TRANSITION:
-            if (remoteView.transition !== action.transition) {
-                state = replaceValue(state, 'remoteView.transition', action.transition);
+        case UI.RV_EXPAND_DESCRIPTION:
+        case UI.RV_COLLAPSE_DESCRIPTION:
+            if (!remoteView.transition) {
+                let transition = action.type === UI.RV_EXPAND_DESCRIPTION
+                    ? UI.T_EXPAND_DESCRITION
+                    : UI.T_COLLAPSE_DESCRITION;
+                state = replaceValue(state, 'remoteView.transition', transition);
             }
             break;
 
-        case UI.RV_SET_DESCRIPTION_STATE:
-            if (remoteView.descriptionState !== action.state) {
-                state = replaceValue(state, 'remoteView.descriptionState', action.state);
-                // reset transition as well
-                state.remoteView.transition = null;
-            }
+        case UI.RV_DESCRIPTION_TRANSITION_COMPLETE:
+            state = replaceValue(state, 'remoteView.descriptionState',
+                remoteView.descriptionState === 'expanded' ? 'collapsed' : 'expanded');
+            state.remoteView.transition = null;
             break;
 
         case UI.RV_PUSH_MESSAGE:
@@ -95,8 +97,8 @@ function ui(state={}, action) {
                 let messages = remoteView.messages.slice();
                 messages.push(action.message);
                 state = replaceValue(state, 'remoteView.messages', messages);
-                if (action.transition) {
-                    state.remoteView.transition = action.transition;
+                if (!state.remoteView.transition) {
+                    state.remoteView.transition = UI.T_SWAP_MESSAGE;
                 }
             }
             break;
@@ -104,10 +106,15 @@ function ui(state={}, action) {
         case UI.RV_SHIFT_MESSAGE:
             if (remoteView.messages.length > 1) {
                 state = replaceValue(state, 'remoteView.messages', remoteView.messages.slice(1));
-                if (action.transition) {
-                    state.remoteView.transition = action.transition;
+                if (state.remoteView.transition === UI.T_SWAP_MESSAGE) {
+                    state.remoteView.transition = UI.T_SWAP_MESSAGE_COMPLETE;
                 }
             }
+            break;
+
+        case UI.RV_SWAP_MESSAGE_COMPLETE:
+            state = replaceValue(state, 'remoteView.transition',
+                remoteView.messages.length > 1 ? UI.T_SWAP_MESSAGE : null);
             break;
     }
 

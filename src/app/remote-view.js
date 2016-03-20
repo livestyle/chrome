@@ -35,6 +35,10 @@ export function checkConnection() {
 export function createSession(localSite) {
 	return validateOrigin(localSite)
 	.then(localSite => {
+		if (errorResetHandlers.has(localSite)) {
+			clearTimeout(errorResetHandlers.get(localSite));
+			errorResetHandlers.delete(localSite);
+		}
 		setSessionData({state: REMOTE_VIEW.STATE_PENDING, localSite});
 		return localSite;
 	})
@@ -42,11 +46,6 @@ export function createSession(localSite) {
 	.then(session => {
 		if (session.error) {
 			// no valid session, create it
-			if (errorResetHandlers.has(localSite)) {
-				clearTimeout(errorResetHandlers.get(localSite));
-				errorResetHandlers.delete(localSite);
-			}
-
 			return getUserToken(localSite)
 			.then(createHTTPServerIfRequired)
 			.then(requestRvSession)
@@ -112,17 +111,17 @@ function setSessionData(session) {
 	dispatch({type: REMOTE_VIEW.SET_SESSION, session});
 }
 
-function clearSessionData(id) {
-	dispatch({type: REMOTE_VIEW.REMOVE_SESSION, id});
+function clearSessionData(localSite) {
+	dispatch({type: REMOTE_VIEW.REMOVE_SESSION, localSite});
 }
 
-function scheduleErrorSessionRemove(id) {
-	errorResetHandlers.set(id, setTimeout(() => {
-		var sessions = getStateValue('remoteView');
-		if (sessions && sessions.has(id) && sessions.get(id).state === REMOTE_VIEW.STATE_ERROR) {
-			clearSessionData(id);
+function scheduleErrorSessionRemove(localSite) {
+	errorResetHandlers.set(localSite, setTimeout(() => {
+		var sessions = getStateValue('remoteView').sessions;
+		if (sessions && sessions.has(localSite) && sessions.get(localSite).state === REMOTE_VIEW.STATE_ERROR) {
+			clearSessionData(localSite);
 		}
-		errorResetHandlers.delete(id);
+		errorResetHandlers.delete(localSite);
 	}, 5000));
 }
 

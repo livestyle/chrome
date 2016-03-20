@@ -10,14 +10,21 @@ import {REMOTE_VIEW} from '../../app/action-names';
 import tween from '../../lib/tween';
 
 const cl = bem('rv');
+const transitions = {
+    [UI.T_EXPAND_DESCRITION]: expandDescriptionTransition,
+    [UI.T_COLLAPSE_DESCRITION]: collapseDescriptionTransition,
+    [UI.T_SWAP_MESSAGE]: swapMessageTransition,
+    [UI.T_SWAP_MESSAGE_COMPLETE]: swapMessageTransitionComplete
+};
+
 const messages = {
     'default': message(
         'Remote View',
-        <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></span>
+        <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>
     ),
 	'unavailable': message(
 		'Remote View is not available',
-        <span>Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span className={cl('-learn-more')} onClick={toggleDescription}>Learn more</span></span>
+        <span>Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>
 	),
 	'no-origin': message(
 		'Remote View is not available',
@@ -35,7 +42,7 @@ export default tr.component({
         var session = props.session || {};
         var ui = props.ui || {};
         var msg = getRecentMessages(props);
-        var stateToggler;
+        var stateToggler = noopHandler;
         if (session.state === REMOTE_VIEW.STATE_CONNECTED) {
             stateToggler = disable;
         } else if (session.state !== REMOTE_VIEW.STATE_PENDING) {
@@ -44,9 +51,9 @@ export default tr.component({
 
         return <div
             className={cl('', `_${ui.descriptionState || 'collapsed'}`)}
-            transition={ui.transition}>
+            transition={getTransition(props)}>
     		<header className={cl('-header')}>
-                <Toggler name="rv-enabled" checked={session.state && session.state !== REMOTE_VIEW.STATE_PENDING} onClick={stateToggler} />
+                <Toggler name="rv-enabled" checked={session.state === REMOTE_VIEW.STATE_CONNECTED} onClick={stateToggler} />
                 <div className={cl('-title')}>
                     {outputMessage(msg.primary.title)}
                     {msg.secondary && msg.secondary.title ? outputMessage(msg.secondary.title, 'secondary') : undefined}
@@ -70,18 +77,32 @@ function message(title, comment=null) {
 	return {title, comment};
 }
 
-function enable() {
+function toggleDescription() {
+    var props = getStateValue('ui.remoteView');
+    dispatch({type: props.descriptionState === 'expanded'
+        ? UI.RV_COLLAPSE_DESCRIPTION
+        : UI.RV_EXPAND_DESCRIPTION});
+}
+
+function enable(evt) {
+    evt.preventDefault();
     dispatch({type: REMOTE_VIEW.CREATE_SESSION});
 }
 
-function disable() {
+function disable(evt) {
+    evt.preventDefault();
     dispatch({type: REMOTE_VIEW.REMOVE_SESSION});
 }
 
+function noopHandler(evt) {
+    evt.preventDefault();
+}
+
 function getRecentMessages(props) {
+    var messages = props.ui.messages;
     return {
-        primary: getMessage(props.ui.messages[0] || 'default'),
-        secondary: getMessage(props.ui.messages[1])
+        primary: getMessage(messages[0] || 'default'),
+        secondary: getMessage(messages[1])
     };
 }
 
@@ -104,42 +125,30 @@ function getMessage(name) {
     }
 }
 
+function getTransition(props) {
+    return transitions[props.ui.transition];
+}
+
 function outputMessage(content, key='primary') {
     return <div key={key} className={cl('-message', '-message_' + key)}>{content}</div>
-}
-
-function toggleDescription() {
-    var props = getStateValue('ui.remoteView');
-    if (props.transition) {
-        return undefined;
-    }
-
-    setTransition(props.descriptionState === 'expanded'
-        ? collapseDescriptionTransition
-        : expandDescriptionTransition);
-}
-
-function setTransition(transition) {
-    dispatch({type: UI.RV_SET_TRANSITION, transition});
-}
-
-function setDescriptionState(state) {
-    dispatch({type: UI.RV_SET_DESCRIPTION_STATE, state});
 }
 
 function expandDescriptionTransition(root) {
 	var content = root.querySelector('.rv__description');
 	var rect = root.getBoundingClientRect();
-    descriptionTransition(root, content, rect.top|0, false,
-        () => setDescriptionState('expanded'));
+    descriptionTransition(root, content, rect.top|0, false, descriptionTransitionComplete);
 }
 
 function collapseDescriptionTransition(root) {
 	var content = root.querySelector('.rv__description');
     descriptionTransition(root, content, content.offsetHeight|0, true, () => {
-        setDescriptionState('collapsed');
         root.style.transform = content.style.height = '';
+        descriptionTransitionComplete();
     });
+}
+
+function descriptionTransitionComplete() {
+    dispatch({type: UI.RV_DESCRIPTION_TRANSITION_COMPLETE});
 }
 
 function descriptionTransition(root, content, offset, reverse, complete) {
@@ -155,23 +164,18 @@ function descriptionTransition(root, content, offset, reverse, complete) {
 	});
 }
 
-function messageTransition(root) {
+function swapMessageTransition(root) {
     Promise.all([
         swapMessage($('.rv__title', root)),
         swapMessage($('.rv__comment', root))
     ].filter(Boolean))
-    .then(() => dispatch({
-        type: UI.RV_SHIFT_MESSAGE,
-        transition: messageTransitionComplete
-    }));
+    .then(() => dispatch({type: UI.RV_SHIFT_MESSAGE}));
 }
 
-function messageTransitionComplete(root) {
+function swapMessageTransitionComplete(root) {
     resetMessageAfterSwap($('.rv__title', root));
     resetMessageAfterSwap($('.rv__comment', root));
-    if (getStateValue('ui.remoteView.messages').length > 1) {
-        setTransition(messageTransition);
-    }
+    dispatch({type: UI.RV_SWAP_MESSAGE_COMPLETE});
 }
 
 function swapMessage(container) {
@@ -194,7 +198,7 @@ function swapMessage(container) {
     return new Promise(complete => {
         tween({
     		easing: 'outExpo',
-    		duration: 300,
+    		duration: 400,
             complete,
     		step(pos) {
     			pm.style.transform = sm.style.transform = `translateY(${-pos * pcRect.height}px)`;
