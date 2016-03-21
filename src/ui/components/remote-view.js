@@ -17,10 +17,16 @@ const transitions = {
     [UI.T_SWAP_MESSAGE_COMPLETE]: swapMessageTransitionComplete
 };
 
+
+const defaultDescription = <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>;
 const messages = {
     'default': message(
         'Remote View',
-        <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>
+        defaultDescription
+    ),
+    'connecting': message(
+        <span>Connecting <Spinner /></span>,
+            defaultDescription
     ),
 	'unavailable': message(
 		'Remote View is not available',
@@ -30,7 +36,6 @@ const messages = {
 		'Remote View is not available',
         <span>Unable to get URL origin for current page. Please <a href="http://github.com/livestyle/issues/issues" target="_blank">report this issue</a> with URL of your page.</span>
 	),
-	'connecting': message(<span>Connecting <Spinner /></span>),
 	'no-app': message(
         'No LiveStyle App',
         <span>Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.</span>
@@ -100,10 +105,21 @@ function noopHandler(evt) {
 
 function getRecentMessages(props) {
     var messages = props.ui.messages;
-    return {
+    var out = {
         primary: getMessage(messages[0] || 'default'),
         secondary: getMessage(messages[1])
     };
+    if (out.primary && out.secondary) {
+        // do not output secondary title and/or comment if it equals previous one
+        if (out.primary.title === out.secondary.title) {
+            out.secondary = {...out.secondary, title: null};
+        }
+
+        if (out.primary.comment === out.secondary.comment) {
+            out.secondary = {...out.secondary, comment: null};
+        }
+    }
+    return out;
 }
 
 function getMessage(name) {
