@@ -5,11 +5,13 @@
 'use strict';
 import {getState, dispatch} from '../app/store';
 import {REMOTE_VIEW} from '../app/action-names';
-import {createSession, closeSession} from '../app/remote-view';
+import {createSession, removeSession} from '../app/remote-view';
 import {normalizeUrl} from '../lib/utils';
 
 const popupPorts = new Set();
 const EMPTY_OBJECT = {};
+const mainFrame = {frameId: 0};
+const remoteViewActions = new Set([REMOTE_VIEW.CREATE_SESSION, REMOTE_VIEW.REMOVE_SESSION]);
 
 /**
  * Default handler: sends popup model, created from given state, to all connected
@@ -33,6 +35,7 @@ chrome.runtime.onConnect.addListener((port, sender) => {
             }
 
             port.tabId = tab.id;
+            port.url = tab.url;
             onPopupConnect(port);
             sendPopupModel(port);
         });
@@ -40,32 +43,39 @@ chrome.runtime.onConnect.addListener((port, sender) => {
 });
 
 function sendPopupModel(port, state=getState()) {
-    port.postMessage({
-        action: 'model-update',
-        data: popupModelForTab(port.tabId, state)
+    fetchOrigin(port.tabId).then(origin => {
+        port.postMessage({
+            action: 'model-update',
+            data: popupModelForPort(port, origin, state)
+        });
     });
 }
 
-function popupModelForTab(tabId, state) {
-    var session = state.sessions[tabId];
-    if (!session) {
-        return {enabled: false};
-    }
-
-    var page = state.pages[session.page];
-    var remoteView = state.remoteView.sessions.get(session.origin);
-    var userStylesheets = {};
-    (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
-    return {
-        enabled: page.enabled,
-        origin: session.origin,
-        direction: page.direction,
-        editorFiles: state.editorFiles,
-        browserFiles: session.stylesheets,
-        mapping: session.mapping,
-        userStylesheets,
-        remoteView
+function popupModelForPort(port, origin, state) {
+    var session = state.sessions[port.tabId];
+    var model = {
+        enabled: false,
+        tabId: port.tabId,
+        url: port.url,
+        origin,
+        remoteView: state.remoteView.sessions.get(origin)
     };
+
+    if (session) {
+        var page = state.pages[session.page];
+        var userStylesheets = {};
+        (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
+        model = {
+            ...model,
+            enabled: page.enabled,
+            direction: page.direction,
+            editorFiles: state.editorFiles,
+            browserFiles: session.stylesheets,
+            mapping: session.mapping,
+            userStylesheets
+        };
+    }
+    return model;
 }
 
 function onPopupMessage(message, port) {
@@ -81,11 +91,16 @@ function onPopupMessage(message, port) {
                 return console.warn('No tab for', port.tabId);
             }
 
-            var session = getSessionForTabId(tab.id);
-            if (session && message.data.type === REMOTE_VIEW.CREATE_SESSION) {
-                createSession(session.origin);
-            } else if (session && message.data.type === REMOTE_VIEW.REMOVE_SESSION) {
-                closeSession(session.origin);
+            var data = message.data;
+            if (remoteViewActions.has(data.type)) {
+                fetchOrigin(tab.id).then(origin => {
+                    if (data.type === REMOTE_VIEW.CREATE_SESSION) {
+                        createSession(origin);
+                    } else if (data.type === REMOTE_VIEW.REMOVE_SESSION) {
+                        console.log('will close session', origin);
+                        removeSession(origin);
+                    }
+                });
             } else {
                 dispatch({
                     ...message.data,
@@ -109,6 +124,8 @@ function onPopupDisconnect(port) {
     popupPorts.delete(port);
 }
 
-function getSessionForTabId(tabId) {
-    return getState().sessions[tabId];
+function fetchOrigin(tabId) {
+    return new Promise(resolve => {
+        chrome.tabs.sendMessage(tabId, {action: 'get-origin'}, mainFrame, resolve);
+    });
 }

@@ -23,9 +23,7 @@ var enhancer = null;
 var initialState = {
     model: {},
     ui: {
-        remoteView: {
-            messages: ['default']
-        }
+        remoteView: {messages: []}
     }
 };
 

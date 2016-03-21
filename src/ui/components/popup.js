@@ -30,7 +30,8 @@ export default tr.component({
                 </fieldset>
                 {content}
             </div>
-            <RemoteView session={props.model.remoteView} ui={props.ui.remoteView} />
+            <RemoteView session={props.model.remoteView} ui={props.ui.remoteView}
+                url={props.model.url} origin={props.model.origin} />
         </div>;
     }
 });

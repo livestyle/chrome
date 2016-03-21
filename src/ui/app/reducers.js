@@ -97,7 +97,7 @@ function ui(state={}, action) {
                 let messages = remoteView.messages.slice();
                 messages.push(action.message);
                 state = replaceValue(state, 'remoteView.messages', messages);
-                if (!state.remoteView.transition) {
+                if (!state.remoteView.transition && messages.length > 1) {
                     state.remoteView.transition = UI.T_SWAP_MESSAGE;
                 }
             }

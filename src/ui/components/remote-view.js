@@ -106,8 +106,8 @@ function noopHandler(evt) {
 function getRecentMessages(props) {
     var messages = props.ui.messages;
     var out = {
-        primary: getMessage(messages[0] || 'default'),
-        secondary: getMessage(messages[1])
+        primary: getMessage(messages[0] || 'default', props),
+        secondary: getMessage(messages[1], props)
     };
     if (out.primary && out.secondary) {
         // do not output secondary title and/or comment if it equals previous one
@@ -122,7 +122,20 @@ function getRecentMessages(props) {
     return out;
 }
 
-function getMessage(name) {
+function getMessage(name, props) {
+    if (name === REMOTE_VIEW.STATE_CONNECTED) {
+        // FIXME when uses closes session, it’s data is no longer available
+        // for previous `connected` message. Maybe create message object instead
+        // of `connected` string?
+        let localUrl = createLocalUrl(props.origin, props.url);
+        let publicUrl = `http://${props.session.publicId}`;
+    	let publicHref = localUrl ? createPublicHref(props.session.publicId, localUrl) : publicUrl;
+    	return {
+    		title: <a href={publicHref} target="_blank">{publicUrl}</a>,
+    		comment: `Use this URL to view ${props.session.localSite} in any internet-connect browser, mobile device, virtual machine or share it with your friend and colleagues.`
+    	};
+    }
+
     if (typeof name === 'string') {
         return messages[name];
     }
@@ -230,4 +243,30 @@ function resetMessageAfterSwap(container) {
     var msg = $$('.rv__message', container);
     msg.forEach(m => m.style.transform = m.style.display = '');
     container.style.height = '';
+}
+
+function createPublicHref(publicId, localUrl) {
+	if (typeof localUrl === 'string') {
+		localUrl = new URL(localUrl);
+	}
+	return `http://${publicId}${localUrl.pathname}${localUrl.search}`;
+}
+
+/**
+ * Creates a local URL of given page URL for easier UX management.
+ * Mostly used for `file:` origins: creates a fake URL that relative to given
+ * origin. This fake URL is easier to parse and replace host name with RV domain
+ * @param  {String} origin
+ * @param  {String} pageUrl
+ * @return {String}
+ */
+function createLocalUrl(origin, pageUrl) {
+	var url = pageUrl;
+	if (/^file:/.test(pageUrl) && pageUrl.indexOf(origin) === 0) {
+		url = 'http://livestyle/' + pageUrl.slice(origin.length)
+		.split(/[\\\/]/g)
+		.filter(Boolean)
+		.join('/');
+	}
+	return url;
 }

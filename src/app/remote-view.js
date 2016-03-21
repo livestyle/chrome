@@ -16,7 +16,11 @@ const errorResetHandlers = new Map();
 
 client
 // new RV session is available
-.on('rv-session', setSessionData)
+.on('rv-session', session => {
+	if (session && !session.error) {
+		setSessionData(session);
+	}
+})
 // RV session was closed
 .on('rv-session-closed', session => clearSessionData(session.localSite))
 // Received list of currently available sessions
@@ -51,19 +55,20 @@ export function createSession(localSite) {
 			.then(requestRvSession)
 			.then(payload => {
 				return request('rv-create-session', payload)
-				.expect('rv-session', 15000, data => data.localSite === localSite);
+				.expect('rv-session', data => data.localSite === localSite, 15000);
 			});
 			// if session was successfully created, its data will be updated
 			// by `rv-session` event listener in client.
 		}
 	})
 	.catch(error => {
+		console.log('got RV error', error);
 		setSessionData({state: REMOTE_VIEW.STATE_ERROR, localSite, error});
 		scheduleErrorSessionRemove(localSite);
 	});
 }
 
-export function closeSession(localSite) {
+export function removeSession(localSite) {
 	request('rv-close-session', {localSite});
 }
 
@@ -87,6 +92,7 @@ export function getSession(localSite) {
 }
 
 export function validateOrigin(url) {
+	console.log('validating origin', url);
 	if (!url) {
 		return Promise.reject(error('ERVNOORIGIN', 'Local site origin is empty'));
 	}
