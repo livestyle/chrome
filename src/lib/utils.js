@@ -28,6 +28,10 @@ export function mapToObj(map) {
 	return out;
 }
 
+export function last(arr) {
+	return arr[arr.length - 1];
+}
+
 /**
  * Updates `key` value in given `obj` by creating new instances of intermediate
  * object of deep `key`

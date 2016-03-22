@@ -3,7 +3,7 @@
 import {combineReducers} from 'redux';
 import {MODEL, UI} from './action-names';
 import {PAGE, REMOTE_VIEW} from '../../app/action-names';
-import {replaceValue} from '../../lib/utils';
+import {replaceValue, last} from '../../lib/utils';
 
 const combined = combineReducers({model, ui});
 
@@ -14,7 +14,7 @@ export default function(state={}, action) {
         // session data
         var uiProps = ui(state.ui, {
             type: UI.RV_PUSH_MESSAGE,
-            message: getRemoteViewUIMessage(action.model.remoteView)
+            message: getRemoteViewUIMessage(action.model)
         });
         if (uiProps !== state.ui) {
             state = {...state, ui: uiProps};
@@ -40,25 +40,13 @@ function model(state={}, action) {
             return action.model;
 
         case PAGE.TOGGLE_ENABLED:
-            return {
-                ...state,
-                enabled: state.enabled
-            };
+            return replaceValue(state, 'enabled', action.enabled);
 
         case PAGE.UPDATE_FILE_MAPPING:
-            return {
-                ...state,
-                mapping: {
-                    ...state.mapping,
-                    [action.browser]: action.editor
-                }
-            };
+            return replaceValue(state, 'mapping.' + action.browser, action.editor);
 
         case PAGE.UPDATE_DIRECTION:
-            return {
-                ...state,
-                direction: action.direction
-            };
+            return replaceValue(state, 'direction', action.direction);
     }
 
     return state;
@@ -93,7 +81,7 @@ function ui(state={}, action) {
             break;
 
         case UI.RV_PUSH_MESSAGE:
-            if (remoteView.messages[remoteView.messages.length - 1] !== action.message) {
+            if (getRemoteViewMessageName(last(remoteView.messages)) !== getRemoteViewMessageName(action.message)) {
                 let messages = remoteView.messages.slice();
                 messages.push(action.message);
                 state = replaceValue(state, 'remoteView.messages', messages);
@@ -127,13 +115,23 @@ function ui(state={}, action) {
  * @param  {Object} session Remote View session data
  * @return {String|Object}
  */
-function getRemoteViewUIMessage(session={}) {
+function getRemoteViewUIMessage(model) {
+    var session = model.remoteView || {};
     switch (session.state) {
         case REMOTE_VIEW.STATE_PENDING:
             return 'connecting';
 
         case REMOTE_VIEW.STATE_CONNECTED:
-            return 'connected';
+            // for connected state, push session data as message. In this case,
+            // when user closes manually connection, we’ll still have session
+            // data for message swapping while session itself will be disposed.
+            return {
+                name: REMOTE_VIEW.STATE_CONNECTED,
+                origin: model.origin,
+                localUrl: createLocalUrl(model.origin, model.url),
+                publicUrl: `http://${session.publicId}`,
+                publicId: session.publicId
+            };
 
         case REMOTE_VIEW.STATE_ERROR:
             // extract some common errors
@@ -150,4 +148,27 @@ function getRemoteViewUIMessage(session={}) {
     }
 
     return 'default';
+}
+
+/**
+ * Creates a local URL of given page URL for easier UX management.
+ * Mostly used for `file:` origins: creates a fake URL that relative to given
+ * origin. This fake URL is easier to parse and replace host name with RV domain
+ * @param  {String} origin
+ * @param  {String} pageUrl
+ * @return {String}
+ */
+function createLocalUrl(origin, pageUrl) {
+	var url = pageUrl;
+	if (/^file:/.test(pageUrl) && pageUrl.indexOf(origin) === 0) {
+		url = 'http://livestyle/' + pageUrl.slice(origin.length)
+		.split(/[\\\/]/g)
+		.filter(Boolean)
+		.join('/');
+	}
+	return url;
+}
+
+function getRemoteViewMessageName(name) {
+    return typeof name === 'object' ? name.name : name;
 }
