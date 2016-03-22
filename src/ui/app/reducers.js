@@ -54,6 +54,7 @@ function model(state={}, action) {
 
 function ui(state={}, action) {
     var remoteView = state.remoteView || {};
+
     switch (action.type) {
         case UI.TOGGLE_ACTIVE_PICKER:
             return replaceValue(state, 'activePicker', action.picker ? action.picker : null);
@@ -101,9 +102,8 @@ function ui(state={}, action) {
             break;
 
         case UI.RV_SWAP_MESSAGE_COMPLETE:
-            state = replaceValue(state, 'remoteView.transition',
+            return replaceValue(state, 'remoteView.transition',
                 remoteView.messages.length > 1 ? UI.T_SWAP_MESSAGE : null);
-            break;
     }
 
     return state;
@@ -134,17 +134,11 @@ function getRemoteViewUIMessage(model) {
             };
 
         case REMOTE_VIEW.STATE_ERROR:
-            // extract some common errors
-            switch (session.error.code) {
-                case 'ENOAPP': return 'no-app';
-                case 'ERVNOORIGIN': return 'no-origin';
-                case 'ERVINVALIDORIGIN': return 'unavailable';
-                default: return {
-                    name: 'error',
-                    code: session.error.code,
-                    message: session.error.message
-                };
-            }
+            return {
+                name: 'error',
+                code: session.error.code,
+                message: session.error.message
+            };
     }
 
     return 'default';

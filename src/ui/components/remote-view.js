@@ -17,7 +17,6 @@ const transitions = {
     [UI.T_SWAP_MESSAGE_COMPLETE]: swapMessageTransitionComplete
 };
 
-
 const defaultDescription = <span>Easy way to view local web-sites with LiveStyle updates in other browsers and mobile devices. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>;
 const messages = {
     'default': message(
@@ -26,17 +25,17 @@ const messages = {
     ),
     'connecting': message(
         <span>Connecting <Spinner /></span>,
-            defaultDescription
+        defaultDescription
     ),
-	'unavailable': message(
+	'ERVINVALIDORIGIN': message(
 		'Remote View is not available',
         <span>Remote View only works for web-sites with HTTP, HTTPS and FILE protocols. <span className={cl('-learn-more')} onclick={toggleDescription}>Learn more</span></span>
 	),
-	'no-origin': message(
+	'ERVNOORIGIN': message(
 		'Remote View is not available',
         <span>Unable to get URL origin for current page. Please <a href="http://github.com/livestyle/issues/issues" target="_blank">report this issue</a> with URL of your page.</span>
 	),
-	'no-app': message(
+	'ENOAPP': message(
         'No LiveStyle App',
         <span>Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.</span>
     )
@@ -138,7 +137,7 @@ function getMessage(name, props) {
     }
 
     if (obj.name === 'error') {
-        return message(obj.code, obj.message);
+        return messages[obj.code] || message(obj.code, obj.message);
     }
 }
 
