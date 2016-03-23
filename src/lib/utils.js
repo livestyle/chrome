@@ -32,6 +32,18 @@ export function last(arr) {
 	return arr[arr.length - 1];
 }
 
+export function has(obj, key) {
+	return obj instanceof Map ? obj.has(key) : key in obj
+}
+
+export function get(obj, key) {
+	return obj instanceof Map ? obj.get(key) : obj[key];
+}
+
+export function set(obj, key, value) {
+	return obj instanceof Map ? obj.set(key, value) : (obj[key] = value);
+}
+
 /**
  * Updates `key` value in given `obj` by creating new instances of intermediate
  * object of deep `key`
@@ -41,17 +53,42 @@ export function last(arr) {
  * @return {Object}
  */
 export function replaceValue(obj, key, value) {
-	var result = {...obj};
-	var ctx = result;
 	var parts = key.split('.');
 	var lastKey = parts.pop();
+	var result = copy(obj);
+	var ctx = result;
 	parts.forEach(k => {
-		var inner = k in ctx ? {...ctx[k]} : {};
-		ctx[k] = inner;
+		var inner = has(ctx, k) ? copy(get(ctx, k)) : {};
+		set(ctx, k, inner);
 		ctx = inner;
 	});
-	ctx[lastKey] = value;
+	set(ctx, lastKey, value);
 	return result;
+}
+
+/**
+ * Creates a copy of given object
+ * @param  {any} obj
+ * @return {any}
+ */
+export function copy(obj) {
+	if (Array.isArray(obj)) {
+		return obj.slice();
+	}
+
+	if (obj instanceof Map) {
+		return new Map(obj);
+	}
+
+	if (obj instanceof Set) {
+		return new Set(obj);
+	}
+
+	if (obj && typeof obj === 'object') {
+		return {...obj};
+	}
+
+	return obj;
 }
 
 /**

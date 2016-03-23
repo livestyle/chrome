@@ -1,13 +1,14 @@
 /**
- * References data for Redux store
+ * Reference data for Redux store
  */
 'use strict';
 
 export default const = {
-    // List of stylesheet files currently available in opened editor
-    editorFiles: [],
+    // ---------------------------------------------
+    // Persistent data, synced with browser storage
+    // ---------------------------------------------
 
-    // Persistent storage of active pages (URL) models
+    // Active pages (URL) models
     pages: {
         'http://example.com:9000/test.html': {
             // LiveStyle is enabled for given page
@@ -22,12 +23,19 @@ export default const = {
             // Browser-to-editor file mapping, hand-picked by user
             userMapping: {},
 
-            // IDs of user-generated styleshets
+            // IDs of user-generated stylesheets
             userStylesheets: []
         }
     },
 
-    // Hash of currenlty active LiveStyle sessions per opened tabs (key is a tab ID)
+    // ---------------------
+    // Runtime storage
+    // ---------------------
+
+    // List of stylesheet files currently available in opened editor
+    editorFiles: [],
+
+    // Hash of currently active LiveStyle sessions per opened tabs (key is a tab ID)
     sessions: {
         '187': {
             // Reference to page in `pages` key
@@ -56,7 +64,7 @@ export default const = {
 
             // List of resource patches applied to given session. Mostly used by
             // DevTools: session accumulates all incoming patches in this map
-            // (key is resource URI, value are patches) and DevTools,
+            // (key is resource URI, values are patches) and DevTools,
             // when connected or synchronized, will use these patches to update
             // resources accordingly and then remove applied patches
             patches: new Map(),
