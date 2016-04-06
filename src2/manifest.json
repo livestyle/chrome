@@ -1,0 +1,39 @@
+{
+	"name": "LiveStyle 2",
+	"description": "New LiveStyle extension",
+	"version": "2.0.0",
+	"permissions": [
+		"tabs",
+		"storage",
+		"identity",
+		"http://*/*",
+		"https://*/*"
+	],
+	"icons": {
+		"16":  "icon/icon16.png",
+		"48":  "icon/icon48.png",
+		"128": "icon/icon128.png"
+	},
+	"browser_action": {
+		"default_title": "LiveStyle Control Panel",
+		"default_popup": "popup.html",
+		"default_icon": "icon/ba-disabled.png"
+	},
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"content_scripts": [{
+		"matches": ["http://*/*", "https://*/*", "file:///*"],
+		"js": ["content-script.js"],
+		"run_at": "document_start",
+		"all_frames": true
+    }],
+	"web_accessible_resources": ["styles/user-stylesheet.css"],
+    "devtools_page": "./devtools.html",
+	"manifest_version": 2,
+	"key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcrTJSUd51qTt4JPhpve5/bMwmJ5SFhUU2blEF9tUdt7TNCS/Y2oFz5yGWWXgLnLQ5822/+PkiSOwoG1QoLjaRz+TBIup+vctPuEsYk3+H1bGhdULjxhrsczKjYA2KPMX0ll/ncR1C3lalRx8PMwYW68bkXH/Z9USp5ITlBjoJ6QIDAQAB",
+	"oauth2": {
+		"client_id": "429076250235-ik9plskehth6ihmslgnl5a83do6e9tm9.apps.googleusercontent.com",
+		"scopes": ["email"]
+	}
+}
