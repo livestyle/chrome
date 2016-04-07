@@ -1,6 +1,16 @@
 'use strict';
 
 /**
+ * Returns copy of given array with unique values
+ * @param {Array} arr
+ * @return {Array}
+ */
+export function unique(arr) {
+	return arr.filter(_uniqueHandler);
+}
+const _uniqueHandler = (val, i, arr) => arr.indexOf(val) === i;
+
+/**
  * Returns a function, that, as long as it continues to be invoked, will not
  * be triggered. The function will be called after it stops being called for
  * N milliseconds. If `immediate` is passed, trigger the function on the
@@ -76,54 +86,6 @@ export function throttle(func, wait) {
 }
 
 /**
- * Returns string representation for given node path
- * @param {Array} nodePath
- * @type {String}
- */
-export function stringifyPath(nodePath) {
-	return nodePath.map(c => c[0] + (c[1] > 1 ? '|' + c[1] : '')).join(' / ');
-}
-
-/**
- * Returns string representation of given patch JSON
- * @param {Object} patch
- * @type {String}
- */
-export function stringifyPatch(patch) {
-	var str = stringifyPath(patch.path) + ' {\n' +
-		patch.update.map(prop => `  ${prop.name}: ${prop.value};\n`).join('') +
-		patch.remove.map(prop => `  /* ${prop.name}: ${prop.value}; */\n`).join('') +
-		'}';
-
-	if (patch.action === 'remove') {
-		str = '/* remove: ' + stringifyPath(patch.path) + ' */';
-	}
-
-	if (patch.hints && patch.hints.length) {
-		var hint = patch.hints[patch.hints.length - 1];
-		var self = this;
-
-		var before = (hint.before || []).map(function(p) {
-			return stringifyPath([p]);
-		}).join(' / ');
-
-		var after = (hint.after || []).map(function(p) {
-			return stringifyPath([p]);
-		}).join(' / ');
-
-		if (before) {
-			str = `/** before: ${before} */\n${str}`;
-		}
-
-		if (after) {
-			str += `\n/** after: ${after} */\n`;
-		}
-	}
-
-	return str.trim();
-}
-
-/**
  * Serializes given object into JSON, including Map and Set objects
  * @param  {any} obj
  * @return {any}
@@ -141,15 +103,25 @@ export function serialize(obj) {
 		return Array.from(obj.keys()).reduce((out, key) => {
 			out[key] = serialize(obj.get(key));
 			return out;
-		});
+		}, {});
 	}
 
-	if (typeof obj === 'object') {
+	if (obj && typeof obj === 'object') {
 		return Object.keys(obj).reduce((out, key) => {
 			out[key] = serialize(obj[key]);
 			return out;
-		});
+		}, {});
 	}
 
 	return obj;
+}
+
+export function error(code, message) {
+    var err = new Error(code || message);
+    err.code = code;
+    return err;
+}
+
+export function objToMap(obj) {
+	return Object.keys(obj || {}).reduce((out, key) => out.set(key, obj[key]), new Map());
 }

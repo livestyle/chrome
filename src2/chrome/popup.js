@@ -3,15 +3,13 @@
  * and sends updated data model
  */
 'use strict';
-import {getState, dispatch} from '../app/store';
-import {REMOTE_VIEW} from '../app/action-names';
+import {REMOTE_VIEW} from 'extension-app/lib/action-names';
+import app from '../lib/app';
+import {serialize} from '../lib/utils';
 import {createSession, removeSession} from '../app/remote-view';
-import {normalizeUrl} from '../lib/utils';
 
 const popupPorts = new Set();
-const EMPTY_OBJECT = {};
-const mainFrame = {frameId: 0};
-const remoteViewActions = new Set([REMOTE_VIEW.CREATE_SESSION, REMOTE_VIEW.REMOVE_SESSION]);
+const remoteViewActions = new Set([REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION]);
 
 /**
  * Default handler: sends popup model, created from given state, to all connected
@@ -19,8 +17,34 @@ const remoteViewActions = new Set([REMOTE_VIEW.CREATE_SESSION, REMOTE_VIEW.REMOV
  * @param  {Object} state Storage data
  */
 export default function(state) {
-    popupPorts.forEach(port => sendPopupModel(port));
+    popupPorts.forEach(sendPopupModel);
 }
+
+export function modelForTab(tabId, state=app.getState()) {
+    var tab = state.tabs.get(tabId);
+    var model = {
+        enabled: false,
+        tabId,
+        url: tab.url,
+        origin: tab.origin,
+        remoteView: state.remoteView.sessions.get(tab.remoteView)
+    };
+
+    if (tab.session) {
+        var session = state.sessions.get(tab.session.id);
+        model = {
+            ...model,
+            enabled: session.enabled,
+            direction: session.direction,
+            editorFiles: serialize(state.editors.files),
+            browserFiles: serialize(tab.session.stylesheets),
+            mapping: serialize(tab.session.mapping),
+            userStylesheets: serialize(tab.stylesheets.user) || {}
+        };
+    }
+    return model;
+}
+
 
 chrome.runtime.onConnect.addListener((port, sender) => {
     if (port.name === 'popup') {
@@ -42,40 +66,11 @@ chrome.runtime.onConnect.addListener((port, sender) => {
     }
 });
 
-function sendPopupModel(port, state=getState()) {
-    fetchOrigin(port.tabId).then(origin => {
-        port.postMessage({
-            action: 'model-update',
-            data: popupModelForPort(port, origin, state)
-        });
+function sendPopupModel(port) {
+    port.postMessage({
+        action: 'model-update',
+        data: modelForTab(port.tabId)
     });
-}
-
-function popupModelForPort(port, origin, state) {
-    var session = state.sessions[port.tabId];
-    var model = {
-        enabled: false,
-        tabId: port.tabId,
-        url: port.url,
-        origin,
-        remoteView: state.remoteView.sessions.get(origin)
-    };
-
-    if (session) {
-        var page = state.pages[session.page];
-        var userStylesheets = {};
-        (session.userStylesheets || new Map()).forEach((value, key) => userStylesheets[value] = key);
-        model = {
-            ...model,
-            enabled: page.enabled,
-            direction: page.direction,
-            editorFiles: state.editorFiles,
-            browserFiles: session.stylesheets,
-            mapping: session.mapping,
-            userStylesheets
-        };
-    }
-    return model;
 }
 
 function onPopupMessage(message, port) {
@@ -86,29 +81,17 @@ function onPopupMessage(message, port) {
             return console.warn('Unknown port or tab id');
         }
 
-        chrome.tabs.get(port.tabId, tab => {
-            if (!tab) {
-                return console.warn('No tab for', port.tabId);
+        var data = message.data;
+        if (remoteViewActions.has(data.type)) {
+            if (data.type === REMOTE_VIEW.SET_SESSION) {
+                createSession(port.tabId);
+            } else if (data.type === REMOTE_VIEW.REMOVE_SESSION) {
+                console.log('will close session for', port.tabId);
+                removeSession(port.tabId);
             }
-
-            var data = message.data;
-            if (remoteViewActions.has(data.type)) {
-                fetchOrigin(tab.id).then(origin => {
-                    if (data.type === REMOTE_VIEW.CREATE_SESSION) {
-                        createSession(origin);
-                    } else if (data.type === REMOTE_VIEW.REMOVE_SESSION) {
-                        console.log('will close session', origin);
-                        removeSession(origin);
-                    }
-                });
-            } else {
-                dispatch({
-                    ...message.data,
-                    page: normalizeUrl(tab.url),
-                    tabId: tab.id
-                });
-            }
-        });
+        } else {
+            dispatch({...message.data, tabId: port.tabId});
+        }
     }
 }
 
@@ -122,10 +105,4 @@ function onPopupDisconnect(port) {
     port.onMessage.removeListener(onPopupMessage);
     port.onDisconnect.removeListener(onPopupDisconnect);
     popupPorts.delete(port);
-}
-
-function fetchOrigin(tabId) {
-    return new Promise(resolve => {
-        chrome.tabs.sendMessage(tabId, {action: 'get-origin'}, mainFrame, resolve);
-    });
 }

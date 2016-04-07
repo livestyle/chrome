@@ -9,13 +9,15 @@ const images = {
 	warning:  './icon/ba-warning.png'
 };
 
-export default function(sessions) {
-    chrome.tabs.query({
-        windowType: 'normal',
-        status: 'complete'
-    }, tabs => {
+const tabQuery = {
+	windowType: 'normal',
+	status: 'complete'
+};
+
+export default function(tabs) {
+    chrome.tabs.query(tabQuery, tabs => {
         tabs.forEach(tab => chrome.browserAction.setIcon({
-            path: tab.id in sessions ? images.active : images.disabled,
+            path: tabs.has(tab.id) ? images.active : images.disabled,
             tabId: tab.id
         }));
     });

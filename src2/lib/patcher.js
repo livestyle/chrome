@@ -5,9 +5,9 @@
  */
 'use strict';
 import patcher from 'livestyle-patcher';
-import client from 'livestyle-client';
+import app from './app';
 
-const commander = patcher(client, {worker: './worker.js'});
+const commander = patcher(app.client, {worker: './worker.js'});
 
 commander.worker.addEventListener('message', function(message) {
 	var payload = message.data;

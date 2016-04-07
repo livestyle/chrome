@@ -3,12 +3,12 @@
  * DevTools resource (faster, contains most recent version) or via XHR
  */
 'use strict';
-import {getStateValue} from '../app/store';
+import app from '../lib/app';
 
 export default function(tabId, url) {
-	var session = getStateValue('sessions')[tabId];
-	if (session && session.devtoolsStylesheets && session.devtoolsStylesheets.has(url)) {
-		return Promise.resolve(session.devtoolsStylesheets.get(url));
+	var tab = app.getStateValue('tabs').get(tabId);
+	if (tab && tab.stylesheets.devtools && tab.stylesheets.devtools.has(url)) {
+		return Promise.resolve(tab.stylesheets.devtools.get(url));
 	}
 	return load(url);
 };

@@ -2,12 +2,11 @@
  * Main controller to work with DevTools resources
  */
 'use strict';
-import client from 'livestyle-client';
-import {dispatch, subscribe, subscribeDeepKey, getStateValue} from '../../app/store';
-import {diff, patch} from '../../app/patcher';
-import {SESSION} from '../../app/action-names';
-import {error, debounce, objToMap} from '../../lib/utils';
+import {SESSION} from 'extension-app/lib/action-names';
 import request from './request';
+import app from '../../lib/app';
+import {diff, patch} from '../../lib/patcher';
+import {error, debounce, objToMap} from '../../lib/utils';
 
 const ports = new Map();
 const pendingUpdates = new Map();
@@ -17,7 +16,7 @@ const diffTransactions = new Map();
 const patchDebounce = 200;
 const diffDebounce = 150;
 
-const applyPatch = debounce(function(tabId, resourceUrl) {
+const applyPatch = debounce((tabId, resourceUrl) => {
     var key = getKey(tabId, resourceUrl);
     if (patchTransactions.has(key)) {
         // transaction is in progress, just wait until it finished, it will
@@ -36,7 +35,7 @@ const applyPatch = debounce(function(tabId, resourceUrl) {
     });
 }, patchDebounce);
 
-const calculateDiff = debounce(function(tabId, resourceUrl, content) {
+const calculateDiff = debounce((tabId, resourceUrl, content) => {
     var key = getKey(tabId, resourceUrl);
     var exists = diffTransactions.has(key);
     diffTransactions.set(key, content);
@@ -44,15 +43,14 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         return;
     }
 
-    var session = getStateValue('sessions')[tabId];
-    if (!session || !session.devtoolsStylesheets || !session.devtoolsStylesheets.has(resourceUrl)) {
+    if (getDevtoolsStylesheets(tabId).has(resourceUrl)) {
         // missing some important data, abort transaction
         return diffTransactions.delete(key);
     }
 
     console.groupCollapsed('DevTools diff transaction for %s (tab id: %d)', resourceUrl, tabId);
     console.time('Diff time');
-    var prevContent = session.devtoolsStylesheets.get(resourceUrl) || '';
+    var prevContent = tab.stylesheets.devtools.get(resourceUrl) || '';
     Promise.race([
         diff(prevContent, content),
         rejectOnTimeout(10000)
@@ -73,17 +71,17 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
 
         // Forge diff payload for client so default handler from background page
         // will apply it to all editors and sessions
-        client.send('diff', {
+        app.client.send('diff', {
             uri: resourceUrl,
             synaxt: 'css',
             patches
         });
-        var session = getStateValue('sessions')[tabId];
-        if (session && session.mapping[resourceUrl]) {
-            client.send('diff', {
+        var tab = getTab(tabId);
+        if (tab && tabs.session && tab.session.mapping.has(resourceUrl)) {
+            app.client.send('diff', {
                 excludeTabId: [tabId],
-                uri: session.mapping[resourceUrl],
-                synaxt: 'css',
+                uri: tab.session.mapping.get(resourceUrl),
+                syntax: 'css',
                 patches
             });
         }
@@ -91,8 +89,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
     .catch(err => {
         console.error(err);
         // check if we can restart transaction
-        var session = getStateValue('sessions')[tabId];
-        if (session && session.devtoolsStylesheets && session.devtoolsStylesheets.has(resourceUrl) && diffTransactions.has(key)) {
+        if (getDevtoolsStylesheets(tabId).has(resourceUrl) && diffTransactions.has(key)) {
             console.log('Restart transactions due to errors');
             calculateDiff(tabId, resourceUrl, diffTransactions.get(key));
         }
@@ -102,7 +99,7 @@ const calculateDiff = debounce(function(tabId, resourceUrl, content) {
         console.timeEnd('Diff time');
         console.groupEnd();
         diffTransactions.delete(key);
-        session = key = exists = prevContent = null;
+        key = exists = prevContent = null;
     });
 }, diffDebounce);
 
@@ -112,21 +109,29 @@ chrome.runtime.onConnect.addListener(port => {
     }
 });
 
-// Watch for new sessions: if session is added, fetch stylesheets for it
-subscribe(sessions => {
-    var tabIds = Object.keys(sessions).map(tabId => +tabId);
-    var newSessions = tabIds.filter(tabId => !sessionIds.has(tabId) && !sessions[tabId].devtoolsStylesheets);
+// Watch for new tabs: if tab is added, fetch stylesheets for it
+app.subscribe(tabs => {
+    // find newly-added tabs with LiveStyle-enabled sessions
+    var newSessions = [];
+    tabs.forEach((tab, tabId) => {
+        if (tab.session && !sessionIds.has(tabId) && !tab.stylesheets.devtools) {
+            newSessions.push(tabId);
+        }
+    });
+
     sessionIds.clear();
-    tabIds.forEach(tabId => sessionIds.add(tabId));
+    for (let tabId of tabs.keys()) {
+        sessionIds.add(tabId)
+    }
     newSessions.forEach(setStylesheetsForSession);
 
     // update activity state for each connected port
     ports.forEach(sendActivityState);
-}, 'sessions');
+}, 'tabs');
 
 // update DevTools resource when there are pending patches
-subscribeDeepKey('sessions', 'patches', (session, tabId) => {
-	applyPatches(+tabId, session.patches);
+app.subscribeDeepKey('tabs', 'session.patches', (session, tabId) => {
+	applyPatches(tabId, session.patches);
 });
 
 /**
@@ -158,10 +163,10 @@ function onPortConnect(port) {
     console.log('Port %s connected, total connection: %d', port.name, ports.size);
 
     // check if there’s active session for current tab id and update stylesheets
-    var session = getStateValue('sessions')[tabId];
-    if (session) {
+    var tab = getTab(tabId);
+    if (tab && tabs.session) {
         setStylesheetsForSession(port.tabId)
-        .then(() => applyPatches(port.tabId, session.patches));
+        .then(() => applyPatches(port.tabId, tab.session.patches));
     }
     sendActivityState(port);
 }
@@ -171,10 +176,11 @@ function onPortDisconnect(port) {
     port.onDisconnect.removeListener(onPortDisconnect);
     ports.delete(port.tabId);
     // reset session DevTools stylesheets
-    dispatch({
-        type: SESSION.SET_DEVTOOLS_STYLESHEETS,
-        tabId: port.tabId,
-        items: new Map()
+    app.dispatch({
+        type: TAB.SET_STYLESHEET_DATA,
+        id: port.tabId,
+        items: new Map(),
+        zone: 'devtools'
     });
     console.log('Port %s disconnected, total connection: %d', port.name, ports.size);
 }
@@ -210,10 +216,11 @@ function setStylesheetsForSession(tabId) {
         return Promise.resolve();
     }
 
-    return request(port, 'get-stylesheets').then(data => dispatch({
-        type: SESSION.SET_DEVTOOLS_STYLESHEETS,
-        tabId,
-        items: objToMap(data.items)
+    return request(port, 'get-stylesheets').then(data => app.dispatch({
+        type: TAB.SET_STYLESHEET_DATA,
+        id: tabId,
+        items: objToMap(data.items),
+        zone: 'devtools'
     }));
 }
 
@@ -265,7 +272,13 @@ function getKey(tabId, url) {
 }
 
 function updateResourceInStore(tabId, url, content) {
-    dispatch({type: SESSION.UPDATE_DEVTOOLS_STYLESHEET, tabId, url, content});
+    dispatch({
+        type: TAB.UPDATE_STYLESHEET_ITEM,
+        id: tabId,
+        itemId: url,
+        itemValue: content,
+        zone: 'devtools'
+    });
 }
 
 function errorNoDevTools(tabId) {
@@ -284,8 +297,8 @@ function rejectOnTimeout(timeout=1000) {
 }
 
 function getResourcePatches(tabId, url) {
-	var session = getStateValue('sessions')[tabId];
-	return session && session.patches.get(url) || null;
+	var tab = getTab(tabId);
+	return tab && tab.session && tab.session.patches.get(url) || null;
 }
 
 function applyPatches(tabId, patches) {
@@ -320,10 +333,10 @@ function createPatchTransaction(tabId, resourceUrl) {
 
         // everything seems fine: we can update DevTools resource
         // and drain patch queue
-        dispatch({
-            type: SESSION.RESET_RESOURCE_PATCHES,
-            uri: resourceUrl,
-            tabId
+        app.dispatch({
+            type: TAB.CLEAR_PATCHES,
+            id: tabId,
+            uri: resourceUrl
         });
         return update(tabId, resourceUrl, response.content).then(() => true);
     })
@@ -347,4 +360,13 @@ function sendActivityState(port) {
         action: 'activity-state',
         data: {enabled: sessionIds.has(port.tabId)}
     });
+}
+
+function getTab(tabId) {
+    return app.getStateValue('tabs').get(tabId);
+}
+
+function getDevtoolsStylesheets(tabId) {
+    var tab = getTab(tabId);
+    return tab && tab.stylesheets.devtools || new Map();
 }

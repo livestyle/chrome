@@ -24,7 +24,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 			callback(findStyleSheets(document.styleSheets));
 			return true;
 		case 'create-user-stylesheet-url':
-			callback(data.userId.reduce((out, id) => {
+			callback(data.stylesheetId.reduce((out, id) => {
 				out[id] = createUrl(id);
 				return out;
 			}, {}));
@@ -46,7 +46,9 @@ function getTabInfo() {
 	return {
 		url: window.location.href,
 		origin: origin(),
-		stylesheets: findStyleSheets(document.styleSheets)
+		stylesheets: {
+			cssom: findStyleSheets(document.styleSheets)
+		}
 	};
 }
 

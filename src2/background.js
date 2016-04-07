@@ -1,28 +1,22 @@
 'use strict';
-import client from 'livestyle-client';
-import extensionApp from 'extension-app';
 import {TAB, SESSION} from 'extension-app/lib/action-names';
-import {stringifyPatch, throttle, serialize} from './lib/utils';
-import {forEditor, forBrowser} from './app/diff';
-import patcher from './app/patcher';
+import app from './lib/app';
+import {throttle, serialize} from './lib/utils';
+import patcher from './lib/patcher';
+import logPatches from './lib/patch-logger';
 import devtoolsUpdate from './chrome/devtools';
 import updateBrowserIcon from './chrome/browser-icon';
 import updatePopups from './chrome/popup';
 import getStylesheetContent from './chrome/get-stylesheet-content';
 
-const CLIENT_ID = {id: 'chrome'};
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
-const curSessions = new Map();
+const clientId = {id: 'chrome'};
 const mainFrame = {frameId: 0};
 const tabsQuery = {
     windowType: 'normal',
     status: 'complete'
 };
-
-const app = extensionApp(client, {
-    logger: process.env.NODE_ENV !== 'production'
-});
 
 // TODO import data from old storage
 const saveDataToStorage = throttle(state => {
@@ -33,22 +27,17 @@ const saveDataToStorage = throttle(state => {
     });
 }, 3000);
 
-client.on('message-send', function(name, data) {
-	console.log('send message %c%s', 'font-weight:bold', name);
-	if (name === 'diff') {
-		// sending `diff` message from worker:
-		// server won’t send it back to sender so handle it manually
-		applyDiff(data);
-	}
-})
-.on('diff', applyDiff)
-.on('open identify-client', identify)
-.on('message-receive', (name, data) => console.log('received message %c%s: %o', 'font-weight:bold', name, data))
-.connect();
+// Load saved data
+storage.get(storageKey, data => {
+	app.dispatch({
+		type: SESSION.LOAD,
+		sessions: data[storageKey] || {}
+	});
+	syncTabs();
+});
 
-// subscribe to Chrome lifecycle events and keep store up-to-date
-['onCreated', 'onUpdated', 'onRemoved', 'onReplaced']
-.forEach(key => chrome.tabs[key].addListener(syncTabs));
+// Save LiveStyle data to storage
+app.subscribe(saveDataToStorage);
 
 // Broadcast storage update to all connected popups
 app.subscribe(updatePopups);
@@ -65,7 +54,7 @@ app.subscribeDeepKey('tabs', 'session.mapping', (tab, tabId) => {
 
     if (files.length) {
         app.dispatch({type: TAB.ADD_REQUESTED_UNSAVED_FILES, files});
-        client.send('request-unsaved-changes', {files});
+        app.client.send('request-unsaved-changes', {files});
     }
 });
 
@@ -74,22 +63,27 @@ app.subscribeDeepKey('sessions', 'userStylesheets', (session, id) => {
     var tabs = app.getStateValue('tabs');
     for (let [tabId, tab] of tabs) {
         if (tab.session && tab.session.id === id) {
-            syncUserStylesheets(tabId, tab, session);
+            syncUserStylesheets(tabId);
         }
     }
 });
 
-// Save LiveStyle data to storage
-app.subscribe(saveDataToStorage);
+app.client.on('message-send', function(name, data) {
+	console.log('send message %c%s', 'font-weight:bold', name);
+	if (name === 'diff') {
+		// sending `diff` message from worker:
+		// server won’t send it back to sender so handle it manually
+		applyDiff(data);
+	}
+})
+.on('diff', applyDiff)
+.on('open identify-client', identify)
+.on('message-receive', (name, data) => console.log('received message %c%s: %o', 'font-weight:bold', name, data))
+.connect();
 
-// Load saved data
-storage.get(storageKey, data => {
-	app.dispatch({
-		type: SESSION.LOAD,
-		sessions: data[storageKey] || {}
-	});
-	syncTabs();
-});
+// subscribe to Chrome lifecycle events and keep store up-to-date
+['onCreated', 'onUpdated', 'onRemoved', 'onReplaced']
+.forEach(key => chrome.tabs[key].addListener(syncTabs));
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     if (message.name === 'get-stylesheet-content' && sender.tab) {
@@ -104,12 +98,13 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
 });
 
 function identify() {
-	client.send('client-id', CLIENT_ID);
+	app.client.send('client-id', clientId);
 }
 
 function applyDiff(diff) {
-    forEditor(diff).forEach(payload => client.send('incoming-updates', payload));
-    forBrowser(diff).forEach(payload => {
+    var state = app.getState();
+    app.diffForEditor(diff, state).forEach(payload => app.client.send('incoming-updates', payload));
+    app.diffForBrowser(diff, state).forEach(payload => {
         chrome.tabs.sendMessage(payload.tabId, {
             action: 'apply-cssom-patch',
             data: {
@@ -117,7 +112,7 @@ function applyDiff(diff) {
                 patches: payload.patches
             }
         });
-        dispatch({
+        app.dispatch({
             type: TAB.SAVE_PATCHES,
             id: payload.tabId,
             uri: payload.uri,
@@ -125,23 +120,6 @@ function applyDiff(diff) {
         });
 
         logPatches(payload.tabId, payload.uri, payload.patches);
-    });
-}
-
-function logPatches(tabId, url, patches) {
-	console.groupCollapsed('apply diff on %s in tab %d', url, tabId);
-	patches.forEach(p => console.log(stringifyPatch(p)));
-	console.groupEnd();
-}
-
-function getSessions() {
-	return curSessions;
-}
-
-function fetchCSSOMStylesheets(tabId) {
-    // always request stylesheets from main frame
-    chrome.tabs.sendMessage(tabId, {action: 'get-stylesheets'}, mainFrame, items => {
-        dispatch({type: SESSION.SET_CSSOM_STYLESHEETS, tabId, items});
     });
 }
 
@@ -154,33 +132,34 @@ function fetchTabInfo(tab) {
 }
 
 /**
- * Syncronizes currently opened tab list with app store
+ * Syncronizes currently opened tab list with app storage
  */
 function syncTabs() {
     chrome.tabs.query(tabsQuery, tabs => {
         var storeTabs = app.getStateValue('tabs');
-        // first, fetch info for new tabs (e.g. ones not in store) from content script
+        // fetch info for new tabs (e.g. ones not in store) from content script
         Promise.all(tabs.filter(tab => !storeTabs.has(tab.id)).map(fetchTabInfo))
         .then(newTabs => {
             newTabs = newTabs.reduce((out, tab) => out.set(tab.id, tab), new Map());
             var finalTabs = tabs.reduce((out, tab) => {
-                var tabData = storeTabs.get(tab.id) || newTabs.get(tab.id);
-                if (tabData) {
-                    out.set(tab.id, {origin: tabData.origin, url: tab.url});
+                if (newTabs.has(tab.id)) {
+                    // this is a new tab, add its data as is
+                    out.set(tab.id, newTabs.get(tab.id));
+                } else if (storeTabs.has(tab.id)) {
+                    // for existing tab, check if its URL was changed
+                    let tabData = storeTabs.get(tab.id).url;
+                    if (tabData.url !== tab.url) {
+                        out.set(tab.id, {
+                            origin: tabData.origin,
+                            url: tab.url
+                        });
+                    }
+                } else {
+                    console.warn('Unexpected tab:', tab);
                 }
                 return out;
             });
             app.dispatch({type: TAB.UPDATE_LIST, tabs: finalTabs});
-
-            // for new tabs, explicitly set CSSOM stylesheets
-            for (let [id, tab] of newTabs) {
-                app.dispatch({
-                    type: TAB.SET_STYLESHEET_DATA,
-                    id,
-                    items: tab.stylesheets || [],
-                    zone: 'cssom'
-                });
-            }
         });
     });
 }
@@ -193,13 +172,27 @@ function syncTabs() {
  * @param  {Object} page
  * @return {Promise}
  */
-function syncUserStylesheets(tabId, session, page) {
-    var pageStylesheets = page.userStylesheets || [];
-    var sessionStylesheets = session.userStylesheets || new Map();
-    var items = pageStylesheets.reduce((out, id) => {
-        out[id] = sessionStylesheets.get(id) || null;
-        return out;
-    }, {});
+function syncUserStylesheets(tabId) {
+    var state = app.getState();
+    var tab = state.tabs.get(tabId);
+    var session = tab && tab.session state.sessions.get(tab.session.id);
+    if (!session) {
+        return;
+    }
+
+    var tabStylesheets = new Map();
+    // the `user` zone in tab stylesheets holds local-to-global references,
+    // convert them to global-to-local
+    if (tab.stylesheets.user) {
+        for (let [k, v] of tab.stylesheets.user) {
+            tabStylesheets.set(v, k);
+        }
+    }
+
+    var items = {};
+    for (let userStylesheet of session.userStylesheets) {
+        items[userStylesheet] = tabStylesheets.get(userStylesheet) || null;
+    }
 
     return createUserStylesheetUrls(tabId, items)
     .then(items => new Promise(resolve => {
@@ -208,10 +201,12 @@ function syncUserStylesheets(tabId, session, page) {
             data: {items}
         }, resp => {
             if (resp) {
-                dispatch({
-                    type: SESSION.SET_USER_STYLESHEETS,
-                    tabId,
-                    items: serialize(resp)
+                var items = Object.keys(resp).reduce((out, globalId) => out.set(resp[globalId], globalId), new Map());
+                app.dispatch({
+                    type: TAB.SET_STYLESHEET_DATA,
+                    id: tabId,
+                    items,
+                    zone: 'cssom'
                 });
             }
             resolve(resp);
@@ -235,7 +230,7 @@ function createUserStylesheetUrls(tabId, items) {
         // create URLs in main frame only
         chrome.tabs.sendMessage(tabId, {
             action: 'create-user-stylesheet-url',
-            data: {userId: emptyItems}
+            data: {stylesheetId: emptyItems}
         }, mainFrame, resp => {
             resolve({...items, ...(resp || {})});
         });
