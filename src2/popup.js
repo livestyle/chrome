@@ -5,7 +5,7 @@
 
 import tr from 'tiny-react';
 import Popup from './ui/components/popup';
-import {getState, subscribe, dispatch} from './ui/app/store';
+import {getState, subscribe, dispatch} from './ui/app';
 import {UI} from './ui/app/action-names';
 
 var transitions = new Map();

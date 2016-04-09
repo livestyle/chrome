@@ -1,12 +1,12 @@
 'use strict';
 
 import tr from 'tiny-react';
+import {SESSION} from 'extension-app/lib/action-names';
 import {bem} from '../utils';
 import Select from './select';
 import compactPaths from '../../lib/compact-paths';
-import {dispatch} from '../app/store';
+import {dispatch} from '../app';
 import {UI} from '../app/action-names';
-import {PAGE} from '../../app/action-names';
 
 const cl = bem('file-list');
 const EMPTY_OBJECT = {};
@@ -66,7 +66,7 @@ function onFilePickerActivate(evt) {
 
 function onPickFile() {
     dispatch({
-        type: PAGE.UPDATE_FILE_MAPPING,
+        type: SESSION.UPDATE_FILE_MAPPING,
         editor: this.dataset.value,
         browser: this.closest('.select-box').dataset.name
     });
@@ -74,7 +74,7 @@ function onPickFile() {
 
 function removeUserStylesheet() {
     dispatch({
-        type: PAGE.REMOVE_USER_STYLESHEET,
+        type: SESSION.REMOVE_USER_STYLESHEET,
         id: this.dataset.userId
     });
 }

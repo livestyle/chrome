@@ -1,10 +1,10 @@
 'use strict';
 
 import tr from 'tiny-react';
-import {PAGE} from '../../app/action-names';
-import {dispatch} from '../app/store';
+import {SESSION} from 'extension-app/lib/action-names';
+import {dispatch} from '../app';
 
-const updateDirections = [PAGE.DIRECTION_BOTH, PAGE.DIRECTION_TO_BROWSER, PAGE.DIRECTION_TO_EDITOR];
+const updateDirections = [SESSION.DIRECTION_BOTH, SESSION.DIRECTION_TO_BROWSER, SESSION.DIRECTION_TO_EDITOR];
 
 export default tr.component({
     render(props) {
@@ -18,7 +18,7 @@ function cycleUpdateDirection() {
 	var dir = this.dataset.direction || updateDirections[0];
 	var next = (updateDirections.indexOf(dir) + 1) % updateDirections.length;
     dispatch({
-        type: PAGE.UPDATE_DIRECTION,
+        type: SESSION.UPDATE_DIRECTION,
         direction: updateDirections[next]
     });
 }

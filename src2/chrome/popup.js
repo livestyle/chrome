@@ -6,7 +6,7 @@
 import {REMOTE_VIEW} from 'extension-app/lib/action-names';
 import app from '../lib/app';
 import {serialize} from '../lib/utils';
-import {createSession, removeSession} from '../app/remote-view';
+import {createSession, destroySession} from './remote-view';
 
 const popupPorts = new Set();
 const remoteViewActions = new Set([REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION]);
@@ -44,7 +44,6 @@ export function modelForTab(tabId, state=app.getState()) {
     }
     return model;
 }
-
 
 chrome.runtime.onConnect.addListener((port, sender) => {
     if (port.name === 'popup') {
@@ -87,7 +86,7 @@ function onPopupMessage(message, port) {
                 createSession(port.tabId);
             } else if (data.type === REMOTE_VIEW.REMOVE_SESSION) {
                 console.log('will close session for', port.tabId);
-                removeSession(port.tabId);
+                destroySession(port.tabId);
             }
         } else {
             dispatch({...message.data, tabId: port.tabId});

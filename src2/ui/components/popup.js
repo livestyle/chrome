@@ -1,12 +1,12 @@
 'use strict';
 
 import tr from 'tiny-react';
+import {SESSION} from 'extension-app/lib/action-names';
 import Toggler from './toggler';
 import Direction from './direction';
 import FileList from './file-list';
 import RemoteView from './remote-view';
-import {PAGE} from '../../app/action-names';
-import {dispatch} from '../app/store';
+import {dispatch} from '../app';
 
 export default tr.component({
     render(props) {
@@ -38,10 +38,10 @@ export default tr.component({
 
 function toggleEnabled(evt) {
     evt.preventDefault();
-    dispatch({type: PAGE.TOGGLE_ENABLED});
+    dispatch({type: SESSION.TOGGLE_ENABLED});
 }
 
 function addUserStylesheet(evt) {
     evt.preventDefault();
-    dispatch({type: PAGE.ADD_USER_STYLESHEET});
+    dispatch({type: SESSION.ADD_USER_STYLESHEET});
 }

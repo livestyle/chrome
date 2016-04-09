@@ -8,15 +8,16 @@
 
 import {createStore, applyMiddleware} from 'redux';
 import createLogger from 'redux-logger';
-import reducers from './reducers';
-import {PAGE, REMOTE_VIEW} from '../../app/action-names';
+import {SESSION, REMOTE_VIEW} from 'extension-app/lib/action-names';
+import {deepGet} from 'extension-app/lib/utils';
 import {MODEL} from './action-names';
+import reducers from './reducers';
 
 const port = connectToApp();
 const externalActions = new Set([
-    PAGE.TOGGLE_ENABLED, PAGE.UPDATE_DIRECTION, PAGE.UPDATE_FILE_MAPPING,
-    PAGE.ADD_USER_STYLESHEET, PAGE.REMOVE_USER_STYLESHEET,
-    REMOTE_VIEW.CREATE_SESSION, REMOTE_VIEW.REMOVE_SESSION
+    SESSION.TOGGLE_ENABLED, SESSION.UPDATE_DIRECTION, SESSION.UPDATE_FILE_MAPPING,
+    SESSION.ADD_USER_STYLESHEET, SESSION.REMOVE_USER_STYLESHEET,
+    REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION
 ]);
 
 var enhancer = null;
@@ -90,18 +91,7 @@ export function getState() {
 }
 
 export function getStateValue(key, state=getState()) {
-    var ctx = state;
-    var parts = key.split('.');
-    while (parts.length) {
-        let key = parts.shift();
-        if (key in ctx) {
-            ctx = ctx[key];
-        } else {
-            return undefined;
-        }
-    }
-
-    return ctx;
+    return deepGet(state, key);
 }
 
 function connectToApp() {

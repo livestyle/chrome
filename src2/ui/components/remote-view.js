@@ -1,13 +1,13 @@
 'use strict';
 
 import tr from 'tiny-react';
+import {REMOTE_VIEW} from 'extension-app/lib/action-names';
 import Toggler from './toggler';
 import Spinner from './spinner';
 import {bem, $, $$} from '../utils';
-import {dispatch, getStateValue} from '../app/store';
+import {dispatch, getStateValue} from '../app';
 import {UI} from '../app/action-names';
-import {REMOTE_VIEW} from '../../app/action-names';
-import tween from '../../lib/tween';
+import tween from '../tween';
 
 const cl = bem('rv');
 const transitions = {

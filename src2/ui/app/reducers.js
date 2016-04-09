@@ -2,9 +2,9 @@
 
 import {combineReducers} from 'redux';
 import {deepSet} from 'extension-app/lib/utils';
+import {SESSION, REMOTE_VIEW} from 'extension-app/lib/action-names';
 import {MODEL, UI} from './action-names';
 import {last} from '../utils';
-import {PAGE, REMOTE_VIEW} from '../../app/action-names';
 
 const combined = combineReducers({model, ui});
 
@@ -25,7 +25,7 @@ export default function(state={}, action) {
 };
 
 function enabled(state=false, action) {
-    if (action.type === PAGE.TOGGLE_ENABLED) {
+    if (action.type === SESSION.TOGGLE_ENABLED) {
         state = !state;
     }
     return state;
@@ -40,13 +40,13 @@ function model(state={}, action) {
         case MODEL.UPDATE:
             return action.model;
 
-        case PAGE.TOGGLE_ENABLED:
+        case SESSION.TOGGLE_ENABLED:
             return deepSet(state, 'enabled', action.enabled);
 
-        case PAGE.UPDATE_FILE_MAPPING:
-            return deepSet(state, 'mapping.' + action.browser, action.editor);
+        case SESSION.UPDATE_FILE_MAPPING:
+            return deepSet(state, ['mapping', action.browser], action.editor);
 
-        case PAGE.UPDATE_DIRECTION:
+        case SESSION.UPDATE_DIRECTION:
             return deepSet(state, 'direction', action.direction);
     }
 

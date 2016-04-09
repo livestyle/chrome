@@ -4,10 +4,11 @@ import app from './lib/app';
 import {throttle, serialize} from './lib/utils';
 import patcher from './lib/patcher';
 import logPatches from './lib/patch-logger';
-import devtoolsUpdate from './chrome/devtools';
 import updateBrowserIcon from './chrome/browser-icon';
 import updatePopups from './chrome/popup';
 import getStylesheetContent from './chrome/get-stylesheet-content';
+
+import './chrome/devtools';
 
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
