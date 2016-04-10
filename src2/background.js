@@ -69,6 +69,16 @@ app.subscribeDeepKey('sessions', 'userStylesheets', (session, id) => {
     }
 });
 
+// For tabs with active sessions, inject content script, if required
+app.subscribe(tabs => {
+    var candidates = new Map();
+    for (let [tabId, tab] of tabs) {
+        if (tab.session && !tab.stylesheets.cssom) {
+            candidates.set(tabId, tab);
+        }
+    }
+}, 'tabs');
+
 app.client.on('message-send', function(name, data) {
 	console.log('send message %c%s', 'font-weight:bold', name);
 	if (name === 'diff') {
@@ -124,11 +134,34 @@ function applyDiff(diff) {
     });
 }
 
-function fetchTabInfo(tab) {
+function getTabInfo(tab) {
+    var info = {
+        id: tab.id,
+        url: tab.url
+    };
+
     return new Promise(resolve => {
-        chrome.tabs.sendMessage(tab.id, {action: 'get-tab-info'}, mainFrame, info => {
-            resolve({...info, id: tab.id});
-        });
+        if (/^https?:/.test(tab.url)) {
+            return resolve(new URL(tab.url).origin);
+        }
+
+        if (/^file:/.test(tab.url)) {
+            // get file origin from content script
+            return chrome.tabs.executeScript(tab.id, {
+                file: 'assets/get-file-origin.js'
+            }, origin => resolve(origin[0]));
+        }
+
+        // unknown origin
+        resolve(null);
+    })
+    .catch(err => {
+        console.warn(err);
+        return '';
+    })
+    .then(origin => {
+        info.origin = origin || '';
+        return info;
     });
 }
 
@@ -139,7 +172,7 @@ function syncTabs() {
     chrome.tabs.query(tabsQuery, tabs => {
         var storeTabs = app.getStateValue('tabs');
         // fetch info for new tabs (e.g. ones not in store) from content script
-        Promise.all(tabs.filter(tab => !storeTabs.has(tab.id)).map(fetchTabInfo))
+        Promise.all(tabs.filter(tab => !storeTabs.has(tab.id)).map(getTabInfo))
         .then(newTabs => {
             newTabs = newTabs.reduce((out, tab) => out.set(tab.id, tab), new Map());
             var finalTabs = tabs.reduce((out, tab) => {
@@ -159,7 +192,8 @@ function syncTabs() {
                     console.warn('Unexpected tab:', tab);
                 }
                 return out;
-            });
+            }, new Map());
+
             app.dispatch({type: TAB.UPDATE_LIST, tabs: finalTabs});
         });
     });
@@ -176,7 +210,7 @@ function syncTabs() {
 function syncUserStylesheets(tabId) {
     var state = app.getState();
     var tab = state.tabs.get(tabId);
-    var session = tab && tab.session state.sessions.get(tab.session.id);
+    var session = tab && tab.session && state.sessions.get(tab.session.id);
     if (!session) {
         return;
     }
@@ -236,4 +270,23 @@ function createUserStylesheetUrls(tabId, items) {
             resolve({...items, ...(resp || {})});
         });
     });
+}
+
+function injectContentScript(tabId) {
+    return new Promise(resolve => {
+        // first, check if content script wasn’t injected yet
+        chrome.tabs.sendMessage(tabId, {action: 'content-script-available'}, mainFrame, resp => {
+            if (resp) {
+                // script is already injected
+                return resolve(tabId);
+            }
+
+            // XXX: Check if Re:view is available and inject script into views as well
+            chrome.tabs.executeScript(tabId, {file: 'content-script.js'}, () => resolve(tabId));
+        });
+    });
+}
+
+function getCSSOMStylesheets(tabId) {
+
 }

@@ -15,9 +15,11 @@ const tabQuery = {
 };
 
 export default function(tabs) {
-    chrome.tabs.query(tabQuery, tabs => {
-        tabs.forEach(tab => chrome.browserAction.setIcon({
-            path: tabs.has(tab.id) ? images.active : images.disabled,
+    chrome.tabs.query(tabQuery, browserTabs => {
+        browserTabs.forEach(tab => chrome.browserAction.setIcon({
+            path: tabs.has(tab.id) && tabs.get(tab.id).session
+				? images.active
+				: images.disabled,
             tabId: tab.id
         }));
     });

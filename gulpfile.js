@@ -6,11 +6,11 @@ const notify = require('./gulp-tasks/notify');
 
 const isWatching = ~process.argv.indexOf('watch');
 const production = ~process.argv.indexOf('--production') || process.env.NODE_ENV === 'production';
-const src = (pattern, options) => gulp.src(pattern, Object.assign({base: './src'}, options || {}));
+const src = (pattern, options) => gulp.src(pattern, Object.assign({base: './src2'}, options || {}));
 const dest = (pattern) => gulp.dest(pattern || './out2');
 
 gulp.task('script', () => {
-	return src('./src/*.js')
+	return src('./src2/*.js')
 	.pipe(js({
 		debug: !production,
 		watch: isWatching
@@ -19,7 +19,7 @@ gulp.task('script', () => {
 });
 
 gulp.task('assets', ['resources'], () => {
-	return src('./src/*.{html,json}').pipe(dest());
+	return src(['./src2/*.{html,json}', './src2/assets/*.*']).pipe(dest());
 });
 
 gulp.task('resources', () => {
@@ -27,9 +27,9 @@ gulp.task('resources', () => {
 });
 
 gulp.task('watch', ['build'], () => {
-	gulp.watch(['./src/**/*.js'], ['script']);
+	gulp.watch(['./src2/**/*.js'], ['script']);
 	gulp.watch(['./{icon,styles}/**'], ['resources']);
-	gulp.watch(['./src/*.{html,json}'], ['assets']);
+	gulp.watch(['./src2/*.{html,json}', './src2/assets/*.*'], ['assets']);
 });
 
 gulp.task('build', ['script', 'assets']);

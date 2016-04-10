@@ -7,7 +7,8 @@
 		"storage",
 		"identity",
 		"http://*/*",
-		"https://*/*"
+		"https://*/*",
+		"file://*/*"
 	],
 	"icons": {
 		"16":  "icon/icon16.png",
@@ -31,6 +32,7 @@
 	"web_accessible_resources": ["styles/user-stylesheet.css"],
     "devtools_page": "./devtools.html",
 	"manifest_version": 2,
+	"minimum_chrome_version": "45",
 	"key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDcrTJSUd51qTt4JPhpve5/bMwmJ5SFhUU2blEF9tUdt7TNCS/Y2oFz5yGWWXgLnLQ5822/+PkiSOwoG1QoLjaRz+TBIup+vctPuEsYk3+H1bGhdULjxhrsczKjYA2KPMX0ll/ncR1C3lalRx8PMwYW68bkXH/Z9USp5ITlBjoJ6QIDAQAB",
 	"oauth2": {
 		"client_id": "429076250235-ik9plskehth6ihmslgnl5a83do6e9tm9.apps.googleusercontent.com",

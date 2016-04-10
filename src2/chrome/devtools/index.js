@@ -2,7 +2,7 @@
  * Main controller to work with DevTools resources
  */
 'use strict';
-import {SESSION} from 'extension-app/lib/action-names';
+import {TAB} from 'extension-app/lib/action-names';
 import request from './request';
 import app from '../../lib/app';
 import {diff, patch} from '../../lib/patcher';

@@ -3,7 +3,6 @@
 import * as cssom from 'livestyle-cssom-patcher';
 import {default as syncUserStylesheets, isUserStylesheet, createUrl} from './chrome/user-stylesheet';
 import shadowCSS from './lib/shadow-css';
-import origin from './lib/origin';
 
 var pendingShadowCSSPatches = [];
 
@@ -20,7 +19,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 	switch (message.action) {
 		case 'apply-cssom-patch':
 			return applyPatches(data.stylesheetUrl, data.patches);
-		case 'get-stylesheets':  // deprecated, use `get-tab-info`
+		case 'get-stylesheets':
 			callback(findStyleSheets(document.styleSheets));
 			return true;
 		case 'create-user-stylesheet-url':
@@ -33,24 +32,11 @@ chrome.runtime.onMessage.addListener(function(message, sender, callback) {
 			console.log('requested stylesheet sync', message);
 			callback(syncUserStylesheets(data.items));
 			return true;
-		case 'get-origin': // deprecated, use `get-tab-info`
-			callback(origin());
-			return true;
-		case 'get-tab-info':
-			callback(getTabInfo());
+		case 'content-script-available':
+			callback(true);
 			return true;
 	}
 });
-
-function getTabInfo() {
-	return {
-		url: window.location.href,
-		origin: origin(),
-		stylesheets: {
-			cssom: findStyleSheets(document.styleSheets)
-		}
-	};
-}
 
 function applyPatches(url, patches) {
 	if (!url || !patches || !patches.length) {
