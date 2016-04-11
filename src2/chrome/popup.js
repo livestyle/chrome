@@ -89,7 +89,7 @@ function onPopupMessage(message, port) {
                 destroySession(port.tabId);
             }
         } else {
-            dispatch({...message.data, tabId: port.tabId});
+            app.dispatch({...message.data, tabId: port.tabId});
         }
     }
 }

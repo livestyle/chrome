@@ -9,11 +9,11 @@ import updatePopups from './chrome/popup';
 import getStylesheetContent from './chrome/get-stylesheet-content';
 
 import './chrome/devtools';
+import './chrome/tabs';
 
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
 const clientId = {id: 'chrome'};
-const mainFrame = {frameId: 0};
 const tabsQuery = {
     windowType: 'normal',
     status: 'complete'
@@ -58,26 +58,6 @@ app.subscribeDeepKey('tabs', 'session.mapping', (tab, tabId) => {
         app.client.send('request-unsaved-changes', {files});
     }
 });
-
-// When a user stylesheets updated in host page, update matched tab sessions as well
-app.subscribeDeepKey('sessions', 'userStylesheets', (session, id) => {
-    var tabs = app.getStateValue('tabs');
-    for (let [tabId, tab] of tabs) {
-        if (tab.session && tab.session.id === id) {
-            syncUserStylesheets(tabId);
-        }
-    }
-});
-
-// For tabs with active sessions, inject content script, if required
-app.subscribe(tabs => {
-    var candidates = new Map();
-    for (let [tabId, tab] of tabs) {
-        if (tab.session && !tab.stylesheets.cssom) {
-            candidates.set(tabId, tab);
-        }
-    }
-}, 'tabs');
 
 app.client.on('message-send', function(name, data) {
 	console.log('send message %c%s', 'font-weight:bold', name);
@@ -197,96 +177,4 @@ function syncTabs() {
             app.dispatch({type: TAB.UPDATE_LIST, tabs: finalTabs});
         });
     });
-}
-
-/**
- * Synchronizes user stylesheets with page in given `tabId`: removes redundant
- * and adds missing stylesheets
- * @param  {Number} tabId
- * @param  {Object} session
- * @param  {Object} page
- * @return {Promise}
- */
-function syncUserStylesheets(tabId) {
-    var state = app.getState();
-    var tab = state.tabs.get(tabId);
-    var session = tab && tab.session && state.sessions.get(tab.session.id);
-    if (!session) {
-        return;
-    }
-
-    var tabStylesheets = new Map();
-    // the `user` zone in tab stylesheets holds local-to-global references,
-    // convert them to global-to-local
-    if (tab.stylesheets.user) {
-        for (let [k, v] of tab.stylesheets.user) {
-            tabStylesheets.set(v, k);
-        }
-    }
-
-    var items = {};
-    for (let userStylesheet of session.userStylesheets) {
-        items[userStylesheet] = tabStylesheets.get(userStylesheet) || null;
-    }
-
-    return createUserStylesheetUrls(tabId, items)
-    .then(items => new Promise(resolve => {
-        chrome.tabs.sendMessage(tabId, {
-            action: 'sync-user-stylesheets',
-            data: {items}
-        }, resp => {
-            if (resp) {
-                var items = Object.keys(resp).reduce((out, globalId) => out.set(resp[globalId], globalId), new Map());
-                app.dispatch({
-                    type: TAB.SET_STYLESHEET_DATA,
-                    id: tabId,
-                    items,
-                    zone: 'cssom'
-                });
-            }
-            resolve(resp);
-        });
-    }));
-}
-
-/**
- * Creates local URLs for new user stylesheets (e.g. `items` with empty values).
- * These URLs can be used across inner frames
- * @param  {Object} items User stylesheet mappings
- * @return {Promise}
- */
-function createUserStylesheetUrls(tabId, items) {
-    return new Promise(resolve => {
-        var emptyItems = Object.keys(items).filter(id => !items[id]);
-        if (!emptyItems.length) {
-            return resolve(items);
-        }
-
-        // create URLs in main frame only
-        chrome.tabs.sendMessage(tabId, {
-            action: 'create-user-stylesheet-url',
-            data: {stylesheetId: emptyItems}
-        }, mainFrame, resp => {
-            resolve({...items, ...(resp || {})});
-        });
-    });
-}
-
-function injectContentScript(tabId) {
-    return new Promise(resolve => {
-        // first, check if content script wasn’t injected yet
-        chrome.tabs.sendMessage(tabId, {action: 'content-script-available'}, mainFrame, resp => {
-            if (resp) {
-                // script is already injected
-                return resolve(tabId);
-            }
-
-            // XXX: Check if Re:view is available and inject script into views as well
-            chrome.tabs.executeScript(tabId, {file: 'content-script.js'}, () => resolve(tabId));
-        });
-    });
-}
-
-function getCSSOMStylesheets(tabId) {
-
 }
