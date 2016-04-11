@@ -14,6 +14,7 @@ import './chrome/tabs';
 const storage = chrome.storage.local;
 const storageKey = 'livestyle2';
 const clientId = {id: 'chrome'};
+const mainFrame = {frameId: 0};
 const tabsQuery = {
     windowType: 'normal',
     status: 'complete'
@@ -21,7 +22,7 @@ const tabsQuery = {
 
 // TODO import data from old storage
 const saveDataToStorage = throttle(state => {
-    storage.set({[storageKey]: {sessions: serialize(state.sessions)}}, () => {
+    storage.set({[storageKey]: serialize(state.sessions)}, () => {
         if (chrome.runtime.lastError) {
             console.error('Unable to save LiveStyle state', chrome.runtime.lastError);
         }
@@ -54,7 +55,11 @@ app.subscribeDeepKey('tabs', 'session.mapping', (tab, tabId) => {
     .filter(file => !requested.has(file));
 
     if (files.length) {
-        app.dispatch({type: TAB.ADD_REQUESTED_UNSAVED_FILES, files});
+        app.dispatch({
+            type: TAB.ADD_REQUESTED_UNSAVED_FILES,
+            id: tabId,
+            files
+        });
         app.client.send('request-unsaved-changes', {files});
     }
 });
@@ -102,7 +107,7 @@ function applyDiff(diff) {
                 stylesheetUrl: payload.uri,
                 patches: payload.patches
             }
-        });
+        }, mainFrame);
         app.dispatch({
             type: TAB.SAVE_PATCHES,
             id: payload.tabId,
@@ -110,7 +115,10 @@ function applyDiff(diff) {
             patches: payload.patches
         });
 
-        logPatches(payload.tabId, payload.uri, payload.patches);
+        logPatches(payload.patches, {
+            tabId: payload.tabId,
+            url: payload.uri
+        });
     });
 }
 

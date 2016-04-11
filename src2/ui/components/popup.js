@@ -15,14 +15,14 @@ export default tr.component({
         if (isEnabled) {
             content = <div className="popup__content">
                 <FileList {...props.model} active={props.ui.activePicker} />
-                <button className="add-file" onclick={addUserStylesheet}>Add stylesheet</button>
+            <button className="add-file" onclick={addUserStylesheet} data-session-id={props.model.sessionId}>Add stylesheet</button>
             </div>;
         }
 
         return <div className="layout">
             <div className="popup">
                 <fieldset className="activity">
-                    <Toggler name="enabled" checked={isEnabled} onClick={toggleEnabled} />
+                    <Toggler name="enabled" value={props.model.url} checked={isEnabled} onClick={toggleEnabled} />
                     <label htmlFor="fld-enabled">Enable LiveStyle</label>
                     <em>for current page with
                         <Direction direction={props.model.direction} />
@@ -38,10 +38,14 @@ export default tr.component({
 
 function toggleEnabled(evt) {
     evt.preventDefault();
-    dispatch({type: SESSION.TOGGLE_ENABLED});
+    dispatch({type: SESSION.TOGGLE_ENABLED, id: evt.target.value});
 }
 
 function addUserStylesheet(evt) {
     evt.preventDefault();
-    dispatch({type: SESSION.ADD_USER_STYLESHEET});
+    dispatch({
+        type: SESSION.ADD_USER_STYLESHEET,
+        id: evt.target.dataset.sessionId,
+        stylesheet: 'css' + Date.now()
+    });
 }

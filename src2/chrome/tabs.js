@@ -6,7 +6,7 @@
 
 import {TAB, SESSION} from 'extension-app/lib/action-names';
 import app from '../lib/app';
-import {error} from '../lib/utils';
+import {error, serialize} from '../lib/utils';
 
 const mainFrame = {frameId: 0};
 const tabsWithInjectedScripts = new Set();
@@ -44,16 +44,14 @@ function prepareTabs(tabs) {
 	tabsWithInjectedScripts.forEach(tabId => !tabs.has(tabId) && tabsWithInjectedScripts.delete(tabId));
 
 	if (!tabsToInject.length) {
-		return console.log('Nothing to inject');
+		return;
 	}
-
-	console.log('inject content script into', tabsToInject);
 
 	// Since script injection is async process, there’s a chance that store
 	// will receive update during injection process.
 	// Considering that, store tab ids that waiting for injection in separate
 	// set and empty it when process is complete
-	tabsPendingInjection.forEach(tabId => tabsPendingInjection.add(tabId));
+	tabsToInject.forEach(tabId => tabsPendingInjection.add(tabId));
 	Promise.all(tabsToInject.map(injectContentScript))
 	.then(injectedTabIds => {
 		// when script is injected, request CSSOM stylesheets
@@ -67,8 +65,7 @@ function prepareTabs(tabs) {
 	})
 	.then(injectedTabIds => {
 		// cleanup
-		console.log('cleanup', injectedTabIds);
-		injectedTabIds.forEach(tabId => tabsPendingInjection.add(tabId));
+		injectedTabIds.forEach(tabId => tabsPendingInjection.delete(tabId));
 	});
 }
 
@@ -100,7 +97,6 @@ function injectContentScript(tabId) {
 function getCSSOMStylesheets(tabId) {
 	return new Promise(resolve => {
 		chrome.tabs.sendMessage(tabId, {action: 'get-stylesheets'}, mainFrame, items => {
-			console.log('received CSSOM items', tabId, items);
 			setStylesheetData(tabId, 'cssom', items);
 			resolve(items);
 		});

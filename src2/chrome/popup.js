@@ -34,6 +34,7 @@ export function modelForTab(tabId, state=app.getState()) {
         var session = state.sessions.get(tab.session.id);
         model = {
             ...model,
+            sessionId: tab.session.id,
             enabled: session.enabled,
             direction: session.direction,
             editorFiles: serialize(state.editors.files),
@@ -89,7 +90,7 @@ function onPopupMessage(message, port) {
                 destroySession(port.tabId);
             }
         } else {
-            app.dispatch({...message.data, tabId: port.tabId});
+            app.dispatch(message.data);
         }
     }
 }

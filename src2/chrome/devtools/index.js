@@ -272,7 +272,7 @@ function getKey(tabId, url) {
 }
 
 function updateResourceInStore(tabId, url, content) {
-    dispatch({
+    app.dispatch({
         type: TAB.UPDATE_STYLESHEET_ITEM,
         id: tabId,
         itemId: url,
