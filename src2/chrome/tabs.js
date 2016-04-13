@@ -6,7 +6,7 @@
 
 import {TAB, SESSION} from 'extension-app/lib/action-names';
 import app from '../lib/app';
-import {error, serialize} from '../lib/utils';
+import {error, serialize, objToMap} from '../lib/utils';
 
 const mainFrame = {frameId: 0};
 const tabsWithInjectedScripts = new Set();
@@ -119,16 +119,14 @@ function syncUserStylesheets(tabId) {
         return Promise.reject(error('ENOTABSESSION', 'No active LiveStyle session for tab ' + tabId));
     }
 
-	// the `user` zone in tab stylesheets holds local-to-global references,
-	// convert them to global-to-local
-    var tabStylesheets = transpose(tab.stylesheets.user);
+    var tabStylesheets = objToMap(tab.stylesheets.user || {});
 
 	var stylesheets = {}, emptyStylesheets = [];
     for (let userStylesheet of session.userStylesheets) {
 		if (tabStylesheets.has(userStylesheet)) {
-			items[userStylesheet] = tabStylesheets.get(userStylesheet);
+			stylesheets[userStylesheet] = tabStylesheets.get(userStylesheet);
 		} else {
-			items[userStylesheet] = null;
+			stylesheets[userStylesheet] = null;
 			emptyStylesheets.push(userStylesheet);
 		}
     }
@@ -141,7 +139,7 @@ function syncUserStylesheets(tabId) {
                 items: {...stylesheets, ...createdStylesheets}
             }
         }, resp => {
-			setStylesheetData(tabId, 'user', transpose(resp));
+			setStylesheetData(tabId, 'user', resp || {});
             resolve(resp);
         });
     }));
@@ -165,24 +163,6 @@ function createUserStylesheetUrls(tabId, items) {
             data: {stylesheetId: items}
         }, mainFrame, resp => resolve(resp || {}));
     });
-}
-
-/**
- * Swaps keys with values in given object or map
- * @param  {Object|Map} obj
- * @return {Map}
- */
-function transpose(obj) {
-	var result = new Map();
-	if (obj instanceof Map) {
-		for (let [k, v] of obj) {
-            result.set(v, k);
-        }
-	} else if (obj && typeof obj === 'object') {
-		Object.keys(obj).forEach(k => result.set(obj[k], k));
-	}
-
-	return result;
 }
 
 function setStylesheetData(id, zone, items) {

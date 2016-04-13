@@ -19,36 +19,35 @@ export default tr.component({
         var userFiles = Object.keys(props.userStylesheets).map((url, i) => ({
             label: 'user stylesheet ' + (i + 1),
             value: url,
-            name: props.userStylesheets[url],
-            userId: props.userStylesheets[url]
+            isUser: true
         }));
 
-        return <ul className={cl('')}>
-            {browserFiles.map(file => outputFileItem(file, editorFiles, props.active, props.mapping))}
-            {userFiles.map(file => outputFileItem(file, editorFiles, props.active, props.mapping))}
+        return <ul className={cl('')} data-session-id={props.sessionId}>
+            {browserFiles.map(file => outputFileItem(file, editorFiles, props))}
+            {userFiles.map(file => outputFileItem(file, editorFiles, props))}
 		</ul>;
     }
 });
 
-function outputFileItem(browserFile, editorFiles, activeFile, mapping) {
+function outputFileItem(browserFile, editorFiles, props) {
     var name = browserFile.name || browserFile.value;
     var editorFileProps = {
         name,
-        active: activeFile === name,
+        active: props.active === name,
         items: editorFiles.map(file => {
             return {
                 ...file,
-                selected: mapping[browserFile.value] === file.value
+                selected: props.mapping[browserFile.value] === file.value
             };
         }),
         onActivate: onFilePickerActivate,
         onPick: onPickFile
     };
 
-    return <li className={cl('-item', browserFile.userId && '-item_user')} key={browserFile.value}>
+    return <li className={cl('-item', browserFile.isUser && '-item_user')} key={browserFile.value}>
         <div className={cl('-browser')}>
             {browserFile.label}
-            {browserFile.userId ? <i className={cl('-item-remove')} onclick={removeUserStylesheet} data-user-id={browserFile.value}></i> : undefined}
+            {browserFile.isUser ? <i className={cl('-item-remove')} onclick={removeUserStylesheet} data-stylesheet={browserFile.value}></i> : undefined}
         </div>
         <div className={cl('-editor')}>
             <Select {...editorFileProps} />
@@ -64,17 +63,28 @@ function onFilePickerActivate(evt) {
     });
 }
 
-function onPickFile() {
+function onPickFile(evt) {
     dispatch({
         type: SESSION.UPDATE_FILE_MAPPING,
+        id: getSessionId(evt.target),
         editor: this.dataset.value,
         browser: this.closest('.select-box').dataset.name
     });
 }
 
-function removeUserStylesheet() {
+function removeUserStylesheet(evt) {
     dispatch({
         type: SESSION.REMOVE_USER_STYLESHEET,
-        id: this.dataset.userId
+        id: getSessionId(evt.target),
+        stylesheet: this.dataset.stylesheet
     });
+}
+
+function getSessionId(ctx) {
+    while (ctx && ctx !== document) {
+        if (ctx.dataset.sessionId) {
+            return ctx.dataset.sessionId;
+        }
+        ctx = ctx.parentNode;
+    }
 }

@@ -123,5 +123,8 @@ export function error(code, message) {
 }
 
 export function objToMap(obj) {
+	if (obj instanceof Map) {
+		return new Map(obj);
+	}
 	return Object.keys(obj || {}).reduce((out, key) => out.set(key, obj[key]), new Map());
 }
