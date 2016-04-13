@@ -137,7 +137,9 @@ function syncUserStylesheets(tabId) {
     .then(createdStylesheets => new Promise(resolve => {
         chrome.tabs.sendMessage(tabId, {
             action: 'sync-user-stylesheets',
-            data: {...stylesheets, ...createdStylesheets}
+            data: {
+                items: {...stylesheets, ...createdStylesheets}
+            }
         }, resp => {
 			setStylesheetData(tabId, 'user', transpose(resp));
             resolve(resp);

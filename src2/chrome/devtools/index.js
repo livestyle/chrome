@@ -43,14 +43,15 @@ const calculateDiff = debounce((tabId, resourceUrl, content) => {
         return;
     }
 
-    if (getDevtoolsStylesheets(tabId).has(resourceUrl)) {
+    var stylesheets = getDevtoolsStylesheets(tabId);
+    if (!stylesheets.has(resourceUrl)) {
         // missing some important data, abort transaction
         return diffTransactions.delete(key);
     }
 
     console.groupCollapsed('DevTools diff transaction for %s (tab id: %d)', resourceUrl, tabId);
     console.time('Diff time');
-    var prevContent = tab.stylesheets.devtools.get(resourceUrl) || '';
+    var prevContent = stylesheets.get(resourceUrl) || '';
     Promise.race([
         diff(prevContent, content),
         rejectOnTimeout(10000)
@@ -77,7 +78,7 @@ const calculateDiff = debounce((tabId, resourceUrl, content) => {
             patches
         });
         var tab = getTab(tabId);
-        if (tab && tabs.session && tab.session.mapping.has(resourceUrl)) {
+        if (tab && tab.session && tab.session.mapping.has(resourceUrl)) {
             app.client.send('diff', {
                 excludeTabId: [tabId],
                 uri: tab.session.mapping.get(resourceUrl),
@@ -114,7 +115,7 @@ app.subscribe(tabs => {
     // find newly-added tabs with LiveStyle-enabled sessions
     var newSessions = [];
     tabs.forEach((tab, tabId) => {
-        if (tab.session && !sessionIds.has(tabId) && !tab.stylesheets.devtools) {
+        if (tab.session && !sessionIds.has(tabId) && !getDevtoolsStylesheets(tabId)) {
             newSessions.push(tabId);
         }
     });
@@ -130,8 +131,8 @@ app.subscribe(tabs => {
 }, 'tabs');
 
 // update DevTools resource when there are pending patches
-app.subscribeDeepKey('tabs', 'session.patches', (session, tabId) => {
-	applyPatches(tabId, session.patches);
+app.subscribeDeepKey('tabs', 'session.patches', (tab, tabId) => {
+	applyPatches(tabId, tab.session.patches);
 });
 
 /**
@@ -163,8 +164,8 @@ function onPortConnect(port) {
     console.log('Port %s connected, total connection: %d', port.name, ports.size);
 
     // check if there’s active session for current tab id and update stylesheets
-    var tab = getTab(tabId);
-    if (tab && tabs.session) {
+    var tab = getTab(port.tabId);
+    if (tab && tab.session) {
         setStylesheetsForSession(port.tabId)
         .then(() => applyPatches(port.tabId, tab.session.patches));
     }
