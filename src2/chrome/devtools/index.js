@@ -72,17 +72,23 @@ const calculateDiff = debounce((tabId, resourceUrl, content) => {
 
         // Forge diff payload for client so default handler from background page
         // will apply it to all editors and sessions
+        var uri = resourceUrl;
+        var tab = getTab(tabId);
+        if (tab && tab.stylesheets.user) {
+            uri = keyForValue(tab.stylesheets.user, uri) || uri;
+        }
+
         app.client.send('diff', {
-            uri: resourceUrl,
-            synaxt: 'css',
+            syntax: 'css',
+            uri,
             patches
         });
-        var tab = getTab(tabId);
-        if (tab && tab.session && tab.session.mapping.has(resourceUrl)) {
+
+        if (tab && tab.session && tab.session.mapping.has(uri)) {
             app.client.send('diff', {
                 excludeTabId: [tabId],
-                uri: tab.session.mapping.get(resourceUrl),
                 syntax: 'css',
+                uri: tab.session.mapping.get(uri),
                 patches
             });
         }
@@ -370,4 +376,13 @@ function getTab(tabId) {
 function getDevtoolsStylesheets(tabId) {
     var tab = getTab(tabId);
     return tab && tab.stylesheets.devtools || new Map();
+}
+
+function keyForValue(obj, value) {
+    var keys = Object.keys(obj);
+    for (let k of keys) {
+        if (obj[k] === value) {
+            return k;
+        }
+    }
 }

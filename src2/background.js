@@ -2,12 +2,12 @@
 import {TAB, SESSION} from 'extension-app/lib/action-names';
 import app from './lib/app';
 import {throttle, serialize} from './lib/utils';
-import patcher from './lib/patcher';
 import logPatches from './lib/patch-logger';
 import updateBrowserIcon from './chrome/browser-icon';
 import updatePopups from './chrome/popup';
 import getStylesheetContent from './chrome/get-stylesheet-content';
 
+import './lib/patcher';
 import './chrome/devtools';
 import './chrome/tabs';
 
@@ -64,8 +64,9 @@ app.subscribeDeepKey('tabs', 'session.mapping', (tab, tabId) => {
     }
 });
 
-app.client.on('message-send', function(name, data) {
-	console.log('send message %c%s', 'font-weight:bold', name);
+app.client
+.on('message-send', function(name, data) {
+	console.log('send message %c%s %o', 'font-weight:bold', name, data);
 	if (name === 'diff') {
 		// sending `diff` message from worker:
 		// server won’t send it back to sender so handle it manually
@@ -101,24 +102,22 @@ function applyDiff(diff) {
     var state = app.getState();
     app.diffForEditor(diff, state).forEach(payload => app.client.send('incoming-updates', payload));
     app.diffForBrowser(diff, state).forEach(payload => {
+        var uri = getBrowserStylesheet(payload.tabId, payload.uri);
         chrome.tabs.sendMessage(payload.tabId, {
             action: 'apply-cssom-patch',
             data: {
-                stylesheetUrl: payload.uri,
+                stylesheetUrl: uri,
                 patches: payload.patches
             }
         }, mainFrame);
         app.dispatch({
             type: TAB.SAVE_PATCHES,
             id: payload.tabId,
-            uri: payload.uri,
+            uri,
             patches: payload.patches
         });
 
-        logPatches(payload.patches, {
-            tabId: payload.tabId,
-            url: payload.uri
-        });
+        logPatches(payload.patches, {tabId: payload.tabId, uri});
     });
 }
 
@@ -185,4 +184,20 @@ function syncTabs() {
             app.dispatch({type: TAB.UPDATE_LIST, tabs: finalTabs});
         });
     });
+}
+
+/**
+ * Returns valid browser stylesheet URL of given `tabId` tab. This method is
+ * used to resolve user stylesheet mapping since it points to runtime-generated
+ * CSS file
+ * @param  {Number} tabId
+ * @param  {String} uri
+ * @return {String}
+ */
+function getBrowserStylesheet(tabId, uri) {
+    var tab = app.getStateValue('tabs').get(tabId);
+    if (tab && tab.stylesheets.user && uri in tab.stylesheets.user) {
+        uri = tab.stylesheets.user[uri];
+    }
+    return uri;
 }
