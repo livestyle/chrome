@@ -7,8 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec",
-    "pack": "./node_modules/.bin/gulp pack --production"
+    "test": "mocha",
+    "pack": "gulp pack --production"
   },
   "repository": {
     "type": "git",
@@ -25,8 +25,8 @@
     "connect": "^3.3.5",
     "gulp": "^3.9.0",
     "gulp-zip": "^3.0.2",
-    "js-bundler": "git+https://github.com/sergeche/js-bundler.git#v1.1.0",
-    "mocha": "^2.2.1",
+    "js-bundler": "github:sergeche/js-bundler.git#v1.1.0",
+    "mocha": "^3.0.0",
     "node-notifier": "^4.1.2",
     "serve-static": "^1.9.2",
     "through2": "^2.0.0"
@@ -34,6 +34,6 @@
   "dependencies": {
     "livestyle-client": "livestyle/client",
     "livestyle-cssom-patcher": "livestyle/cssom-patcher",
-    "livestyle-patcher": "livestyle/patcher"
+    "livestyle-patcher": "livestyle/patcher#v1.0.1"
   }
 }
