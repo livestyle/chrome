@@ -47,9 +47,9 @@ export function createSession(tabId) {
             return Promise.reject(err);
         });
 	})
-	.catch(err => {
-		console.log('got RV error', err);
-		setSessionData({state: REMOTE_VIEW.STATE_ERROR, localSite: tab.origin, err});
+	.catch(error => {
+		console.log('got RV error', error);
+		setSessionData({state: REMOTE_VIEW.STATE_ERROR, localSite: tab.origin, error});
 		scheduleErrorSessionRemove(tab.origin);
 	});
 }
@@ -76,6 +76,20 @@ function validateOrigin(origin) {
 
 function setSessionData(session) {
 	app.dispatch({type: REMOTE_VIEW.SET_SESSION, session});
+}
+
+function clearSessionData(localSite) {
+	app.dispatch({type: REMOTE_VIEW.REMOVE_SESSION, localSite});
+}
+
+function scheduleErrorSessionRemove(origin) {
+	errorResetHandlers.set(origin, setTimeout(() => {
+		var sessions = app.getStateValue('remoteView').sessions;
+		if (sessions && sessions.has(origin) && sessions.get(origin).state === REMOTE_VIEW.STATE_ERROR) {
+			clearSessionData(origin);
+		}
+		errorResetHandlers.delete(origin);
+	}, 5000));
 }
 
 function getAuthToken() {

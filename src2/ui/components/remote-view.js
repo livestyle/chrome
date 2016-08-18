@@ -46,18 +46,18 @@ export default tr.component({
         var session = props.session || {};
         var ui = props.ui || {};
         var msg = getRecentMessages(props);
-        var stateToggler = noopHandler;
+        var toggleState = noopHandler;
         if (session.state === REMOTE_VIEW.STATE_CONNECTED) {
-            stateToggler = disable;
+            toggleState = disable;
         } else if (session.state !== REMOTE_VIEW.STATE_PENDING) {
-            stateToggler = enable;
+            toggleState = enable;
         }
 
         return <div
             className={cl('', `_${ui.descriptionState || 'collapsed'}`)}
             transition={getTransition(props)}>
     		<header className={cl('-header')}>
-                <Toggler name="rv-enabled" checked={session.state === REMOTE_VIEW.STATE_CONNECTED} onClick={stateToggler} />
+                <Toggler name="rv-enabled" checked={session.state === REMOTE_VIEW.STATE_CONNECTED} onClick={toggleState} />
                 <div className={cl('-title')}>
                     {outputMessage(msg.primary.title)}
                     {msg.secondary && msg.secondary.title ? outputMessage(msg.secondary.title, 'secondary') : undefined}
@@ -90,7 +90,7 @@ function toggleDescription() {
 
 function enable(evt) {
     evt.preventDefault();
-    dispatch({type: REMOTE_VIEW.CREATE_SESSION});
+    dispatch({type: REMOTE_VIEW.SET_SESSION});
 }
 
 function disable(evt) {
