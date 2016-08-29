@@ -94,6 +94,16 @@ export function getStateValue(key, state=getState()) {
     return deepGet(state, key);
 }
 
+export startRemoteViewSession(data) {
+    console.log('requested session start with', data);
+    return port.postMessage({action: 'start-rv-session', data});
+}
+
+export stopRemoteViewSession(data) {
+    console.log('requested session stop with', data);
+    return port.postMessage({action: 'stop-rv-session', data});
+}
+
 function connectToApp() {
     try {
         var port = chrome.runtime.connect({name: 'popup'});

@@ -6,10 +6,9 @@
 import {REMOTE_VIEW} from 'extension-app/lib/action-names';
 import app from '../lib/app';
 import {serialize} from '../lib/utils';
-import {createSession, destroySession} from './remote-view';
+import {startSession, stopSession} from './remote-view';
 
 const popupPorts = new Set();
-const remoteViewActions = new Set([REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION]);
 
 /**
  * Default handler: sends popup model, created from given state, to all connected
@@ -74,24 +73,26 @@ function sendPopupModel(port) {
 }
 
 function onPopupMessage(message, port) {
-    if (message && message.action === 'store-update') {
-        // resolve session and page data for current connection then
-        // apply action
-        if (!port || !port.tabId) {
-            return console.warn('Unknown port or tab id');
-        }
+    if (!message) {
+        return;
+    }
 
-        var data = message.data;
-        if (remoteViewActions.has(data.type)) {
-            if (data.type === REMOTE_VIEW.SET_SESSION) {
-                createSession(port.tabId);
-            } else if (data.type === REMOTE_VIEW.REMOVE_SESSION) {
-                console.log('will close session for', port.tabId);
-                destroySession(port.tabId);
-            }
-        } else {
+    // resolve session and page data for current connection then
+    // perform action
+    if (!port || !port.tabId) {
+        return console.warn('Unknown port or tab id');
+    }
+
+    switch (message.action) {
+        case 'store-update':
             app.dispatch(message.data);
-        }
+            break;
+        case 'start-rv-session':
+            startSession(message.data.origin);
+            break;
+        case 'stop-rv-session':
+            stopSession(message.data.origin);
+            break;
     }
 }
 

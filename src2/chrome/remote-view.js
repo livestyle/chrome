@@ -3,62 +3,46 @@
  */
 'use strict';
 
-import {REMOTE_VIEW} from 'extension-app/lib/action-names';
 import app from '../lib/app';
 import {error} from '../lib/utils';
 
-const errorResetHandlers = new Map();
-
-export function createSession(tabId) {
-    // check if there’s already opened session for given tab
-    var tab = app.getStateValue('tabs').get(tabId);
-
-    if (!tab) {
-        return Promise.reject(error('ERVNOTAB', 'No tab for id ' + tabId));
+export function startSession(origin) {
+    if (app.getStateValue('removeView.sessions').has(origin)) {
+        // session already exists
+        return;
     }
 
-    if (tab.remoteView) {
-        return Promise.resolve(app.getStateValue('remoteView.sessions').get(tab.remoteView));
-    }
-
-	return validateOrigin(tab.origin)
+    validateOrigin(origin)
 	.then(origin => {
-		if (errorResetHandlers.has(origin)) {
-			clearTimeout(errorResetHandlers.get(origin));
-			errorResetHandlers.delete(origin);
-		}
+        return app.createRemoteViewSession({
+            origin,
+            delegate(start, data) {
+                let startSession = token => start({
+                    ...data,
+                    authorization: 'google ' + token
+                });
 
-		setSessionData({state: REMOTE_VIEW.STATE_PENDING, localSite: origin});
+                return getAuthToken()
+                .then(token => {
+                    return startSession(token)
+                    .catch(err => {
+                        if (err.code === 401) {
+                            // looks like an expired token, get new one and try again
+                            return resetAuthToken(token)
+                            .then(getAuthToken)
+                            .then(startSession);
+                        }
 
-        var _createSession = token => app.createRemoteViewSession({
-            authorization: 'google ' + token,
-            localSite: origin
-        });
-
-        return getAuthToken()
-        .then(_createSession)
-        .catch(err => {
-            if (err.code === 401) {
-                // looks like an expired token, get new one and try again
-                return resetAuthToken(token)
-                .then(getAuthToken)
-                .then(_createSession);
+                        return Promise.reject(err);
+                    });
+                });
             }
-            return Promise.reject(err);
         });
-	})
-	.catch(error => {
-		console.log('got RV error', error);
-		setSessionData({state: REMOTE_VIEW.STATE_ERROR, localSite: tab.origin, error});
-		scheduleErrorSessionRemove(tab.origin);
 	});
 }
 
-export function destroySession(tabId) {
-    var tab = app.getStateValue('tabs').get(tabId);
-    if (tab) {
-        app.destroyRemoteViewSession(tab.origin);
-    }
+export function stopSession(origin) {
+    app.closeRemoteViewSession(origin);
 }
 
 function validateOrigin(origin) {
@@ -72,24 +56,6 @@ function validateOrigin(origin) {
 	}
 
 	return Promise.resolve(origin);
-}
-
-function setSessionData(session) {
-	app.dispatch({type: REMOTE_VIEW.SET_SESSION, session});
-}
-
-function clearSessionData(localSite) {
-	app.dispatch({type: REMOTE_VIEW.REMOVE_SESSION, localSite});
-}
-
-function scheduleErrorSessionRemove(origin) {
-	errorResetHandlers.set(origin, setTimeout(() => {
-		var sessions = app.getStateValue('remoteView').sessions;
-		if (sessions && sessions.has(origin) && sessions.get(origin).state === REMOTE_VIEW.STATE_ERROR) {
-			clearSessionData(origin);
-		}
-		errorResetHandlers.delete(origin);
-	}, 5000));
 }
 
 function getAuthToken() {
