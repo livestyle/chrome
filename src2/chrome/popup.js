@@ -20,19 +20,18 @@ export default function(state) {
 }
 
 export function modelForTab(tabId, state=app.getState()) {
-    var tab = state.tabs.get(tabId);
-    var model = {
+    const tab = state.tabs.get(tabId);
+    const model = {
         enabled: false,
         tabId,
         url: tab.url,
         origin: tab.origin,
-        remoteView: state.remoteView.sessions.get(tab.remoteView)
+        remoteView: state.remoteView.sessions.get(tab.origin)
     };
 
     if (tab.session) {
-        var session = state.sessions.get(tab.session.id);
-        model = {
-            ...model,
+        const session = state.sessions.get(tab.session.id);
+        Object.assign(model, {
             sessionId: tab.session.id,
             enabled: session.enabled,
             direction: session.direction,
@@ -40,7 +39,7 @@ export function modelForTab(tabId, state=app.getState()) {
             browserFiles: serialize(tab.session.stylesheets),
             mapping: serialize(tab.session.mapping),
             userStylesheets: serialize(tab.stylesheets.user) || {}
-        };
+        });
     }
     return model;
 }
@@ -88,10 +87,10 @@ function onPopupMessage(message, port) {
             app.dispatch(message.data);
             break;
         case 'start-rv-session':
-            startSession(message.data.origin);
+            startSession(port.tabId);
             break;
         case 'stop-rv-session':
-            stopSession(message.data.origin);
+            stopSession(port.tabId);
             break;
     }
 }

@@ -13,6 +13,8 @@ export const UI = {
     RV_EXPAND_DESCRIPTION: 'Expand Remote View description',
     RV_COLLAPSE_DESCRIPTION: 'Collapse Remote View description',
     RV_DESCRIPTION_TRANSITION_COMPLETE: 'Completed Remote View description transition',
+    RV_START: 'Start Remote View session',
+    RV_STOP: 'Stop Remote View session',
 
     T_EXPAND_DESCRITION: 'Expand Description transition',
     T_COLLAPSE_DESCRITION: 'Collapse Description transition',

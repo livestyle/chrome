@@ -6,13 +6,20 @@
 import app from '../lib/app';
 import {error} from '../lib/utils';
 
-export function startSession(origin) {
-    if (app.getStateValue('removeView.sessions').has(origin)) {
-        // session already exists
-        return;
+export function startSession(tabId) {
+    // get tab for given tabId
+    const tab = getTab(tabId);
+    if (!tab) {
+        return Promise.reject(error('ERVNOTAB', `No tab for ${tabId} tab id`));
     }
 
-    validateOrigin(origin)
+    if (app.getStateValue('remoteView.sessions').has(tab.origin)) {
+        // session already exists
+        // XXX Maybe Promise.resolve() with session data?
+        return Promise.reject(error('ERVEXISTS', `Session for ${tab.origin} origin already exists`));
+    }
+
+    validateOrigin(tab.origin)
 	.then(origin => {
         return app.createRemoteViewSession({
             origin,
@@ -41,8 +48,15 @@ export function startSession(origin) {
 	});
 }
 
-export function stopSession(origin) {
-    app.closeRemoteViewSession(origin);
+export function stopSession(tabId) {
+    const tab = getTab(tabId);
+    if (tab) {
+        app.closeRemoteViewSession(tab.origin);
+    }
+}
+
+function getTab(tabId) {
+    return app.getState().tabs.get(tabId);
 }
 
 function validateOrigin(origin) {

@@ -10,14 +10,13 @@ import {createStore, applyMiddleware} from 'redux';
 import createLogger from 'redux-logger';
 import {SESSION, REMOTE_VIEW} from 'extension-app/lib/action-names';
 import {deepGet} from 'extension-app/lib/utils';
-import {MODEL} from './action-names';
+import {MODEL, UI} from './action-names';
 import reducers from './reducers';
 
 const port = connectToApp();
 const externalActions = new Set([
     SESSION.TOGGLE_ENABLED, SESSION.UPDATE_DIRECTION, SESSION.UPDATE_FILE_MAPPING,
-    SESSION.ADD_USER_STYLESHEET, SESSION.REMOVE_USER_STYLESHEET,
-    REMOTE_VIEW.SET_SESSION, REMOTE_VIEW.REMOVE_SESSION
+    SESSION.ADD_USER_STYLESHEET, SESSION.REMOVE_USER_STYLESHEET
 ]);
 
 var enhancer = null;
@@ -61,6 +60,14 @@ if (process.env.NODE_ENV !== 'production') {
 const store = createStore(reducers, initialState, enhancer);
 
 export function dispatch(data) {
+    if (data.type === UI.RV_START) {
+        return startRemoteViewSession();
+    }
+
+    if (data.type === UI.RV_STOP) {
+        return stopRemoteViewSession();
+    }
+
     if (externalActions.has(data.type) && port) {
         return port.postMessage({action: 'store-update', data});
     }
@@ -94,12 +101,12 @@ export function getStateValue(key, state=getState()) {
     return deepGet(state, key);
 }
 
-export startRemoteViewSession(data) {
+function startRemoteViewSession(data) {
     console.log('requested session start with', data);
     return port.postMessage({action: 'start-rv-session', data});
 }
 
-export stopRemoteViewSession(data) {
+function stopRemoteViewSession(data) {
     console.log('requested session stop with', data);
     return port.postMessage({action: 'stop-rv-session', data});
 }
