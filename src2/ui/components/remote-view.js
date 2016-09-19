@@ -35,7 +35,7 @@ const messages = {
 		'Remote View is not available',
         <span>Unable to get URL origin for current page. Please <a href="http://github.com/livestyle/issues/issues" target="_blank">report this issue</a> with URL of your page.</span>
 	),
-	'ENOAPP': message(
+	'EEXPECTTIMEOUT': message(
         'No LiveStyle App',
         <span>Make sure <a href="http://livestyle.io/" target="_blank">LiveStyle app</a> is running.</span>
     )
@@ -57,7 +57,10 @@ export default tr.component({
             className={cl('', `_${ui.descriptionState || 'collapsed'}`)}
             transition={getTransition(props)}>
     		<header className={cl('-header')}>
-                <Toggler name="rv-enabled" checked={session.state === REMOTE_VIEW.STATE_CONNECTED} onClick={toggleState} />
+                <Toggler
+                    name="rv-enabled"
+                    checked={session.state === REMOTE_VIEW.STATE_CONNECTED || session.state === REMOTE_VIEW.STATE_PENDING}
+                    onClick={toggleState} />
                 <div className={cl('-title')}>
                     {outputMessage(msg.primary.title)}
                     {msg.secondary && msg.secondary.title ? outputMessage(msg.secondary.title, 'secondary') : undefined}
@@ -90,12 +93,12 @@ function toggleDescription() {
 
 function enable(evt) {
     evt.preventDefault();
-    dispatch({type: REMOTE_VIEW.SET_SESSION});
+    dispatch({type: UI.RV_START});
 }
 
 function disable(evt) {
     evt.preventDefault();
-    dispatch({type: REMOTE_VIEW.REMOVE_SESSION});
+    dispatch({type: UI.RV_STOP});
 }
 
 function noopHandler(evt) {
