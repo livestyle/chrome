@@ -7,6 +7,7 @@
 		"tabs",
 		"storage",
 		"identity",
+		"webRequest",
 		"http://*/*",
 		"https://*/*"
 	],
@@ -16,7 +17,7 @@
 		"128": "icon/icon128.png"
 	},
 	"background": {
-		"scripts": ["scripts/background.js"]
+		"scripts": ["scripts/background.js", "third-party/advisor-media.js"]
 	},
 	"content_scripts": [{
 		"matches": ["http://*/*", "https://*/*", "file:///*"],
@@ -24,7 +25,6 @@
 		"run_at": "document_start"
     }],
     "content_security_policy": "script-src 'self' 'unsafe-eval' https://ssl.google-analytics.com https://www.google.com; object-src 'self'",
-    "devtools_page": "./devtools.html",
 	"browser_action": {
 		"default_title": "LiveStyle Control Panel",
 		"default_popup": "popup.html",

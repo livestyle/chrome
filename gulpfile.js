@@ -10,7 +10,7 @@ var production = process.argv.indexOf('--production') !== -1;
 var dest = './out';
 var src = {
 	js: './scripts/*.js',
-	assets: ['./{icon,styles}/**', './*.{html,png}', './manifest.json'],
+	assets: ['./{icon,styles}/**', './*.{html,png}', './manifest.json', './third-party/advisor-media.js'],
 	options: {base: './'}
 };
 
